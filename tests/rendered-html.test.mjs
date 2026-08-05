@@ -24,10 +24,11 @@ test("ships the finished content operations dashboard", async () => {
 });
 
 test("protects and wires the LocalMiniDrama adapter", async () => {
-  const [healthRoute, generateRoute, projectsRoute, launcher] = await Promise.all([
+  const [healthRoute, generateRoute, projectsRoute, preflightRoute, launcher] = await Promise.all([
     readFile(new URL("../app/api/local/health/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/local/generate/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/local/projects/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/local/preflight/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../start-local-studio.ps1", import.meta.url), "utf8"),
   ]);
 
@@ -38,6 +39,10 @@ test("protects and wires the LocalMiniDrama adapter", async () => {
   assert.match(generateRoute, /source_idea_id === idea\.id/);
   assert.match(generateRoute, /只能从本机操作台执行/);
   assert.match(projectsRoute, /zhihui-content-os/);
+  assert.match(preflightRoute, /"text"/);
+  assert.match(preflightRoute, /"image"/);
+  assert.match(preflightRoute, /"video"/);
+  assert.match(preflightRoute, /"tts"/);
   assert.match(launcher, /LocalMiniDrama/);
   assert.match(launcher, /http:\/\/127\.0\.0\.1:3000/);
 });

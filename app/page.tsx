@@ -8,6 +8,7 @@ type Job = { id:string; ideaId:string; stage:string; progress:number; status:str
 type Metric = { platform:string; views:number; likes:number; comments:number; shares:number; saves:number; completionRate:number };
 type LocalEngine = { ready:boolean; mode:"local"|"cloud"; textConfigured?:boolean; studioUrl?:string; message?:string };
 type LocalProject = { id:string|number; title:string; projectUrl:string; storyTaskId:string|null; nextAction:"story_generating"|"configure_text_model"|"story_ready"|"storyboards_ready"|"packaging_ready"; status?:string; episodeCount?:number; storyboardCount?:number; sourceIdeaId?:string|null; packagePlatforms?:string[] };
+type Preflight = { ready:boolean; mode:"local"|"cloud"; stages:Array<{id:string;label:string;ready:boolean;required:boolean;detail:string}>; blockers?:string[]; settingsUrl?:string; message?:string };
 
 const platformMeta = {
   douyin: { name:"抖音", region:"中国", color:"#ff4e45" },
@@ -47,6 +48,7 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [localEngine, setLocalEngine] = useState<LocalEngine>({ ready:false, mode:"cloud" });
   const [localProjects, setLocalProjects] = useState<LocalProject[]>([]);
+  const [preflight, setPreflight] = useState<Preflight>({ ready:false, mode:"cloud", stages:[] });
 
   const load = async () => {
     try {
@@ -64,8 +66,11 @@ export default function Home() {
         const ready = response.ok && payload.ready;
         setLocalEngine({ ...payload, ready });
         if (ready) {
-          const projectsResponse = await fetch("/api/local/projects");
+          const [projectsResponse, preflightResponse] = await Promise.all([fetch("/api/local/projects"), fetch("/api/local/preflight")]);
           if (projectsResponse.ok) setLocalProjects((await projectsResponse.json()).projects ?? []);
+          if (preflightResponse.ok) setPreflight(await preflightResponse.json());
+        } else {
+          setPreflight({ ready:false, mode:"cloud", stages:[], message:"请启动本机操作台后查看模型检查结果。" });
         }
       })
       .catch(() => setLocalEngine({ ready:false, mode:"local", message:"本机引擎未启动" }));
@@ -179,7 +184,7 @@ export default function Home() {
 
       {view === "metrics" && <section className="panel"><div className="panelTitle"><div><small>04 / LEARNING LOOP</small><h2>账号专属评分器</h2></div></div><div className="metricCards"><div><span>已收集播放</span><b>{totalViews.toLocaleString()}</b></div><div><span>平均完播率</span><b>{avgCompletion}%</b></div><div><span>有效样本</span><b>{metrics.length}</b></div><div><span>可训练阈值</span><b>30 条</b></div></div><div className="learningGrid"><div><h3>三平台平均播放</h3>{platformAverages.map(row=><div className="bar" key={row.key}><span>{platformMeta[row.key as keyof typeof platformMeta].name}</span><i><b style={{width:`${Math.min(100,row.views/100)}%`}}/></i><strong>{row.views || "待积累"}</strong></div>)}</div><div className="formula"><h3>相对潜力分怎么来</h3><p><b>35%</b> 前5秒留存</p><p><b>25%</b> 完播率</p><p><b>20%</b> 收藏与分享</p><p><b>10%</b> 关注转化</p><p><b>10%</b> 单条制作成本</p><small>30条以前使用规则评分；30条以后按你自己的真实数据校准，不伪造具体播放量。</small></div></div></section>}
 
-      {view === "accounts" && <section className="panel"><div className="panelTitle"><div><small>05 / CONNECTIONS</small><h2>账号与生成引擎</h2></div></div><h3 className="subhead">发布账号</h3><div className="accountGrid">{accounts.map(account=>{const p=platformMeta[account.platform as keyof typeof platformMeta];return <div className="account" key={account.platform}><span style={{background:p?.color}}>{p?.name.slice(0,1)}</span><div><b>{p?.name}</b><small>{account.publishMode}</small></div><em>{account.status==="connected"?account.handle:"需要本人授权"}</em><button disabled>准备授权</button></div>})}</div><h3 className="subhead">电脑上的开源引擎</h3><div className="engineList">{engineRows.map(row=><div key={row.name}><span className={row.state.includes("已")?"ready":"waiting"}/><b>{row.name}</b><small>{row.role}</small><p>{row.detail}</p>{"url" in row?<a href={row.url} target="_blank">打开本机工具</a>:<em>{row.state}</em>}</div>)}</div><div className="credentials"><b>还需要你提供什么？</b><p>至少选择一个文本/图片/视频服务商的API Key；创建抖音开放平台应用和TikTok开发者应用；小红书使用官方分享流程。密钥只写入受保护的运行环境，不放进网页或Git。</p></div></section>}
+      {view === "accounts" && <section className="panel"><div className="panelTitle"><div><small>05 / CONNECTIONS</small><h2>账号与生成引擎</h2></div></div><h3 className="subhead">生产前检查</h3>{preflight.stages.length ? <div className="preflightGrid">{preflight.stages.map(stage=><div className={stage.ready?"preflight ready":"preflight blocked"} key={stage.id}><span>{stage.ready?"✓":"!"}</span><div><b>{stage.label}</b><small>{stage.detail}</small></div><em>{stage.ready?"已就绪":stage.required?"阻塞生产":"等待授权"}</em></div>)}</div>:<div className="preflightEmpty"><b>当前为云端规划模式</b><span>{preflight.message}</span></div>}{preflight.settingsUrl&&<a className="configLink" href={preflight.settingsUrl} target="_blank">打开本机 AI 配置 →</a>}<h3 className="subhead">发布账号</h3><div className="accountGrid">{accounts.map(account=>{const p=platformMeta[account.platform as keyof typeof platformMeta];return <div className="account" key={account.platform}><span style={{background:p?.color}}>{p?.name.slice(0,1)}</span><div><b>{p?.name}</b><small>{account.publishMode}</small></div><em>{account.status==="connected"?account.handle:"需要本人授权"}</em><button disabled>准备授权</button></div>})}</div><h3 className="subhead">电脑上的开源引擎</h3><div className="engineList">{engineRows.map(row=><div key={row.name}><span className={row.state.includes("已")?"ready":"waiting"}/><b>{row.name}</b><small>{row.role}</small><p>{row.detail}</p>{"url" in row?<a href={row.url} target="_blank">打开本机工具</a>:<em>{row.state}</em>}</div>)}</div><div className="credentials"><b>还需要你提供什么？</b><p>至少选择一个文本/图片/视频服务商的API Key；创建抖音开放平台应用和TikTok开发者应用；小红书使用官方分享流程。密钥只写入受保护的运行环境，不放进网页或Git。</p></div></section>}
     </section>
   </main>;
 }
