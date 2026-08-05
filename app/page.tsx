@@ -6,6 +6,8 @@ type Idea = { id:string; title:string; angle:string; category:string; status:str
 type Account = { platform:string; handle:string|null; status:string; publishMode:string };
 type Job = { id:string; ideaId:string; stage:string; progress:number; status:string; platforms:string };
 type Metric = { platform:string; views:number; likes:number; comments:number; shares:number; saves:number; completionRate:number };
+type LocalEngine = { ready:boolean; mode:"local"|"cloud"; textConfigured?:boolean; studioUrl?:string; message?:string };
+type LocalProject = { id:string|number; title:string; projectUrl:string; storyTaskId:string|null; nextAction:"story_generating"|"configure_text_model" };
 
 const platformMeta = {
   douyin: { name:"抖音", region:"中国", color:"#ff4e45" },
@@ -43,6 +45,8 @@ export default function Home() {
   const [view, setView] = useState("ideas");
   const [message, setMessage] = useState("正在载入你的内容工厂…");
   const [busy, setBusy] = useState(false);
+  const [localEngine, setLocalEngine] = useState<LocalEngine>({ ready:false, mode:"cloud" });
+  const [localProjects, setLocalProjects] = useState<LocalProject[]>([]);
 
   const load = async () => {
     try {
@@ -52,7 +56,13 @@ export default function Home() {
       setMessage("准备就绪：先从10个候选中选出最多3个。 ");
     } catch { setMessage("当前使用本机候选池；私有线上版会自动保存选择与数据。"); }
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    fetch("/api/local/health")
+      .then(async (response) => ({ response, payload: await response.json() }))
+      .then(({ response, payload }) => setLocalEngine({ ...payload, ready: response.ok && payload.ready }))
+      .catch(() => setLocalEngine({ ready:false, mode:"local", message:"本机引擎未启动" }));
+  }, []);
 
   const selected = ideas.filter((idea) => idea.selected);
   const totalViews = metrics.reduce((sum, item) => sum + item.views, 0);
@@ -73,11 +83,45 @@ export default function Home() {
   const queueGeneration = async () => {
     if (!selected.length) { setMessage("请先选择至少1个选题。"); return; }
     if (!platforms.length) { setMessage("请至少选择1个平台版本。"); return; }
-    setBusy(true); setMessage("正在创建中英文脚本、三平台包装与分镜任务…");
-    const response = await fetch("/api/jobs", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ ideaIds:selected.map((i)=>i.id), platforms }) });
+    setBusy(true);
+    setMessage(localEngine.ready ? "正在把选题交给本机漫剧引擎…" : "正在保存选题和三平台生产任务…");
+
+    let cloudQueued = false;
+    try {
+      const response = await fetch("/api/jobs", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ ideaIds:selected.map((i)=>i.id), platforms }) });
+      cloudQueued = response.ok;
+    } catch { cloudQueued = false; }
+
+    if (localEngine.ready) {
+      try {
+        const results = await Promise.all(selected.map(async (idea) => {
+          const response = await fetch("/api/local/generate", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({ ...idea, platforms }),
+          });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.error || `${idea.title} 创建失败`);
+          return { ...payload.project, projectUrl:payload.projectUrl, storyTaskId:payload.storyTaskId, nextAction:payload.nextAction } as LocalProject;
+        }));
+        setLocalProjects((rows) => [...results, ...rows]);
+        const generating = results.filter((item) => item.nextAction === "story_generating").length;
+        setMessage(generating
+          ? `已创建 ${results.length} 个真实漫剧项目，其中 ${generating} 个正在生成剧本。`
+          : `已创建 ${results.length} 个真实漫剧项目。现在只差配置一个文本模型，才能自动写剧本。`);
+        if (cloudQueued) await load();
+        setView("production");
+      } catch (error) {
+        setMessage(error instanceof Error ? `本机引擎返回：${error.message}` : "本机项目创建失败。");
+      }
+    } else if (cloudQueued) {
+      setMessage(`已保存 ${selected.length} 个生产任务。双击“启动知绘工厂”后，可在本机真正创建项目。`);
+      await load();
+      setView("production");
+    } else {
+      setMessage("暂时无法创建任务：请先启动本机操作台。 ");
+    }
     setBusy(false);
-    if (response.ok) { setMessage(`已创建 ${selected.length} 个内容任务。下一步配置模型密钥后即可生成实际素材。`); await load(); setView("production"); }
-    else setMessage("任务未写入：线上数据服务可能仍在初始化。");
   };
 
   const togglePlatform = (key:string) => setPlatforms((rows) => rows.includes(key) ? rows.filter((row)=>row!==key) : [...rows,key]);
@@ -89,7 +133,7 @@ export default function Home() {
         {[ ["ideas","今日选题","10"], ["production","生成队列",String(jobs.length)], ["review","审核发布",jobs.length ? "!" : "0"], ["metrics","数据学习",String(metrics.length)], ["accounts","账号与引擎","5"] ].map(([id,label,count]) =>
           <button key={id} className={view===id?"active":""} onClick={()=>setView(id)}><i>{label}</i><span>{count}</span></button>)}
       </nav>
-      <div className="sidebarFoot"><span className="pulse"/> 本地桥接待配置<small>RTX 4060 · 8GB VRAM</small></div>
+      <div className="sidebarFoot"><span className={localEngine.ready?"pulse online":"pulse"}/> {localEngine.ready?"本机生成引擎在线":"当前为云端规划模式"}<small>RTX 4060 · 8GB VRAM</small></div>
     </aside>
 
     <section className="workspace">
@@ -101,7 +145,7 @@ export default function Home() {
           <div><small>01</small><b>选择平台版本</b></div>
           <div className="platformToggles">{Object.entries(platformMeta).map(([key,p])=><button key={key} className={platforms.includes(key)?"on":""} onClick={()=>togglePlatform(key)} style={{"--platform":p.color} as React.CSSProperties}><span/>{p.name}<small>{p.region}</small></button>)}</div>
           <div className="selectionCount"><strong>{selected.length}</strong><span>/ 3 已选择</span></div>
-          <button className="generate" disabled={busy} onClick={queueGeneration}>{busy?"创建中…":"生成所选内容 →"}</button>
+          <button className="generate" disabled={busy} onClick={queueGeneration}>{busy?"创建中…":localEngine.ready?"交给本机引擎 →":"保存生产任务 →"}</button>
         </section>
         <div className="ideaHeader"><div><b>系统推荐 10 个候选</b><span>评分不是承诺播放量，而是结合题材、钩子、画面性与平台适配度的相对排序。</span></div><div className="legend"><i className="dy"/>抖音 <i className="tk"/>TikTok <i className="xhs"/>小红书</div></div>
         <section className="ideasGrid">{ideas.map((idea,index)=><article key={idea.id} className={idea.selected?"idea selected":"idea"} onClick={()=>toggleIdea(idea)}>
@@ -114,6 +158,12 @@ export default function Home() {
 
       {view === "production" && <section className="panel">
         <div className="panelTitle"><div><small>02 / PRODUCTION</small><h2>生成队列</h2></div><button onClick={()=>setView("ideas")}>＋ 添加选题</button></div>
+        {localProjects.length > 0 && <div className="localProjects">
+          <div className="localProjectsHead"><b>本机真实项目</b><span>{localEngine.textConfigured?"剧本模型已连接":"等待配置文本模型"}</span></div>
+          {localProjects.map((project) => <a href={project.projectUrl} target="_blank" rel="noreferrer" key={`${project.id}-${project.title}`}>
+            <span>#{project.id}</span><b>{project.title}</b><em>{project.nextAction === "story_generating" ? "剧本生成中" : "已建项目 · 待配置模型"}</em><strong>打开项目 →</strong>
+          </a>)}
+        </div>}
         {jobs.length ? <div className="jobList">{jobs.map((job,index)=><div className="job" key={job.id}><strong>{String(index+1).padStart(2,"0")}</strong><div><b>{ideas.find(i=>i.id===job.ideaId)?.title ?? job.ideaId}</b><span>{job.platforms.split(",").map(p=>platformMeta[p as keyof typeof platformMeta]?.name).join(" · ")}</span></div><div className="jobStage">{job.stage}<span><i style={{width:`${Math.max(job.progress,8)}%`}}/></span></div><em>{job.status === "queued" ? "等待模型配置" : job.status}</em></div>)}</div> : <div className="empty"><b>还没有生成任务</b><p>回到今日选题，选择1–3个题目后创建任务。</p></div>}
         <div className="productionSteps">{["中英文脚本","事实核验","角色与分镜","配音与字幕","三平台包装","人工审核"].map((x,i)=><div key={x}><span>{i+1}</span><b>{x}</b><small>{i===0?"同一事实，不同钩子":i===4?"标题、封面、比例分别生成":"完成后进入下一步"}</small></div>)}</div>
       </section>}
