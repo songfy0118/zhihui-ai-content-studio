@@ -31,7 +31,7 @@ export async function GET(request: Request) {
         status?: string;
         total_episodes?: number;
         episodes?: Array<{ storyboards?: unknown[] }>;
-        metadata?: { source_idea_id?: string; target_platforms?: string[] };
+        metadata?: { source_idea_id?: string; target_platforms?: string[]; delivery_package?: { status?: string; platforms?: string[] } };
         updated_at?: string;
       }) => {
         const episodeCount = item.episodes?.length ?? item.total_episodes ?? 0;
@@ -41,12 +41,13 @@ export async function GET(request: Request) {
         title: item.title,
         projectUrl: `http://127.0.0.1:3013/film/${item.id}`,
         storyTaskId: null,
-        nextAction: storyboardCount > 0 ? "storyboards_ready" : episodeCount > 0 ? "story_ready" : "configure_text_model",
+        nextAction: item.metadata?.delivery_package?.status === "draft_ready" ? "packaging_ready" : storyboardCount > 0 ? "storyboards_ready" : episodeCount > 0 ? "story_ready" : "configure_text_model",
         status: item.status ?? "draft",
         episodeCount,
         storyboardCount,
         sourceIdeaId: item.metadata?.source_idea_id ?? null,
         platforms: item.metadata?.target_platforms ?? [],
+        packagePlatforms: item.metadata?.delivery_package?.platforms ?? [],
         updatedAt: item.updated_at ?? null,
       });
       });

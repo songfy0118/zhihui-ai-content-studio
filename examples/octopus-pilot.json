@@ -160,5 +160,25 @@
       "video_prompt": "拉镜展示八次同步握手，随后快速切到缓慢倾倒的咖啡杯并在落地前定格，15秒，结尾留互动字幕空间",
       "character_names": ["小章", "林主管"]
     }
-  ]
+  ],
+  "platform_copy": {
+    "douyin": {
+      "title": "章鱼面试，能同时握8次手吗？",
+      "caption": "章鱼确实有三颗心脏，但“九个大脑”只是流行比喻。真正特别的是它高度分布的神经系统。",
+      "hashtags": ["动物冷知识", "章鱼", "科普", "AI漫剧"],
+      "cover_text": "章鱼真有9个大脑？"
+    },
+    "tiktok": {
+      "title": "Can an octopus handle 8 handshakes at once?",
+      "caption": "Three hearts, eight arms, but not nine separate brains. Here is what the octopus nervous system actually does.",
+      "hashtags": ["Octopus", "AnimalFacts", "ScienceTok", "AIAnimation"],
+      "cover_text": "9 BRAINS? NOT EXACTLY"
+    },
+    "xiaohongshu": {
+      "title": "章鱼面试｜它真的有9个大脑吗？",
+      "caption": "把章鱼放进办公室面试，我们就能看懂它最特别的两套系统：三颗心脏，以及遍布腕足的神经网络。文末事实来源已核验。",
+      "hashtags": ["动物科普", "冷知识", "章鱼", "AI创作"],
+      "cover_text": "一个脑，八条分布式腕足"
+    }
+  }
 }

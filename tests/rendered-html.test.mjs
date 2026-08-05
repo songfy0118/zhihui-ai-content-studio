@@ -41,3 +41,16 @@ test("protects and wires the LocalMiniDrama adapter", async () => {
   assert.match(launcher, /LocalMiniDrama/);
   assert.match(launcher, /http:\/\/127\.0\.0\.1:3000/);
 });
+
+test("keeps the pilot packaging fact-gated and human-reviewed", async () => {
+  const [packager, pilot] = await Promise.all([
+    readFile(new URL("../scripts/build-delivery-package.mjs", import.meta.url), "utf8"),
+    readFile(new URL("../examples/octopus-pilot.json", import.meta.url), "utf8"),
+  ]);
+  assert.match(packager, /Fact review must be completed before packaging/);
+  assert.match(packager, /requires_human_review:\s*true/);
+  assert.match(packager, /media_status:\s*"waiting_for_generation"/);
+  assert.match(pilot, /"douyin"/);
+  assert.match(pilot, /"tiktok"/);
+  assert.match(pilot, /"xiaohongshu"/);
+});
