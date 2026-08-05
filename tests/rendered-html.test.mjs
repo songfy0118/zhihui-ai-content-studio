@@ -59,3 +59,16 @@ test("keeps the pilot packaging fact-gated and human-reviewed", async () => {
   assert.match(pilot, /"tiktok"/);
   assert.match(pilot, /"xiaohongshu"/);
 });
+
+test("documents a reproducible collaborator bootstrap without secrets", async () => {
+  const [readme, bootstrap] = await Promise.all([
+    readFile(new URL("../README.md", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/bootstrap-vendors.ps1", import.meta.url), "utf8"),
+  ]);
+  assert.match(readme, /知绘工厂/);
+  assert.match(readme, /npm run vendors:bootstrap/);
+  assert.match(readme, /不要在 issue、PR、聊天或配置样例中粘贴 API Key/);
+  assert.match(bootstrap, /xuanyustudio\/LocalMiniDrama\.git/);
+  assert.match(bootstrap, /--recurse-submodules/);
+  assert.doesNotMatch(bootstrap, /api[_-]?key\s*=\s*["'][^"']+["']/i);
+});

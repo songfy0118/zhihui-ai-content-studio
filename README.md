@@ -1,100 +1,101 @@
-# vinext-starter
+# 知绘工厂（AI Content Studio）
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+面向抖音、TikTok 和小红书的 AI 科普漫剧生产控制台。这个仓库不重复训练基础模型，而是把成熟开源项目串成一条可审查的工作流：
 
-## Prerequisites
+`选题 → 剧本 → 事实核验 → 角色 → 分镜 → 图片/视频/配音 → 三平台包装 → 人工审核 → 经授权发布 → 指标回流`
 
-- Node.js `>=22.13.0`
+私有线上操作台：<https://zhihui-ai-studio.songfy0118.chatgpt.site>
 
-## Quick Start
+## 当前完成度
 
-```bash
+- 三平台选题池、相对评分和任务队列
+- LocalMiniDrama 本机项目创建、恢复与防重复
+- 事实核验记录、角色和分镜导入
+- 抖音、TikTok、小红书三套文案与字幕草稿
+- 文本、图片、视频、TTS 生产前检查
+- 人工审核门禁和数据学习页面
+
+试播项目“章鱼面试”目前包含 1 集剧本、2 个角色、6 个分镜和 75 秒三平台交付草稿。实际媒体生成仍需合法可用的模型服务配置。
+
+## 架构
+
+- `app/`：统一操作台和本机适配 API
+- `db/`、`drizzle/`：云端选题、任务、账号和指标数据
+- `scripts/`：开源引擎安装、试播项目导入、三平台包装
+- `examples/`：不含密钥的试播配置和事实核验样例
+- `vendor/`：本机开源引擎，仅在各自电脑下载，不进入本仓库
+
+底层复用：
+
+- [LocalMiniDrama](https://github.com/xuanyustudio/LocalMiniDrama)：本机主工作台
+- [LumenX](https://github.com/alibaba/lumenx)：漫剧生产候选主引擎
+- [MoneyPrinterTurbo](https://github.com/harry0703/MoneyPrinterTurbo)：资讯口播备用
+- [CosyVoice](https://github.com/FunAudioLLM/CosyVoice)：中文配音
+- [MuseTalk](https://github.com/TMElyralab/MuseTalk)：数字人口型备用
+
+## Windows 快速开始
+
+需要 Node.js 22+、Git 和 PowerShell。
+
+```powershell
 npm install
-npm run dev
-npm run build
+npm run vendors:bootstrap
 ```
 
-This starter does not use `wrangler.jsonc`.
+首次只安装当前主链路所需的 LocalMiniDrama 依赖：
 
-## Included Shape
-
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
-
-## Workspace Auth Headers
-
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
-
-The user ID is stable for the same user on the same Site and different across Sites. Email and name are intended for display or contact purposes.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File scripts\bootstrap-vendors.ps1 -InstallLocalMiniDrama
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+验证并启动：
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+```powershell
+npm test
+.\启动知绘工厂.bat
+```
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+打开：
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+- 统一本机操作台：<http://127.0.0.1:3000>
+- LocalMiniDrama：<http://127.0.0.1:3013>
+- 模型配置：<http://127.0.0.1:3013/ai-config>
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
+## 试播流程
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
+```powershell
+npm run pilot:import
+npm run pilot:package
+```
 
-## Useful Commands
+生成的发布草稿位于 `work/packages/octopus-pilot/`。该目录只保存本机产物，不进入 Git。
 
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
+## 密钥与发布安全
 
-## Learn More
+- `.env*`、模型文件、数据库、生成缓存、`vendor/` 和发布产物均被 Git 忽略。
+- 不要在 issue、PR、聊天或配置样例中粘贴 API Key、Cookie、验证码或平台 Token。
+- 模型连通不代表允许商用；每个服务和素材都要单独确认授权范围。
+- 所有平台发布必须经过人工事实核验、画面检查、版权检查和账号本人授权。
+- 分数是相对排序，不是播放量承诺；演示和烟雾测试不能当成真实账号结果。
 
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+## 协作约定
+
+- `main` 保持可运行；每项功能使用独立分支和 Pull Request。
+- 不提交本机生成物、大模型、第三方仓库副本或任何密钥。
+- 修改后至少运行 `npm test`。
+- 接适配器时保留原始来源、失败原因和任务状态，禁止把失败包装成成功。
+
+## 常用命令
+
+- `npm run dev`：启动统一操作台开发环境
+- `npm test`：构建并运行最相关测试
+- `npm run vendors:bootstrap`：下载五个开源引擎代码
+- `npm run pilot:import`：幂等导入试播剧本、角色和分镜
+- `npm run pilot:package`：生成三平台文案和字幕草稿
+- `npm run db:generate`：数据库结构变化后生成迁移
+
+## 当前阻塞
+
+- 文本、图片、视频和 TTS 服务尚未配置。
+- 抖音、TikTok、小红书账号尚未授权。
+- 自动发布保持关闭，直到人工审核与账号授权都完成。
