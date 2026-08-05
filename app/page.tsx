@@ -1,146 +1,128 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-const ideas = [
-  { id: 1, score: 94, type: "动物", title: "如果章鱼去面试，它能同时握几次手？", hook: "三颗心脏、九个大脑，它可能比面试官还忙。", tag: "高完播潜力", color: "coral" },
-  { id: 2, score: 91, type: "人体", title: "你的免疫细胞，正在身体里拍一部警匪片", hook: "一个伤口出现后，第一批警察只需要几分钟到场。", tag: "适合连续剧", color: "violet" },
-  { id: 3, score: 88, type: "宇宙", title: "把地球压成一颗糖，会发生什么？", hook: "答案不是爆炸，而是你制造了一个微型黑洞。", tag: "画面冲击强", color: "blue" },
-  { id: 4, score: 85, type: "科技", title: "AI为什么认得猫，却不一定懂什么是猫？", hook: "给它换几个像素，它可能立刻认成烤面包机。", tag: "账号定位匹配", color: "lime" },
-];
+type Idea = { id:string; title:string; angle:string; category:string; status:string; douyinScore:number; tiktokScore:number; xhsScore:number; selected:boolean };
+type Account = { platform:string; handle:string|null; status:string; publishMode:string };
+type Job = { id:string; ideaId:string; stage:string; progress:number; status:string; platforms:string };
+type Metric = { platform:string; views:number; likes:number; comments:number; shares:number; saves:number; completionRate:number };
 
-const stages = ["选题", "查证", "脚本", "分镜", "配音", "剪辑", "质检", "发布"];
+const platformMeta = {
+  douyin: { name:"抖音", region:"中国", color:"#ff4e45" },
+  tiktok: { name:"TikTok", region:"美国", color:"#51e7dd" },
+  xiaohongshu: { name:"小红书", region:"中国", color:"#ff2442" },
+};
 
-const script = [
-  { time: "00–05s", role: "章鱼阿墨", line: "人类面试要握一次手，我来面试——是不是得握八次？", visual: "阿墨穿西装，八只触手同时伸向镜头" },
-  { time: "05–18s", role: "旁白", line: "其实，章鱼每条腕足都有大量神经元，能半独立地探索和判断。", visual: "腕足变成八名忙碌的小助理，分别翻文件" },
-  { time: "18–35s", role: "面试官", line: "那你是一只章鱼，还是一个九人团队？", visual: "镜头拉远，头部亮起主控灯，八条腕足各亮一盏" },
-  { time: "35–54s", role: "旁白", line: "但别误会，它不是有九个真正的大脑，而是一个中央脑加高度发达的神经系统。", visual: "错误说法被红笔划掉，切换为科学结构图" },
-  { time: "54–65s", role: "章鱼阿墨", line: "所以这份工作，一个人的工资，九个人的效率，成交？", visual: "面试官沉默，屏幕出现关注提示" },
+const fallbackIdeas: Idea[] = [
+  ["octopus","如果章鱼去面试，它能同时握几次手？","三颗心脏、分布式神经系统，用办公室喜剧纠正九个大脑的误解","动物",94,87,92],
+  ["immune","你的免疫细胞，正在身体里拍警匪片","把伤口后的免疫反应讲成一次紧急出警","人体",91,84,94],
+  ["earth-candy","把地球压成一颗糖，会发生什么？","用极端尺度解释黑洞与史瓦西半径","宇宙",88,91,86],
+  ["ai-cat","AI认得猫，为什么不一定懂猫？","用对抗样本解释识别与理解的区别","科技",85,93,89],
+  ["crow","乌鸦为什么会记仇？","让阿墨误惹一只可以记住人脸的乌鸦","动物",92,89,95],
+  ["sleep","熬夜后，大脑真的会吃掉自己吗？","从夸张标题切入，解释胶质细胞与睡眠","人体",90,86,96],
+  ["moon","月球正在偷偷离开地球","把每年约3.8厘米的距离变化变成离家故事","宇宙",87,94,90],
+  ["robot","机器人为什么突然都学会走路了？","从强化学习、仿真训练到现实迁移","科技",86,95,88],
+  ["whale","鲸鱼为什么不会被自己的体重压扁？","海水浮力与搁浅风险的反差","动物",93,90,94],
+  ["memory","你的记忆每次回想都会被改写","把记忆再巩固讲成一份反复修改的文档","人体",89,88,97],
+].map(([id,title,angle,category,douyinScore,tiktokScore,xhsScore]) => ({ id:String(id), title:String(title), angle:String(angle), category:String(category), status:"candidate", douyinScore:Number(douyinScore), tiktokScore:Number(tiktokScore), xhsScore:Number(xhsScore), selected:false }));
+
+const engineRows = [
+  { name:"LumenX", role:"漫剧主引擎", state:"代码已就绪", detail:"剧本 → 角色 → 分镜 → 视频" },
+  { name:"LocalMiniDrama", role:"本机轻量主引擎", state:"本机已运行", detail:"SQLite 本地项目与画布", url:"http://127.0.0.1:3013" },
+  { name:"MoneyPrinterTurbo", role:"资讯成片", state:"代码已就绪", detail:"文案、图库、配音、字幕" },
+  { name:"CosyVoice", role:"中文配音", state:"待下载模型", detail:"固定旁白与角色音色" },
+  { name:"MuseTalk", role:"数字人口型", state:"按需启用", detail:"只用于数字人备选路线" },
 ];
 
 export default function Home() {
-  const [selected, setSelected] = useState(1);
-  const [done, setDone] = useState(["选题", "查证"]);
-  const [filter, setFilter] = useState("全部");
-  const [copied, setCopied] = useState(false);
-  const current = ideas.find((item) => item.id === selected) ?? ideas[0];
-  const visibleIdeas = useMemo(() => filter === "全部" ? ideas : ideas.filter((item) => item.type === filter), [filter]);
+  const [ideas, setIdeas] = useState<Idea[]>(fallbackIdeas);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [metrics, setMetrics] = useState<Metric[]>([]);
+  const [platforms, setPlatforms] = useState(["douyin", "tiktok", "xiaohongshu"]);
+  const [view, setView] = useState("ideas");
+  const [message, setMessage] = useState("正在载入你的内容工厂…");
+  const [busy, setBusy] = useState(false);
 
-  const toggleStage = (stage: string) => {
-    setDone((items) => items.includes(stage) ? items.filter((item) => item !== stage) : [...items, stage]);
+  const load = async () => {
+    try {
+      const [i,a,j,m] = await Promise.all([fetch("/api/ideas"), fetch("/api/accounts"), fetch("/api/jobs"), fetch("/api/metrics")]);
+      if (![i,a,j,m].every((response) => response.ok)) throw new Error("数据服务尚未初始化");
+      setIdeas((await i.json()).ideas); setAccounts((await a.json()).accounts); setJobs((await j.json()).jobs); setMetrics((await m.json()).metrics);
+      setMessage("准备就绪：先从10个候选中选出最多3个。 ");
+    } catch { setMessage("当前使用本机候选池；私有线上版会自动保存选择与数据。"); }
+  };
+  useEffect(() => { load(); }, []);
+
+  const selected = ideas.filter((idea) => idea.selected);
+  const totalViews = metrics.reduce((sum, item) => sum + item.views, 0);
+  const avgCompletion = metrics.length ? Math.round(metrics.reduce((sum, item) => sum + item.completionRate, 0) / metrics.length) : 0;
+  const platformAverages = useMemo(() => Object.keys(platformMeta).map((key) => {
+    const rows = metrics.filter((metric) => metric.platform === key);
+    return { key, views: rows.length ? Math.round(rows.reduce((sum,row)=>sum+row.views,0)/rows.length) : 0 };
+  }), [metrics]);
+
+  const toggleIdea = async (idea: Idea) => {
+    if (!idea.selected && selected.length >= 3) { setMessage("一次最多选择3个，先取消一个再选。"); return; }
+    const next = !idea.selected;
+    setIdeas((rows) => rows.map((row) => row.id === idea.id ? { ...row, selected: next } : row));
+    const response = await fetch("/api/ideas", { method:"PATCH", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ id:idea.id, selected:next }) });
+    if (!response.ok) setMessage("当前为本地预览，选择已在页面保留但尚未写入云端。");
   };
 
-  const copyPrompt = async () => {
-    const text = `请制作一条65秒竖屏AI科普漫剧。标题：${current.title}\n开场钩子：${current.hook}\n要求：固定角色章鱼阿墨，画面统一，事实可核验，结尾提出互动问题。`;
-    await navigator.clipboard?.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+  const queueGeneration = async () => {
+    if (!selected.length) { setMessage("请先选择至少1个选题。"); return; }
+    if (!platforms.length) { setMessage("请至少选择1个平台版本。"); return; }
+    setBusy(true); setMessage("正在创建中英文脚本、三平台包装与分镜任务…");
+    const response = await fetch("/api/jobs", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ ideaIds:selected.map((i)=>i.id), platforms }) });
+    setBusy(false);
+    if (response.ok) { setMessage(`已创建 ${selected.length} 个内容任务。下一步配置模型密钥后即可生成实际素材。`); await load(); setView("production"); }
+    else setMessage("任务未写入：线上数据服务可能仍在初始化。");
   };
 
-  return (
-    <main>
-      <header className="topbar">
-        <a className="brand" href="#top" aria-label="知绘工厂首页">
-          <span className="brandMark">知</span>
-          <span><strong>知绘工厂</strong><small>AI SCIENCE STUDIO</small></span>
-        </a>
-        <nav aria-label="主导航">
-          <a className="active" href="#today">今日生产</a>
-          <a href="#ideas">选题池</a>
-          <a href="#workflow">工作流</a>
-          <a href="#strategy">账号基调</a>
-        </nav>
-        <div className="dayBadge"><span>连续生产</span><strong>07 天</strong></div>
-      </header>
+  const togglePlatform = (key:string) => setPlatforms((rows) => rows.includes(key) ? rows.filter((row)=>row!==key) : [...rows,key]);
 
-      <section className="hero" id="top">
-        <div className="heroCopy">
-          <p className="eyebrow"><span>●</span> ONE-PERSON CONTENT FACTORY</p>
-          <h1>今天不找灵感。<br/><em>今天完成一条。</em></h1>
-          <p className="lede">把硬知识讲成有角色、有冲突、有记忆点的 AI 科普漫剧。一个人，也能稳定运营一条原创内容流水线。</p>
-          <div className="heroActions">
-            <a className="primaryButton" href="#today">开始今日生产 <b>→</b></a>
-            <button className="textButton" onClick={copyPrompt}>{copied ? "已复制制作提示词 ✓" : "复制今日制作提示词"}</button>
-          </div>
-        </div>
-        <aside className="positionCard" id="strategy">
-          <div className="cardLabel">账号唯一基调</div>
-          <div className="character">墨</div>
-          <h2>科学很硬，故事要软。</h2>
-          <p>固定角色「章鱼阿墨」误闯科学世界，每集用一个生活冲突解释一个可靠知识点。</p>
-          <div className="positionMeta"><span>45–75 秒</span><span>日更 1 条</span><span>9:16 竖屏</span></div>
-        </aside>
-      </section>
+  return <main className="shell">
+    <aside className="sidebar">
+      <div className="brand"><span>知</span><div><b>知绘工厂</b><small>CONTENT OS</small></div></div>
+      <nav>
+        {[ ["ideas","今日选题","10"], ["production","生成队列",String(jobs.length)], ["review","审核发布",jobs.length ? "!" : "0"], ["metrics","数据学习",String(metrics.length)], ["accounts","账号与引擎","5"] ].map(([id,label,count]) =>
+          <button key={id} className={view===id?"active":""} onClick={()=>setView(id)}><i>{label}</i><span>{count}</span></button>)}
+      </nav>
+      <div className="sidebarFoot"><span className="pulse"/> 本地桥接待配置<small>RTX 4060 · 8GB VRAM</small></div>
+    </aside>
 
-      <section className="production" id="today">
-        <div className="sectionHeading">
-          <div><p className="sectionIndex">01 / TODAY</p><h2>今日生产台</h2></div>
-          <div className="progressText"><strong>{done.length}/8</strong><span>流程完成</span></div>
-        </div>
-        <div className="pipeline" id="workflow">
-          {stages.map((stage, index) => (
-            <button key={stage} className={done.includes(stage) ? "stage done" : "stage"} onClick={() => toggleStage(stage)}>
-              <span>{done.includes(stage) ? "✓" : String(index + 1).padStart(2, "0")}</span>{stage}
-            </button>
-          ))}
-        </div>
+    <section className="workspace">
+      <header className="topbar"><div><p>AI SCIENCE CONTENT FACTORY</p><h1>{view==="ideas"?"今天做什么？":view==="production"?"生成到哪了？":view==="review"?"最后把关":view==="metrics"?"让数据教会系统":"把工具接起来"}</h1></div><div className="today"><span>第 01 天</span><b>目标 30 条</b></div></header>
+      <div className="notice"><span>●</span>{message}</div>
 
-        <div className="workGrid">
-          <article className="briefCard">
-            <div className="score"><b>{current.score}</b><span>选题分</span></div>
-            <p className="miniLabel">TODAY'S EPISODE · {current.type}</p>
-            <h3>{current.title}</h3>
-            <blockquote>“{current.hook}”</blockquote>
-            <div className="facts">
-              <div><span>核心事实</span><p>章鱼约有三分之二的神经元分布在腕足中，但“九个大脑”是通俗比喻，脚本必须纠正。</p></div>
-              <div><span>视觉母题</span><p>办公室面试 × 八名腕足助理 × 神经系统控制室</p></div>
-            </div>
-            <button className="primaryButton full" onClick={copyPrompt}>{copied ? "提示词已复制 ✓" : "复制完整制作提示词"}</button>
-          </article>
+      {view === "ideas" && <>
+        <section className="controlStrip">
+          <div><small>01</small><b>选择平台版本</b></div>
+          <div className="platformToggles">{Object.entries(platformMeta).map(([key,p])=><button key={key} className={platforms.includes(key)?"on":""} onClick={()=>togglePlatform(key)} style={{"--platform":p.color} as React.CSSProperties}><span/>{p.name}<small>{p.region}</small></button>)}</div>
+          <div className="selectionCount"><strong>{selected.length}</strong><span>/ 3 已选择</span></div>
+          <button className="generate" disabled={busy} onClick={queueGeneration}>{busy?"创建中…":"生成所选内容 →"}</button>
+        </section>
+        <div className="ideaHeader"><div><b>系统推荐 10 个候选</b><span>评分不是承诺播放量，而是结合题材、钩子、画面性与平台适配度的相对排序。</span></div><div className="legend"><i className="dy"/>抖音 <i className="tk"/>TikTok <i className="xhs"/>小红书</div></div>
+        <section className="ideasGrid">{ideas.map((idea,index)=><article key={idea.id} className={idea.selected?"idea selected":"idea"} onClick={()=>toggleIdea(idea)}>
+          <div className="ideaIndex">{String(index+1).padStart(2,"0")}<button aria-label={idea.selected?"取消选择":"选择"}>{idea.selected?"✓":"+"}</button></div>
+          <span className="category">{idea.category}</span><h2>{idea.title}</h2><p>{idea.angle}</p>
+          <div className="scores"><div><span>抖音</span><b>{idea.douyinScore}</b></div><div><span>TikTok</span><b>{idea.tiktokScore}</b></div><div><span>小红书</span><b>{idea.xhsScore}</b></div></div>
+          <footer><span>{idea.status === "generating" ? "已进入生成队列" : idea.selected ? "已入选" : "点击选择"}</span><b>平均 {Math.round((idea.douyinScore+idea.tiktokScore+idea.xhsScore)/3)}</b></footer>
+        </article>)}</section>
+      </>}
 
-          <article className="scriptCard">
-            <div className="scriptHeader"><div><p className="miniLabel">SCRIPT V1</p><h3>65秒分镜脚本</h3></div><span className="status">待事实复核</span></div>
-            <div className="scriptRows">
-              {script.map((row) => (
-                <div className="scriptRow" key={row.time}>
-                  <time>{row.time}</time>
-                  <div><b>{row.role}</b><p>{row.line}</p><small>画面：{row.visual}</small></div>
-                </div>
-              ))}
-            </div>
-          </article>
-        </div>
-      </section>
+      {view === "production" && <section className="panel">
+        <div className="panelTitle"><div><small>02 / PRODUCTION</small><h2>生成队列</h2></div><button onClick={()=>setView("ideas")}>＋ 添加选题</button></div>
+        {jobs.length ? <div className="jobList">{jobs.map((job,index)=><div className="job" key={job.id}><strong>{String(index+1).padStart(2,"0")}</strong><div><b>{ideas.find(i=>i.id===job.ideaId)?.title ?? job.ideaId}</b><span>{job.platforms.split(",").map(p=>platformMeta[p as keyof typeof platformMeta]?.name).join(" · ")}</span></div><div className="jobStage">{job.stage}<span><i style={{width:`${Math.max(job.progress,8)}%`}}/></span></div><em>{job.status === "queued" ? "等待模型配置" : job.status}</em></div>)}</div> : <div className="empty"><b>还没有生成任务</b><p>回到今日选题，选择1–3个题目后创建任务。</p></div>}
+        <div className="productionSteps">{["中英文脚本","事实核验","角色与分镜","配音与字幕","三平台包装","人工审核"].map((x,i)=><div key={x}><span>{i+1}</span><b>{x}</b><small>{i===0?"同一事实，不同钩子":i===4?"标题、封面、比例分别生成":"完成后进入下一步"}</small></div>)}</div>
+      </section>}
 
-      <section className="ideaSection" id="ideas">
-        <div className="sectionHeading">
-          <div><p className="sectionIndex">02 / IDEA BANK</p><h2>已评分选题池</h2></div>
-          <div className="filters">{["全部", "动物", "人体", "宇宙", "科技"].map((item) => <button className={filter === item ? "selected" : ""} key={item} onClick={() => setFilter(item)}>{item}</button>)}</div>
-        </div>
-        <div className="ideaGrid">
-          {visibleIdeas.map((idea) => (
-            <button className={`ideaCard ${idea.color} ${selected === idea.id ? "chosen" : ""}`} key={idea.id} onClick={() => setSelected(idea.id)}>
-              <div className="ideaTop"><span>{idea.type}</span><b>{idea.score}</b></div>
-              <h3>{idea.title}</h3>
-              <p>{idea.hook}</p>
-              <footer><span>{idea.tag}</span><i>选择 →</i></footer>
-            </button>
-          ))}
-        </div>
-      </section>
+      {view === "review" && <section className="panel"><div className="panelTitle"><div><small>03 / HUMAN GATE</small><h2>没有你的确认，不会发布</h2></div></div><div className="reviewCard"><div className="mockVideo"><span>9:16</span><b>预览区</b><small>生成成片后显示</small></div><div className="checklist"><h3>发布前检查</h3>{["事实与数字已核对","画面不存在明显AI错误","配音和字幕无错字","AI内容标识已开启","音乐与素材允许商用","三个平台标题分别检查"].map(x=><label key={x}><input type="checkbox"/>{x}</label>)}<button disabled>三个账号尚未授权</button></div></div></section>}
 
-      <section className="rules">
-        <div><p className="sectionIndex">03 / NON-NEGOTIABLES</p><h2>四条生产红线</h2></div>
-        <ol>
-          <li><b>01</b><span><strong>不搬运切片</strong>原创角色、原创脚本、可授权素材。</span></li>
-          <li><b>02</b><span><strong>不让 AI 当信源</strong>每个知识点至少查两处可靠资料。</span></li>
-          <li><b>03</b><span><strong>不伪装真人</strong>AI画面、配音和数字人全部主动标识。</span></li>
-          <li><b>04</b><span><strong>不同时做五个赛道</strong>先连续发布30条，再依据数据扩题。</span></li>
-        </ol>
-      </section>
+      {view === "metrics" && <section className="panel"><div className="panelTitle"><div><small>04 / LEARNING LOOP</small><h2>账号专属评分器</h2></div></div><div className="metricCards"><div><span>已收集播放</span><b>{totalViews.toLocaleString()}</b></div><div><span>平均完播率</span><b>{avgCompletion}%</b></div><div><span>有效样本</span><b>{metrics.length}</b></div><div><span>可训练阈值</span><b>30 条</b></div></div><div className="learningGrid"><div><h3>三平台平均播放</h3>{platformAverages.map(row=><div className="bar" key={row.key}><span>{platformMeta[row.key as keyof typeof platformMeta].name}</span><i><b style={{width:`${Math.min(100,row.views/100)}%`}}/></i><strong>{row.views || "待积累"}</strong></div>)}</div><div className="formula"><h3>相对潜力分怎么来</h3><p><b>35%</b> 前5秒留存</p><p><b>25%</b> 完播率</p><p><b>20%</b> 收藏与分享</p><p><b>10%</b> 关注转化</p><p><b>10%</b> 单条制作成本</p><small>30条以前使用规则评分；30条以后按你自己的真实数据校准，不伪造具体播放量。</small></div></div></section>}
 
-      <footer className="siteFooter"><strong>知绘工厂</strong><span>目标：30天完成30条原创科普漫剧</span><span>下一复盘节点：第 14 条</span></footer>
-    </main>
-  );
+      {view === "accounts" && <section className="panel"><div className="panelTitle"><div><small>05 / CONNECTIONS</small><h2>账号与生成引擎</h2></div></div><h3 className="subhead">发布账号</h3><div className="accountGrid">{accounts.map(account=>{const p=platformMeta[account.platform as keyof typeof platformMeta];return <div className="account" key={account.platform}><span style={{background:p?.color}}>{p?.name.slice(0,1)}</span><div><b>{p?.name}</b><small>{account.publishMode}</small></div><em>{account.status==="connected"?account.handle:"需要本人授权"}</em><button disabled>准备授权</button></div>})}</div><h3 className="subhead">电脑上的开源引擎</h3><div className="engineList">{engineRows.map(row=><div key={row.name}><span className={row.state.includes("已")?"ready":"waiting"}/><b>{row.name}</b><small>{row.role}</small><p>{row.detail}</p>{"url" in row?<a href={row.url} target="_blank">打开本机工具</a>:<em>{row.state}</em>}</div>)}</div><div className="credentials"><b>还需要你提供什么？</b><p>至少选择一个文本/图片/视频服务商的API Key；创建抖音开放平台应用和TikTok开发者应用；小红书使用官方分享流程。密钥只写入受保护的运行环境，不放进网页或Git。</p></div></section>}
+    </section>
+  </main>;
 }

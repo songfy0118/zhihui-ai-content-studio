@@ -40,6 +40,8 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+/vendor/
+/site-build.tar.gz
 /.npm-cache/
 .*-output.log
 .*-error.log

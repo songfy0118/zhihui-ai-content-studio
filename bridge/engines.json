@@ -1,0 +1,5 @@
+{
+  "lumenx": { "name": "LumenX", "cwd": "vendor/lumenx", "command": "start.bat", "url": "http://127.0.0.1:3008", "enabled": false, "reason": "需要先配置模型服务" },
+  "localminidrama": { "name": "LocalMiniDrama", "cwd": "vendor/LocalMiniDrama", "command": "run_dev.bat", "url": "http://127.0.0.1:3013", "enabled": true, "reason": "轻量主工作台" },
+  "moneyprinter": { "name": "MoneyPrinterTurbo", "cwd": "vendor/MoneyPrinterTurbo", "command": "webui.bat", "url": "http://127.0.0.1:8501", "enabled": false, "reason": "资讯口播备用引擎" }
+}
