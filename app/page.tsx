@@ -7,7 +7,7 @@ type Account = { platform:string; handle:string|null; status:string; publishMode
 type Job = { id:string; ideaId:string; stage:string; progress:number; status:string; platforms:string };
 type Metric = { platform:string; views:number; likes:number; comments:number; shares:number; saves:number; completionRate:number };
 type LocalEngine = { ready:boolean; mode:"local"|"cloud"; textConfigured?:boolean; studioUrl?:string; message?:string };
-type LocalProject = { id:string|number; title:string; projectUrl:string; storyTaskId:string|null; nextAction:"story_generating"|"configure_text_model" };
+type LocalProject = { id:string|number; title:string; projectUrl:string; storyTaskId:string|null; nextAction:"story_generating"|"configure_text_model"|"story_ready"|"storyboards_ready"; status?:string; episodeCount?:number; storyboardCount?:number; sourceIdeaId?:string|null };
 
 const platformMeta = {
   douyin: { name:"抖音", region:"中国", color:"#ff4e45" },
@@ -60,7 +60,14 @@ export default function Home() {
     load();
     fetch("/api/local/health")
       .then(async (response) => ({ response, payload: await response.json() }))
-      .then(({ response, payload }) => setLocalEngine({ ...payload, ready: response.ok && payload.ready }))
+      .then(async ({ response, payload }) => {
+        const ready = response.ok && payload.ready;
+        setLocalEngine({ ...payload, ready });
+        if (ready) {
+          const projectsResponse = await fetch("/api/local/projects");
+          if (projectsResponse.ok) setLocalProjects((await projectsResponse.json()).projects ?? []);
+        }
+      })
       .catch(() => setLocalEngine({ ready:false, mode:"local", message:"本机引擎未启动" }));
   }, []);
 
@@ -161,7 +168,7 @@ export default function Home() {
         {localProjects.length > 0 && <div className="localProjects">
           <div className="localProjectsHead"><b>本机真实项目</b><span>{localEngine.textConfigured?"剧本模型已连接":"等待配置文本模型"}</span></div>
           {localProjects.map((project) => <a href={project.projectUrl} target="_blank" rel="noreferrer" key={`${project.id}-${project.title}`}>
-            <span>#{project.id}</span><b>{project.title}</b><em>{project.nextAction === "story_generating" ? "剧本生成中" : "已建项目 · 待配置模型"}</em><strong>打开项目 →</strong>
+            <span>#{project.id}</span><b>{project.title}</b><em>{project.nextAction === "story_generating" ? "剧本生成中" : project.nextAction === "storyboards_ready" ? `预制作完成 · ${project.storyboardCount ?? 0} 个分镜` : project.nextAction === "story_ready" ? `剧本已就绪 · ${project.episodeCount ?? 1} 集` : "已建项目 · 待配置模型"}</em><strong>打开项目 →</strong>
           </a>)}
         </div>}
         {jobs.length ? <div className="jobList">{jobs.map((job,index)=><div className="job" key={job.id}><strong>{String(index+1).padStart(2,"0")}</strong><div><b>{ideas.find(i=>i.id===job.ideaId)?.title ?? job.ideaId}</b><span>{job.platforms.split(",").map(p=>platformMeta[p as keyof typeof platformMeta]?.name).join(" · ")}</span></div><div className="jobStage">{job.stage}<span><i style={{width:`${Math.max(job.progress,8)}%`}}/></span></div><em>{job.status === "queued" ? "等待模型配置" : job.status}</em></div>)}</div> : <div className="empty"><b>还没有生成任务</b><p>回到今日选题，选择1–3个题目后创建任务。</p></div>}

@@ -47,24 +47,31 @@ export async function POST(request: Request) {
       (item: { service_type?: string; enabled?: boolean }) => item.service_type === "text" && item.enabled !== false,
     );
 
-    const drama = await engineRequest("/api/v1/dramas", {
-      method: "POST",
-      body: JSON.stringify({
-        title,
-        description: angle,
-        genre: idea.category || "科普",
-        style: "AI科普漫剧",
-        metadata: {
-          source: "zhihui-content-os",
-          source_idea_id: idea.id,
-          target_platforms: idea.platforms ?? [],
-          aspect_ratio: "9:16",
-        },
-      }),
-    });
+    const dramaList = await engineRequest("/api/v1/dramas?page=1&page_size=100");
+    const existing = Array.isArray(dramaList?.items)
+      ? dramaList.items.find((item: { metadata?: { source?: string; source_idea_id?: string } }) =>
+        item.metadata?.source === "zhihui-content-os" && item.metadata?.source_idea_id === idea.id,
+      )
+      : null;
+    const drama = existing ?? await engineRequest("/api/v1/dramas", {
+        method: "POST",
+        body: JSON.stringify({
+          title,
+          description: angle,
+          genre: idea.category || "科普",
+          style: "AI科普漫剧",
+          metadata: {
+            source: "zhihui-content-os",
+            source_idea_id: idea.id,
+            target_platforms: idea.platforms ?? [],
+            aspect_ratio: "9:16",
+          },
+        }),
+      });
 
     let storyTaskId: string | null = null;
-    if (textConfigured) {
+    const storyReady = Array.isArray(existing?.episodes) && existing.episodes.length > 0;
+    if (textConfigured && !storyReady) {
       const storyTask = await engineRequest("/api/v1/generation/story", {
         method: "POST",
         body: JSON.stringify({
@@ -88,7 +95,8 @@ export async function POST(request: Request) {
       project: { id: drama.id, title: drama.title },
       projectUrl: `http://127.0.0.1:3013/film/${drama.id}`,
       storyTaskId,
-      nextAction: textConfigured ? "story_generating" : "configure_text_model",
+      nextAction: storyReady ? "story_ready" : textConfigured ? "story_generating" : "configure_text_model",
+      reused: Boolean(existing),
     });
   } catch (error) {
     return NextResponse.json({
