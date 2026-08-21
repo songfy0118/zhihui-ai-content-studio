@@ -23,6 +23,7 @@ export function buildEvidenceSearchPlan(leads = [], selectedIds = [], sources = 
     title: lead.title,
     originalSourceId: lead.sourceId,
     sourcePublishedAt: lead.publishedAt,
+    originalEvidence: (lead.evidence ?? []).slice(0, 1).map(({ id, sourceId, sourceName, title, canonicalUrl, publishedAt }) => ({ id, sourceId, sourceName, title, canonicalUrl, publishedAt })),
     status: "planned_not_executed",
     queries: lead.suggestedQueries.slice(0, 2),
     allowedSources: allowedSources
