@@ -116,6 +116,7 @@ npm run pilot:package
 - `npm run db:claim-acceptance:read:isolated`：在一次性内存 SQLite 中读取完整 active 人工接受回执，验证主张、审核勾选和 original/independent 双来源的只读投影；成功只表示持久人工接受可供草稿研究，仍不声称自动事实核验、文案就绪或真实 D1 已接入
 - `npm run news:accepted-claim-blueprint:check`：把持久人工接受的精确主张措辞、双来源引用和不确定性说明映射为小红书/抖音图文内容结构；标题、正文、封面词、标签和来源说明仍为空，不调用模型、不生成或保存平台草稿
 - `npm run news:platform-text-draft:check`：校验人工填写的双平台标题、封面词、开场、互动句和标签，并只用已接受主张、核验备注及保存来源拼接完整文案预览；包装文字尚未做语义事实核验，预览不调用模型、不写库、不保存平台草稿
+- `npm run news:platform-text-review:check`：逐平台确认当前文案指纹、标题封面、开场结尾、已接受主张、来源说明、不确定性与无流量承诺，生成稳定审核回执预览；回执尚未落库，因此不解锁平台草稿交接或保存
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜

@@ -65,6 +65,7 @@ test("builds complete two-platform copy previews bound to a confirmed blueprint"
   assert.equal(result.status, "platform_text_draft_preview_ready");
   assert.equal(result.readyForHumanDraftReview, true);
   assert.equal(result.platformDraftCount, 2);
+  assert.equal(result.blueprintFingerprint, blueprint.blueprintFingerprint);
   assert.match(result.previewFingerprint, /^[a-f0-9]{64}$/);
   assert.deepEqual(Object.keys(result.platformDrafts), ["xiaohongshu", "douyin"]);
   assert.equal(result.platformDrafts.xiaohongshu.status, "preview_not_saved");
