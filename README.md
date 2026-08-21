@@ -105,6 +105,7 @@ npm run pilot:package
 - `npm run db:source-lock:read:isolated`：用一次性内存 SQLite 验证按计划指纹读取完整来源锁；只接受 active 主记录和 original/independent 两条证据，未连接 API，不会把来源元数据误报为事实核验或草稿输入就绪
 - `npm run news:text-brief:check`：验证来源锁只读投影到小红书/抖音图文研究简报的纯函数边界；简报只含人工角度、来源索引、待核问题和字段清单，不读取正文、不生成事实、文案或平台草稿
 - `npm run news:article-plan:check`：验证两篇公开正文的合规获取计划；仅允许目录中已标注可归纳或官方公共记录的 HTTPS 来源，并固定单并发、大小/超时/跳转边界及登录墙、付费墙、CAPTCHA、robots、429 停止条件，不发出网络请求
+- `npm run news:article-adapter:mock`：仅用注入的模拟网络与 robots 响应验证正文执行口令、计划防篡改、串行间隔、域内跳转、正文提取和失败即丢弃全部结果；适配器未连接 API，也没有执行真实网络请求
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜

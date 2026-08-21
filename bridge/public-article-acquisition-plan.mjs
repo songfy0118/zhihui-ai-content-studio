@@ -48,6 +48,10 @@ function withinConfiguredHost(articleUrl, baseUrl) {
   return article.hostname === base.hostname || article.hostname.endsWith(`.${base.hostname}`);
 }
 
+export function fingerprintPublicArticleAcquisitionPlan({ briefFingerprint, targets, stopConditions, extraction } = {}) {
+  return createHash("sha256").update(JSON.stringify({ briefFingerprint, targets, stopConditions, extraction })).digest("hex");
+}
+
 function planTarget(evidence, source) {
   const blockers = [];
   if (!source) blockers.push("source_not_cataloged");
@@ -65,6 +69,7 @@ function planTarget(evidence, source) {
     sourceName: text(source?.name),
     evidenceRole: text(evidence?.evidenceRole),
     canonicalUrl: parseHttpsUrl(evidence?.canonicalUrl)?.toString() ?? null,
+    configuredHost: parseHttpsUrl(source?.baseUrl)?.hostname ?? null,
     rightsPolicy: text(source?.rightsPolicy),
     eligible,
     blockers,
@@ -108,7 +113,7 @@ export function buildPublicArticleAcquisitionPlan(briefPreview, sources = NEWS_S
     status: ready ? "public_article_acquisition_plan_ready" : "public_article_acquisition_plan_blocked",
     readyForExecutionAuthorizationRequest: ready,
     blockers,
-    planFingerprint: planPayload ? createHash("sha256").update(JSON.stringify(planPayload)).digest("hex") : null,
+    planFingerprint: planPayload ? fingerprintPublicArticleAcquisitionPlan(planPayload) : null,
     briefFingerprint: HASH.test(briefPreview?.briefFingerprint ?? "") ? briefPreview.briefFingerprint : null,
     targets,
     limits: PUBLIC_ARTICLE_ACQUISITION_LIMITS,
