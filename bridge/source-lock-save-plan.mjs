@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-function sourceRecord(evidence) {
+function sourceRecord(evidence, evidenceRole) {
   if (!evidence?.sourceId || !evidence?.canonicalUrl) return null;
   return {
     evidenceId: evidence.id,
@@ -9,6 +9,7 @@ function sourceRecord(evidence) {
     title: evidence.title,
     canonicalUrl: evidence.canonicalUrl,
     publishedAt: evidence.publishedAt,
+    evidenceRole,
   };
 }
 
@@ -19,8 +20,8 @@ export function buildSourceLockSavePlan(reviewPreview, { confirmedReviewFingerpr
   if (!confirmedReviewFingerprint) blockers.push("review_fingerprint_confirmation_required");
   if (confirmedReviewFingerprint && confirmedReviewFingerprint !== reviewPreview?.reviewFingerprint) blockers.push("review_fingerprint_mismatch");
   const plannedLocks = (reviewPreview?.reviewedTargets ?? []).flatMap((target) => {
-    const original = sourceRecord(target.originalEvidence);
-    const candidate = sourceRecord(target.candidate);
+    const original = sourceRecord(target.originalEvidence, "original");
+    const candidate = sourceRecord(target.candidate, "independent");
     if (!target.eligibleForSourceLockProposal || !original || !candidate) {
       blockers.push(`review_target_not_eligible:${target.leadId}`);
       return [];
