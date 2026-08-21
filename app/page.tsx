@@ -8,6 +8,7 @@ type Job = { id:string; ideaId:string; stage:string; progress:number; status:str
 type ReviewAudit = { id:string; jobId:string; action:string; checks:Record<string,boolean>|null; publishTriggered:boolean; createdAt:string; malformed?:boolean };
 type Metric = { platform:string; views:number; likes:number; comments:number; shares:number; saves:number; completionRate:number };
 type NewsSourceCatalogStatus = { status:"loading"|"catalog_ready"|"catalog_blocked"|"unavailable";summary:{totalSources:number;enabledSources:number;rssSources:number;officialNewsrooms:number;manualReviewSources:number};contentFetched:boolean;externalCalls:boolean;databaseWrites:boolean };
+type NewsPreviewStatus = { status:"preview_ready"|"no_live_items";fetchedAt:string;summary:{feedsAttempted:number;readySources:number;failedSources:number;itemsReturned:number};sourceHealth:Array<{sourceId:string;status:"ready"|"empty"|"error";itemsParsed:number;errorCode:string|null}>;items:Array<{id:string;sourceName:string;title:string;summary:string;canonicalUrl:string;publishedAt:string|null}>;contentFetched:boolean;factsVerified:boolean;humanReviewRequired:boolean;externalCalls:number;databaseWrites:boolean;publishTriggered:boolean };
 type MetricFeedStatus = { status:"loading"|"verified"|"awaiting_verified_import"|"storage_unavailable";realDataOnly:boolean;recordsExcluded:number;acceptedSources:string[];writePerformed:boolean;publishTriggered:boolean };
 type MetricsMigrationStatus = { mode:string;localOnly:boolean;migrationTag:string;authorizationRequired:boolean;readyToApplyLocally:boolean;blockers:string[];applyPerformed:boolean;databaseWrites:boolean;storage?:{status:string;verified:boolean;columnsPresent:string[];missingColumns:string[];indexPresent:boolean} };
 type D1MigrationChainStatus = { mode:string;localOnly:boolean;authorizationRequired:boolean;status:"loading"|"empty"|"incomplete"|"current";current:boolean;emptyApplicationSchema:boolean;completedSteps:number;totalSteps:number;firstPending:string|null;blockers:string[];databaseWrites:boolean;applyPerformed:boolean };
@@ -110,6 +111,8 @@ export default function Home() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [newsSourceCatalog, setNewsSourceCatalog] = useState<NewsSourceCatalogStatus>({ status:"loading", summary:{totalSources:0,enabledSources:0,rssSources:0,officialNewsrooms:0,manualReviewSources:0}, contentFetched:false, externalCalls:false, databaseWrites:false });
+  const [newsPreview, setNewsPreview] = useState<NewsPreviewStatus|null>(null);
+  const [newsPreviewBusy, setNewsPreviewBusy] = useState(false);
   const [platforms, setPlatforms] = useState(["douyin", "tiktok", "xiaohongshu"]);
   const [view, setView] = useState("ideas");
   const [message, setMessage] = useState("正在载入你的内容工厂…");
@@ -173,6 +176,19 @@ export default function Home() {
       setIdeas((await i.json()).ideas); setAccounts((await a.json()).accounts); setJobs((await j.json()).jobs); setMetrics(metricPayload.metrics ?? []); setMetricFeedStatus(metricPayload);
       setMessage("准备就绪：先从10个候选中选出最多3个。 ");
     } catch { setMessage("当前使用本机候选池；私有线上版会自动保存选择与数据。"); }
+  };
+
+  const loadNewsPreview = async () => {
+    setNewsPreviewBusy(true);
+    try {
+      const response = await fetch("/api/news/preview", { cache:"no-store" });
+      const payload = await response.json() as NewsPreviewStatus;
+      setNewsPreview(payload);
+    } catch {
+      setMessage("公开 RSS 预览失败；没有写入数据库，也没有生成新闻结论。");
+    } finally {
+      setNewsPreviewBusy(false);
+    }
   };
   useEffect(() => {
     // All state updates in load happen after its network requests resolve.
@@ -581,6 +597,12 @@ export default function Home() {
         <section className="intelBrief">
           <div><small>TODAY'S INTELLIGENCE</small><h2>热点不是一条新闻，是多个可信来源的交集。</h2><p>已登记 {newsSourceCatalog.summary.totalSources || "—"} 个信源，其中 {newsSourceCatalog.summary.enabledSources || "—"} 个公开来源可进入后续采集；当前只是目录，真实抓取仍为 0。原文时间、事实主张和争议点必须随草稿一起交付。</p></div>
           <ol><li><b>01</b><span>公开来源聚合</span><em>RSS · 官方新闻室 · 监管文件</em></li><li><b>02</b><span>聚类与风险检查</span><em>去重 · 交叉来源 · 时效</em></li><li><b>03</b><span>生成平台草稿</span><em>小红书 · 抖音图文 · 人工发送</em></li></ol>
+        </section>
+        <section className="newsPreview">
+          <header><div><small>LIVE RSS · READ ONLY</small><b>{newsPreview?`真实条目 ${newsPreview.summary.itemsReturned} · 可用信源 ${newsPreview.summary.readySources}/${newsPreview.summary.feedsAttempted}`:"尚未读取实时 RSS"}</b></div><button type="button" disabled={newsPreviewBusy} onClick={loadNewsPreview}>{newsPreviewBusy?"读取中…":"读取公开 RSS（只读）"}</button></header>
+          {newsPreview?.items.length ? <div>{newsPreview.items.slice(0,6).map((item)=><a href={item.canonicalUrl} target="_blank" rel="noreferrer" key={item.id}><small>{item.sourceName} · {item.publishedAt?new Date(item.publishedAt).toLocaleString("zh-CN"):"时间未提供"}</small><b>{item.title}</b>{item.summary&&<span>{item.summary}</span>}</a>)}</div> : <p>{newsPreview?"本次没有解析出可展示的真实条目；查看信源健康状态后再处理。":"点击后只读取已登记的公开 RSS；不会写数据库，不会把标题自动当成已核验事实。"}</p>}
+          {newsPreview&&<aside>{newsPreview.sourceHealth.map((source)=><span className={source.status} key={source.sourceId}><i>{source.status==="ready"?"✓":source.status==="empty"?"—":"!"}</i>{source.sourceId}<em>{source.status==="ready"?`${source.itemsParsed} 条`:source.errorCode??"无条目"}</em></span>)}</aside>}
+          <footer>事实核验 {newsPreview?.factsVerified?"已完成":"未完成"} · 外部请求 {newsPreview?.externalCalls??0} · 数据库写入 {newsPreview?.databaseWrites?"已发生":"0"} · 发布 {newsPreview?.publishTriggered?"已触发":"0"}</footer>
         </section>
         <section className="controlStrip">
           <div><small>01</small><b>选择图文平台</b></div>

@@ -91,6 +91,7 @@ npm run pilot:package
 - `npm run local:doctor`：只读检查操作台、桥接服务和 LocalMiniDrama 前后端；不会重启进程、下载模型或调用外部服务
 - `npm run bridge:restart:plan`：只读核验 3765 监听进程、旧桥接健康签名和协议 v3 目标；默认不停止或启动任何进程
 - `npm run bridge:verify:parallel`：在临时端口 3766 启动并回收新版桥接，验证协议 v3 与隔离迁移接口；不改动 3765 旧桥接
+- `npm run news:preview`：对已启用的公开 RSS 各发起一次限时只读请求，输出规范化标题、原文链接、时间与信源健康状态；不抓正文、不写数据库、不发布
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
