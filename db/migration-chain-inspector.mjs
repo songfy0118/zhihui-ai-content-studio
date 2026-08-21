@@ -34,6 +34,19 @@ export const MIGRATION_CHAIN = [
     "index:idx_source_lock_evidence_canonical_url",
     "index:idx_source_lock_evidence_source_id",
   ] },
+  { tag: "0008_overconfident_vance_astro", artifacts: [
+    "table:human_claim_acceptance_receipts",
+    "table:human_claim_acceptance_items",
+    "table:human_claim_acceptance_sources",
+    "index:uq_human_claim_acceptance_fingerprint",
+    "index:uq_human_claim_acceptance_idempotency_key",
+    "index:idx_human_claim_acceptance_selection_created_at",
+    "index:uq_human_claim_acceptance_items_receipt_claim",
+    "index:idx_human_claim_acceptance_items_claim_id",
+    "index:uq_human_claim_acceptance_sources_receipt_claim_role",
+    "index:idx_human_claim_acceptance_sources_candidate_id",
+    "index:idx_human_claim_acceptance_sources_source_id",
+  ] },
 ];
 
 function safeResult(fields = {}) {

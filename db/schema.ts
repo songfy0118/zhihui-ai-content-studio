@@ -201,3 +201,44 @@ export const sourceLockEvidence = sqliteTable("source_lock_evidence", {
   index("idx_source_lock_evidence_canonical_url").on(table.canonicalUrl),
   index("idx_source_lock_evidence_source_id").on(table.sourceId),
 ]);
+
+export const humanClaimAcceptanceReceipts = sqliteTable("human_claim_acceptance_receipts", {
+  id: text("id").primaryKey(),
+  claimSelectionFingerprint: text("claim_selection_fingerprint").notNull(),
+  acceptanceFingerprint: text("acceptance_fingerprint").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  status: text("status").notNull().default("active"),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_human_claim_acceptance_fingerprint").on(table.acceptanceFingerprint),
+  uniqueIndex("uq_human_claim_acceptance_idempotency_key").on(table.idempotencyKey),
+  index("idx_human_claim_acceptance_selection_created_at").on(table.claimSelectionFingerprint, table.createdAt),
+]);
+
+export const humanClaimAcceptanceItems = sqliteTable("human_claim_acceptance_items", {
+  receiptId: text("receipt_id").notNull(),
+  claimId: text("claim_id").notNull(),
+  proposedClaim: text("proposed_claim").notNull(),
+  reviewNote: text("review_note").notNull(),
+  acceptanceChecksJson: text("acceptance_checks_json").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_human_claim_acceptance_items_receipt_claim").on(table.receiptId, table.claimId),
+  index("idx_human_claim_acceptance_items_claim_id").on(table.claimId),
+]);
+
+export const humanClaimAcceptanceSources = sqliteTable("human_claim_acceptance_sources", {
+  receiptId: text("receipt_id").notNull(),
+  claimId: text("claim_id").notNull(),
+  candidateId: text("candidate_id").notNull(),
+  evidenceId: text("evidence_id").notNull(),
+  sourceId: text("source_id").notNull(),
+  evidenceRole: text("evidence_role").notNull(),
+  canonicalUrl: text("canonical_url").notNull(),
+  sourceSentence: text("source_sentence").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_human_claim_acceptance_sources_receipt_claim_role").on(table.receiptId, table.claimId, table.evidenceRole),
+  index("idx_human_claim_acceptance_sources_candidate_id").on(table.candidateId),
+  index("idx_human_claim_acceptance_sources_source_id").on(table.sourceId),
+]);

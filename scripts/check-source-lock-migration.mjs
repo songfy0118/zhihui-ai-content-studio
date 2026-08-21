@@ -10,8 +10,8 @@ const [hostingRaw, journalRaw, migrationSql] = await Promise.all([
 ]);
 const hosting = JSON.parse(hostingRaw);
 const journal = JSON.parse(journalRaw);
-const latest = journal.entries?.at(-1);
-assert.equal(latest?.tag, "0007_silly_turbo", "Source lock migration must remain the latest generated migration");
-const plan = assessSourceLockMigrationPreflight({ hosting, migrationTag: latest.tag, migrationSql, storageStatus: "missing" });
+const entry = journal.entries?.find(({ tag }) => tag === "0007_silly_turbo");
+assert.ok(entry, "Source lock migration must remain registered in the generated journal");
+const plan = assessSourceLockMigrationPreflight({ hosting, migrationTag: entry.tag, migrationSql, storageStatus: "missing" });
 assert.equal(plan.readyToApplyLocally, true, `Source lock migration plan blocked: ${plan.blockers.join(", ")}`);
 console.log(JSON.stringify({ ...plan, readyToApply: false, liveStateRequired: true }, null, 2));
