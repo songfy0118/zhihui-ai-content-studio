@@ -123,6 +123,7 @@ npm run pilot:package
 - `npm run db:platform-text-review:read:isolated`：从一次性内存 SQLite 读取 active 审核回执及逐平台 7 项人工勾选，重新校验审核指纹并生成稳定只读投影；不解锁草稿交接、不保存或发布平台内容
 - `npm run news:platform-text-handoff:plan`：把当前双平台文案与持久审核指纹绑定为官方创作页的可见浏览器交接清单；只交接精确文案，图片素材、账号确认和保存草稿仍需后续人工授权，不打开页面、不上传、不发布
 - `npm run news:platform-text-assets:plan`：把已审核文案原字符拆成小红书 1080×1440（3:4）与抖音 1080×1920（9:16）的封面卡、正文卡和原样 caption 清单；最多 1 张封面加 8 张正文卡，只生成带指纹规格，不调用模型、不渲染图片、不打开或保存平台草稿
+- `npm run news:platform-text-assets:render`：把通过指纹校验的信息卡规格渲染为内存中的确定性 SVG，内嵌可无损还原的审核文案和 SHA-256，并转义可执行标记；测试不写文件、不调用模型，视觉仍须人工复核后才能导出或上传
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
