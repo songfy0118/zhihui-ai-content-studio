@@ -103,6 +103,7 @@ npm run pilot:package
 - `npm run db:source-lock:plan`：只检查来源锁主表、证据明细表、指纹防重索引和 create-only 迁移；不会连接或修改线上数据库，也没有迁移应用入口
 - `npm run db:source-lock:store:isolated`：用一次性内存 SQLite 验证来源锁保存口令、计划指纹绑定、幂等重放和原子批次回滚；写入器未连接任何 API 或真实 D1，不会创建业务来源锁
 - `npm run db:source-lock:read:isolated`：用一次性内存 SQLite 验证按计划指纹读取完整来源锁；只接受 active 主记录和 original/independent 两条证据，未连接 API，不会把来源元数据误报为事实核验或草稿输入就绪
+- `npm run news:text-brief:check`：验证来源锁只读投影到小红书/抖音图文研究简报的纯函数边界；简报只含人工角度、来源索引、待核问题和字段清单，不读取正文、不生成事实、文案或平台草稿
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
