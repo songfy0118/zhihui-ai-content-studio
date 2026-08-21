@@ -114,6 +114,7 @@ npm run pilot:package
 - `npm run db:claim-acceptance:plan`：静态检查三张回执表的生成迁移、关键唯一索引和 create-only 边界；不会检查或修改真实 D1，也没有迁移应用入口
 - `npm run db:claim-acceptance:inspect:isolated`：用模拟只读 D1 响应验证回执存储的 missing、partial、verified 判定；只允许 sqlite_schema 与 PRAGMA 查询，不读取业务行、不写数据库，也未接入 API
 - `npm run db:claim-acceptance:read:isolated`：在一次性内存 SQLite 中读取完整 active 人工接受回执，验证主张、审核勾选和 original/independent 双来源的只读投影；成功只表示持久人工接受可供草稿研究，仍不声称自动事实核验、文案就绪或真实 D1 已接入
+- `npm run news:accepted-claim-blueprint:check`：把持久人工接受的精确主张措辞、双来源引用和不确定性说明映射为小红书/抖音图文内容结构；标题、正文、封面词、标签和来源说明仍为空，不调用模型、不生成或保存平台草稿
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
