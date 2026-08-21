@@ -110,6 +110,7 @@ npm run pilot:package
 - `npm run news:claim-material:check`：把两篇已获取正文拆成带来源和内容哈希的短句候选，供人工逐条核验；不自动合并相似句、不判定事实、不返回完整正文，也不调用模型、生成文案或保存平台草稿
 - `npm run news:claim-selection:check`：验证人工输入主张、分别勾选原始和独立来源短句及四项人工核对后形成的只读选择计划；计划仍未接受主张、不判定事实，也不解锁文案、数据库或平台操作
 - `npm run news:claim-acceptance:check`：验证逐条确认主张措辞、双来源引用和不确定性说明后形成的接受回执预览与稳定幂等键；回执不落库，因此不声称正式接受、事实核验或文案解锁
+- `npm run db:claim-acceptance:store:isolated`：仅在内存 SQLite 临时表验证接受回执、主张和双来源的原子写入、幂等重放与失败回滚；没有迁移、API 接线或真实 D1 写入，测试成功不代表业务数据已保存
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
