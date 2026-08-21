@@ -88,11 +88,41 @@ npm run pilot:package
 ## 常用命令
 
 - `npm run dev`：启动统一操作台开发环境
+- `npm run local:doctor`：只读检查操作台、桥接服务和 LocalMiniDrama 前后端；不会重启进程、下载模型或调用外部服务
+- `npm run bridge:restart:plan`：只读核验 3765 监听进程、旧桥接健康签名和协议 v3 目标；默认不停止或启动任何进程
+- `npm run bridge:verify:parallel`：在临时端口 3766 启动并回收新版桥接，验证协议 v3 与隔离迁移接口；不改动 3765 旧桥接
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
+- `npm run pilot:script-envelope`：把已人工核验的主张、引用来源和三平台目标封装为带 SHA-256 指纹的只读剧本输入；不抓取网页、不调用模型，也不生成剧本
+- `npm run pilot:script-plan`：把来源锁输入映射到 LocalMiniDrama 的真实剧本生成合同，并将 LumenX 保持为等待剧本/分镜；只返回脱敏计划，执行前仍需确认模型与成本
+- `bridge/script-output-acceptance.mjs`：对真实剧本输出执行只读验收，要求来源锁指纹、逐条主张使用记录、零未引用事实声明和完整人工复核项；它不解析文本语义、不自动核实事实，也不调用模型或触发下游生成
+- 本机 `/api/local/script-approval` 只生成剧本模型授权预览：校验来源指纹、文本配置、人工报价、预算和明确确认；拒收密钥字段，且不提供执行器
+- 操作台只提供前往 `http://127.0.0.1:3013/ai-config` 的本机配置引导；供应商密钥不在知绘操作台输入、显示或保存，配置后仍需单独完成报价与授权预览
 - `npm run pilot:package`：生成三平台文案和字幕草稿
+- `npm run pilot:readiness`：只读核对事实来源、三平台包、成片/音轨/字幕文件及 SHA-256；只有全部真实存在才返回 `review_pending`
 - `npm run db:generate`：数据库结构变化后生成迁移
+- `npm run db:preflight`：只读核对 Sites D1 绑定、审核表迁移和破坏性 SQL；不会执行迁移
+- `npm run db:local:chain:plan`：把 0000–0005 源文件与本机 D1 真实结构合并核对；只输出完整应用计划，不执行 SQL
+- `npm run db:local:chain:apply`：默认仍为计划模式，只输出精确确认短语和应用守卫结果；当前执行器未连接，不执行 SQL
+- `npm run db:local:chain:prepare`：结合真实结构检查与隔离验证生成整链指纹；只返回标签、语句数量、类型和 SHA-256，不返回 SQL 或执行命令
+- `npm run db:chain:verify:isolated`：在一次性内存 SQLite 中按顺序真实应用 0000–0005 并检查最终结构；不接触本机或线上 D1，也不代表业务结果
+
+隔离验证按每个迁移文件开启独立事务；若某条语句失败，会回滚该文件并只报告迁移标签、语句序号、错误代码和回滚校验结果，不输出 SQL 内容，也不会继续执行后续迁移。
+
+`npm run pilot:sync` 只复制 LocalMiniDrama 已存在的本地产物并登记 SHA-256；不会生成占位文件，重复运行不会重复登记。
+
+## 审核审计迁移
+
+审核历史使用 Sites 管理的 D1 `DB` 绑定。`npm run db:preflight` 只证明迁移源文件完整，因此固定输出 `sourcePlanReady: true`、`readyToApply: false`；协作者还必须运行 `npm run db:local:chain:plan` 核对真实数据库状态。只有完整计划返回 `readyForAuthorizedApply: true` 后，项目维护者才可在一次单独、明确授权的操作中按 0000–0005 顺序应用迁移。预检不会登录账号、修改数据库或发布内容；不要绕过 Sites 直接绑定个人 Cloudflare 资源。
+
+`npm run db:local:chain:apply` 目前只是授权前守卫：不带参数运行时必定阻止应用并报告 `executorInvoked: false`、`databaseWrites: false`。传入执行参数和精确确认短语后，它只准备 `wrangler d1 migrations apply DB --local` 的结构化本机命令，不调用子进程、不执行迁移，也不会切换到远程 D1；实际运行仍需要用户另行明确授权。
+
+迁移完成后，`/api/reviews?jobId=<任务号>` 才会返回真实审核历史；未完成时接口明确返回 503，不能把它解释为“暂无审核记录”。
+
+指标来源字段由迁移 `0004_strange_doorman` 提供，包括平台来源类型、外部作品号、采集时间和导入时间，并用平台、作品号、采集时间的联合唯一索引阻止重复快照。迁移应用前指标接口保持只读关闭；旧记录因缺少来源证明不会被展示或用于训练。该迁移已生成但未应用。
+
+剧本人工验收记录由迁移 `0005_jazzy_toad` 提供，只保存剧本输出指纹、来源锁指纹、7 项人工检查结果和复核时间，不保存剧本文本。相同剧本与来源锁组合由唯一索引去重；只有当前指纹匹配的 `accepted` 记录才能解除角色与分镜的规划锁，模型执行仍需独立授权。该迁移已生成并通过隔离数据库验证，但未应用到本机或线上 D1。
 
 ## 当前阻塞
 

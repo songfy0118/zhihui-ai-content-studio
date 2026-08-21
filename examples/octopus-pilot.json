@@ -23,6 +23,11 @@
           "https://ocean.si.edu/ocean-life/invertebrates/octopuses-squids-and-relatives",
           "https://pmc.ncbi.nlm.nih.gov/articles/PMC10755184/",
           "https://pubmed.ncbi.nlm.nih.gov/39326412/"
+        ],
+        "claim_citations": [
+          { "claim_index": 0, "source_indices": [0] },
+          { "claim_index": 1, "source_indices": [1, 2] },
+          { "claim_index": 2, "source_indices": [1, 2] }
         ]
       }
     }
@@ -165,18 +170,24 @@
     "douyin": {
       "title": "章鱼面试，能同时握8次手吗？",
       "caption": "章鱼确实有三颗心脏，但“九个大脑”只是流行比喻。真正特别的是它高度分布的神经系统。",
+      "language": "zh-CN",
+      "source_note": "事实来源：Smithsonian Ocean、PMC、PubMed；发布前需人工复核。",
       "hashtags": ["动物冷知识", "章鱼", "科普", "AI漫剧"],
       "cover_text": "章鱼真有9个大脑？"
     },
     "tiktok": {
       "title": "Can an octopus handle 8 handshakes at once?",
       "caption": "Three hearts, eight arms, but not nine separate brains. Here is what the octopus nervous system actually does.",
+      "language": "en-US",
+      "source_note": "Sources: Smithsonian Ocean, PMC, and PubMed. Human review required before posting.",
       "hashtags": ["Octopus", "AnimalFacts", "ScienceTok", "AIAnimation"],
       "cover_text": "9 BRAINS? NOT EXACTLY"
     },
     "xiaohongshu": {
       "title": "章鱼面试｜它真的有9个大脑吗？",
       "caption": "把章鱼放进办公室面试，我们就能看懂它最特别的两套系统：三颗心脏，以及遍布腕足的神经网络。文末事实来源已核验。",
+      "language": "zh-CN",
+      "source_note": "事实来源：Smithsonian Ocean、PMC、PubMed；发布前需人工复核。",
       "hashtags": ["动物科普", "冷知识", "章鱼", "AI创作"],
       "cover_text": "一个脑，八条分布式腕足"
     }

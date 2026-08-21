@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { diagnoseModelConfigs } from "../../../../bridge/model-diagnostics.mjs";
 
 const ENGINE_URL = process.env.LOCAL_MINI_DRAMA_API ?? "http://127.0.0.1:5679";
 
@@ -8,6 +9,9 @@ type Config = {
   name?: string;
   model?: string | string[];
   is_active?: boolean;
+  base_url?: string;
+  api_key?: string;
+  default_model?: string;
 };
 
 function isLocalRequest(request: Request) {
@@ -31,26 +35,12 @@ export async function GET(request: Request) {
     if (!configsResponse.ok || configPayload?.success === false) throw new Error("无法读取模型配置");
 
     const configs: Config[] = Array.isArray(configPayload?.data) ? configPayload.data : [];
-    const active = configs.filter((item) => item.is_active !== false);
-    const byType = (type: string) => active.filter((item) => item.service_type === type);
-    const summarize = (rows: Config[]) => rows.map((item) => ({
-      name: item.name ?? item.provider ?? "未命名服务",
-      provider: item.provider ?? "unknown",
-      models: Array.isArray(item.model) ? item.model : item.model ? [item.model] : [],
-    }));
-
-    const text = byType("text");
-    const image = [...byType("image"), ...byType("storyboard_image")];
-    const video = byType("video");
-    const tts = byType("tts");
+    const modelStages = diagnoseModelConfigs(configs);
     const stages = [
-      { id: "engine", label: "本机漫剧引擎", ready: true, required: true, detail: `${health.app} ${health.version}` },
-      { id: "text", label: "文本与剧本", ready: text.length > 0, required: true, detail: text.length ? `${text.length} 个可用配置` : "缺少文本模型配置", services: summarize(text) },
-      { id: "image", label: "角色与分镜图片", ready: image.length > 0, required: true, detail: image.length ? `${image.length} 个可用配置` : "缺少图片模型配置", services: summarize(image) },
-      { id: "video", label: "分镜视频", ready: video.length > 0, required: true, detail: video.length ? `${video.length} 个可用配置` : "缺少视频模型配置", services: summarize(video) },
-      { id: "tts", label: "配音", ready: tts.length > 0, required: true, detail: tts.length ? `${tts.length} 个可用配置` : "缺少 TTS 配置", services: summarize(tts) },
-      { id: "package", label: "三平台包装", ready: true, required: true, detail: "抖音、TikTok、小红书文案与字幕草稿已生成" },
-      { id: "publish", label: "账号发布", ready: false, required: false, detail: "等待账号授权与人工审核" },
+      { id: "engine", label: "本机漫剧引擎", ready: true, required: true, detail: `${health.app} ${health.version}`, diagnosticCode: "verified_local", verification: "verified", automaticTest: false },
+      ...modelStages,
+      { id: "package", label: "三平台包装", ready: true, required: true, detail: "抖音、TikTok、小红书文案与字幕草稿已生成", diagnosticCode: "verified_local", verification: "verified", automaticTest: false },
+      { id: "publish", label: "账号发布", ready: false, required: false, detail: "等待账号授权与人工审核", diagnosticCode: "authorization_required", action: "保持关闭，直到账号本人授权并完成人工审核。", verification: "not_run", automaticTest: false },
     ];
     const blockers = stages.filter((stage) => stage.required && !stage.ready).map((stage) => stage.id);
 
@@ -61,6 +51,8 @@ export async function GET(request: Request) {
       blockers,
       settingsUrl: "http://127.0.0.1:3013/ai-config",
       checkedAt: new Date().toISOString(),
+      automaticConnectionTests: false,
+      verificationNotice: "这里只检查本地配置结构；没有调用任何模型，也没有产生费用。",
     });
   } catch (error) {
     return NextResponse.json({

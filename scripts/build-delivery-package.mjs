@@ -1,8 +1,13 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { validateFactReview } from "../bridge/fact-review-policy.mjs";
+import { PLATFORM_REQUIREMENTS, validatePlatformPackages } from "../bridge/platform-package-policy.mjs";
 
-const inputPath = resolve(process.argv[2] ?? "examples/octopus-pilot.json");
-const outputRoot = resolve(process.argv[3] ?? "work/packages/octopus-pilot");
+const args = process.argv.slice(2);
+const offline = args.includes("--offline");
+const positionalArgs = args.filter((arg) => !arg.startsWith("--"));
+const inputPath = resolve(positionalArgs[0] ?? "examples/octopus-pilot.json");
+const outputRoot = resolve(positionalArgs[1] ?? "work/packages/octopus-pilot");
 const pilot = JSON.parse(await readFile(inputPath, "utf8"));
 
 function srtTime(totalSeconds) {
@@ -44,15 +49,13 @@ function buildSubtitleDraft(storyboards) {
   ).join("\n");
 }
 
-if (pilot.outline?.metadata?.fact_review?.status !== "reviewed") {
-  throw new Error("Fact review must be completed before packaging");
-}
+const factReviewEvidence = validateFactReview(pilot.outline?.metadata?.fact_review);
+if (!factReviewEvidence.ready) throw new Error(`Fact review must be completed before packaging: ${factReviewEvidence.blockers.join(", ")}`);
 if (!Array.isArray(pilot.storyboards) || pilot.storyboards.length === 0) {
   throw new Error("At least one storyboard is required");
 }
-if (!pilot.platform_copy || Object.keys(pilot.platform_copy).length !== 3) {
-  throw new Error("Douyin, TikTok, and Xiaohongshu copy are required");
-}
+const platformPackageEvidence = validatePlatformPackages(pilot.platform_copy);
+if (!platformPackageEvidence.ready) throw new Error(`Douyin, TikTok, and Xiaohongshu copy are required: ${platformPackageEvidence.blockers.join(", ")}`);
 
 await mkdir(outputRoot, { recursive: true });
 const subtitlePath = resolve(outputRoot, "subtitles.zh-CN.draft.srt");
@@ -75,14 +78,16 @@ const manifest = {
   duration_seconds: durationSeconds,
   aspect_ratio: pilot.outline.metadata.aspect_ratio,
   platforms: Object.keys(pilot.platform_copy),
+  platform_packages: Object.fromEntries(Object.entries(PLATFORM_REQUIREMENTS).map(([platform, requirement]) => [platform, { file: `${platform}.json`, language: requirement.language }])),
   subtitle_file: "subtitles.zh-CN.draft.srt",
   media_status: "waiting_for_generation",
+  artifacts: [],
   fact_review: pilot.outline.metadata.fact_review,
   requires_human_review: true,
 };
 await writeFile(resolve(outputRoot, "manifest.json"), JSON.stringify(manifest, null, 2), "utf8");
 
-if (!process.argv.includes("--offline")) {
+if (!offline) {
   const apiBase = process.env.LOCAL_MINI_DRAMA_API ?? "http://127.0.0.1:5679/api/v1";
   const response = await fetch(`${apiBase}/dramas/${pilot.drama_id}/outline`, {
     method: "PUT",

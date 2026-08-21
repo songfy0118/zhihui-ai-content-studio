@@ -1,4 +1,4 @@
-import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const ideas = sqliteTable("ideas", {
   id: text("id").primaryKey(),
@@ -23,6 +23,58 @@ export const jobs = sqliteTable("jobs", {
   createdAt: text("created_at").notNull(),
 }, (table) => [index("idx_jobs_created_at").on(table.createdAt), index("idx_jobs_idea_id").on(table.ideaId)]);
 
+export const reviewAudits = sqliteTable("review_audits", {
+  id: text("id").primaryKey(),
+  jobId: text("job_id").notNull(),
+  action: text("action").notNull(),
+  checklist: text("checklist").notNull(),
+  publishTriggered: integer("publish_triggered", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").notNull(),
+}, (table) => [index("idx_review_audits_job_created_at").on(table.jobId, table.createdAt)]);
+
+export const scriptReviewAcceptances = sqliteTable("script_review_acceptances", {
+  id: text("id").primaryKey(),
+  sourceIdeaId: text("source_idea_id").notNull(),
+  dramaId: integer("drama_id").notNull(),
+  outputFingerprint: text("output_fingerprint").notNull(),
+  sourceLockFingerprint: text("source_lock_fingerprint").notNull(),
+  reviewDraftFingerprint: text("review_draft_fingerprint").notNull(),
+  previewFingerprint: text("preview_fingerprint").notNull(),
+  checklist: text("checklist").notNull(),
+  status: text("status").notNull().default("accepted"),
+  reviewedAt: text("reviewed_at").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_script_review_acceptances_output_source_lock").on(table.outputFingerprint, table.sourceLockFingerprint),
+  index("idx_script_review_acceptances_idea_reviewed_at").on(table.sourceIdeaId, table.reviewedAt),
+]);
+
+export const pilotAuthorizationReceipts = sqliteTable("pilot_authorization_receipts", {
+  id: text("id").primaryKey(),
+  candidateRequestHash: text("candidate_request_hash").notNull(),
+  executionRequestHash: text("execution_request_hash").notNull(),
+  provider: text("provider").notNull(),
+  imageModel: text("image_model").notNull(),
+  videoModel: text("video_model").notNull(),
+  imageCostCny: real("image_cost_cny").notNull(),
+  videoCostCny: real("video_cost_cny").notNull(),
+  quotedTotalCostCny: real("quoted_total_cost_cny").notNull(),
+  maxCostCny: real("max_cost_cny").notNull(),
+  pricingConfirmed: integer("pricing_confirmed", { mode: "boolean" }).notNull(),
+  status: text("status").notNull().default("active"),
+  issuedAtMs: integer("issued_at_ms").notNull(),
+  expiresAtMs: integer("expires_at_ms").notNull(),
+  consumedAtMs: integer("consumed_at_ms"),
+  externalCalls: integer("external_calls", { mode: "boolean" }).notNull().default(false),
+  costIncurred: integer("cost_incurred", { mode: "boolean" }).notNull().default(false),
+  executionTriggered: integer("execution_triggered", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [
+  index("idx_pilot_receipts_execution_hash_issued_at").on(table.executionRequestHash, table.issuedAtMs),
+  index("idx_pilot_receipts_status_expires_at").on(table.status, table.expiresAtMs),
+]);
+
 export const metrics = sqliteTable("metrics", {
   id: text("id").primaryKey(),
   ideaId: text("idea_id").notNull(),
@@ -34,8 +86,16 @@ export const metrics = sqliteTable("metrics", {
   saves: integer("saves").notNull().default(0),
   followers: integer("followers").notNull().default(0),
   completionRate: real("completion_rate").notNull().default(0),
+  sourceKind: text("source_kind"),
+  externalPostId: text("external_post_id"),
+  capturedAt: text("captured_at"),
+  importedAt: text("imported_at"),
   createdAt: text("created_at").notNull(),
-}, (table) => [index("idx_metrics_platform_created_at").on(table.platform, table.createdAt), index("idx_metrics_idea_id").on(table.ideaId)]);
+}, (table) => [
+  index("idx_metrics_platform_created_at").on(table.platform, table.createdAt),
+  index("idx_metrics_idea_id").on(table.ideaId),
+  uniqueIndex("uq_metrics_platform_post_captured_at").on(table.platform, table.externalPostId, table.capturedAt),
+]);
 
 export const accounts = sqliteTable("accounts", {
   platform: text("platform").primaryKey(),

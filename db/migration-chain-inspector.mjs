@@ -1,0 +1,52 @@
+export const INSPECT_SCHEMA_OBJECTS_SQL = `SELECT name, type FROM sqlite_schema
+WHERE type IN ('table', 'index') AND name NOT LIKE 'sqlite_%'`;
+export const INSPECT_METRICS_COLUMNS_SQL = "PRAGMA table_info(`metrics`)";
+
+export const MIGRATION_CHAIN = [
+  { tag: "0000_serious_tinkerer", artifacts: ["table:accounts", "table:ideas", "table:jobs", "table:metrics"] },
+  { tag: "0001_modern_hydra", artifacts: ["index:idx_ideas_created_at", "index:idx_jobs_created_at", "index:idx_jobs_idea_id", "index:idx_metrics_platform_created_at", "index:idx_metrics_idea_id"] },
+  { tag: "0002_shiny_spitfire", artifacts: ["table:review_audits", "index:idx_review_audits_job_created_at"] },
+  { tag: "0003_faithful_harry_osborn", artifacts: ["table:pilot_authorization_receipts", "index:idx_pilot_receipts_execution_hash_issued_at", "index:idx_pilot_receipts_status_expires_at"] },
+  { tag: "0004_strange_doorman", artifacts: ["column:source_kind", "column:external_post_id", "column:captured_at", "column:imported_at", "index:uq_metrics_platform_post_captured_at"] },
+  { tag: "0005_jazzy_toad", artifacts: ["table:script_review_acceptances", "index:uq_script_review_acceptances_output_source_lock", "index:idx_script_review_acceptances_idea_reviewed_at"] },
+];
+
+function safeResult(fields = {}) {
+  return { verification: "read_only_sqlite_schema", databaseWrites: false, applyPerformed: false, externalCalls: false, costIncurred: false, publishTriggered: false, ...fields };
+}
+
+export async function inspectMigrationChain(d1) {
+  if (!d1 || typeof d1.prepare !== "function") throw new Error("d1_binding_required");
+  const [schemaResult, columnResult] = await Promise.all([
+    d1.prepare(INSPECT_SCHEMA_OBJECTS_SQL).all(),
+    d1.prepare(INSPECT_METRICS_COLUMNS_SQL).all(),
+  ]);
+  const schemaArtifacts = new Set(
+    Array.isArray(schemaResult?.results)
+      ? schemaResult.results.filter((row) => typeof row?.name === "string" && (row?.type === "table" || row?.type === "index")).map((row) => `${row.type}:${row.name}`)
+      : [],
+  );
+  const metricColumns = new Set(Array.isArray(columnResult?.results) ? columnResult.results.map((row) => row?.name).filter((name) => typeof name === "string") : []);
+  const migrationLedgerObjects = Array.isArray(schemaResult?.results)
+    ? schemaResult.results.filter((row) => row?.type === "table" && typeof row?.name === "string" && /migration/i.test(row.name)).map((row) => row.name)
+    : [];
+  const steps = MIGRATION_CHAIN.map((step) => {
+    const presentArtifacts = step.artifacts.filter((artifact) => artifact.startsWith("column:") ? metricColumns.has(artifact.slice(7)) : schemaArtifacts.has(artifact));
+    return { ...step, presentArtifacts, missingArtifacts: step.artifacts.filter((artifact) => !presentArtifacts.includes(artifact)), complete: presentArtifacts.length === step.artifacts.length, partial: presentArtifacts.length > 0 && presentArtifacts.length < step.artifacts.length };
+  });
+  const completedSteps = steps.filter((step) => step.complete).length;
+  const firstPending = steps.find((step) => !step.complete)?.tag ?? null;
+  const applicationObjects = [...schemaArtifacts].filter((artifact) => !artifact.includes("_cf_") && !artifact.includes("d1_migrations"));
+  const emptyApplicationSchema = applicationObjects.length === 0 && metricColumns.size === 0;
+  return safeResult({
+    status: completedSteps === steps.length ? "current" : emptyApplicationSchema ? "empty" : "incomplete",
+    current: completedSteps === steps.length,
+    emptyApplicationSchema,
+    migrationLedgerObjects,
+    completedSteps,
+    totalSteps: steps.length,
+    firstPending,
+    steps,
+    blockers: completedSteps === steps.length ? [] : emptyApplicationSchema ? ["full_migration_chain_missing"] : [steps.some((step) => step.partial) ? "partial_migration_detected" : "migration_chain_incomplete"],
+  });
+}

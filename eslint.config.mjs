@@ -11,6 +11,8 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    // Vendored engines keep their own lint rules and must stay unmodified.
+    "vendor/**",
     "next-env.d.ts",
   ]),
 ]);
