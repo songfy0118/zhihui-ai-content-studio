@@ -11,6 +11,7 @@ type NewsSourceCatalogStatus = { status:"loading"|"catalog_ready"|"catalog_block
 type NewsPreviewStatus = { status:"preview_ready"|"no_live_items";fetchedAt:string;summary:{feedsAttempted:number;readySources:number;failedSources:number;itemsReturned:number};sourceHealth:Array<{sourceId:string;status:"ready"|"empty"|"error";itemsParsed:number;errorCode:string|null}>;items:Array<{id:string;sourceName:string;title:string;summary:string;canonicalUrl:string;publishedAt:string|null}>;contentFetched:boolean;factsVerified:boolean;humanReviewRequired:boolean;externalCalls:number;databaseWrites:boolean;publishTriggered:boolean };
 type TopicClusterPreview = { status:"clusters_ready"|"no_items";summary:{itemsConsidered:number;clusterCount:number;crossSourceClusters:number;eligibleCandidates:number;similarityThreshold:number;windowHours:number};clusters:Array<{id:string;title:string;status:string;itemCount:number;sourceCount:number;sourceIds:string[];firstSeenAt:string|null;lastSeenAt:string|null;meanSimilarity:number|null;crossSourceConfirmed:boolean;timeWindowVerified:boolean;eligibleForHotspotScoring:boolean}>;factsVerified:boolean;heatScored:boolean;externalCalls:number;databaseWrites:boolean;publishTriggered:boolean };
 type TopicRankingPreview = { status:"ranked_candidates_ready"|"no_eligible_candidates";profile:{id:string;label:string;calibration:string};summary:{clustersConsidered:number;eligibleClusters:number;rankedCandidates:number;blockedBeforeScoring:number};candidates:Array<{id:string;title:string;sourceCount:number;itemCount:number;trendEvidenceScore:number;accountFitScore:number;relativePriorityScore:number;matchedAccountTopics:string[];predictedViews:null;viralProbability:null;factsVerified:false;selectableForDraft:false}>;scoreKind:string;heatScored:boolean;factsVerified:boolean;predictedViewsGenerated:boolean;viralProbabilityGenerated:boolean;accountMetricsUsed:boolean;humanSelectionUnlocked:boolean;externalCalls:number;databaseWrites:boolean;publishTriggered:boolean };
+type EvidenceGapPreview = { status:"evidence_gaps_ready"|"no_recent_account_fit_leads";profile:{id:string;label:string;calibration:string};summary:{clustersConsidered:number;recentSingleSourceLeads:number;leadsReturned:number;independentSourcesStillRequired:number;windowHours:number;minimumAccountFit:number};leads:Array<{id:string;title:string;category:string;sourceId:string;publishedAt:string;ageHours:number;accountFitScore:number;matchedAccountTopics:string[];status:"needs_independent_source";missingIndependentSources:1;suggestedQueries:string[];shortlistableForEvidenceSearch:true;factsVerified:false;sourceLockReady:false;selectableForDraft:false}>;humanShortlistPersisted:false;evidenceSearchTriggered:false;factsVerified:false;sourceLocksCreated:0;draftsUnlocked:0;externalCalls:number;databaseWrites:false;publishTriggered:false };
 type MetricFeedStatus = { status:"loading"|"verified"|"awaiting_verified_import"|"storage_unavailable";realDataOnly:boolean;recordsExcluded:number;acceptedSources:string[];writePerformed:boolean;publishTriggered:boolean };
 type MetricsMigrationStatus = { mode:string;localOnly:boolean;migrationTag:string;authorizationRequired:boolean;readyToApplyLocally:boolean;blockers:string[];applyPerformed:boolean;databaseWrites:boolean;storage?:{status:string;verified:boolean;columnsPresent:string[];missingColumns:string[];indexPresent:boolean} };
 type D1MigrationChainStatus = { mode:string;localOnly:boolean;authorizationRequired:boolean;status:"loading"|"empty"|"incomplete"|"current";current:boolean;emptyApplicationSchema:boolean;completedSteps:number;totalSteps:number;firstPending:string|null;blockers:string[];databaseWrites:boolean;applyPerformed:boolean };
@@ -119,6 +120,9 @@ export default function Home() {
   const [topicClustersBusy, setTopicClustersBusy] = useState(false);
   const [topicRanking, setTopicRanking] = useState<TopicRankingPreview|null>(null);
   const [topicRankingBusy, setTopicRankingBusy] = useState(false);
+  const [evidenceGaps, setEvidenceGaps] = useState<EvidenceGapPreview|null>(null);
+  const [evidenceGapsBusy, setEvidenceGapsBusy] = useState(false);
+  const [evidenceGapShortlist, setEvidenceGapShortlist] = useState<string[]>([]);
   const [platforms, setPlatforms] = useState(["douyin", "tiktok", "xiaohongshu"]);
   const [view, setView] = useState("ideas");
   const [message, setMessage] = useState("正在载入你的内容工厂…");
@@ -218,6 +222,21 @@ export default function Home() {
     } finally {
       setTopicRankingBusy(false);
     }
+  };
+  const loadEvidenceGaps = async () => {
+    setEvidenceGapsBusy(true);
+    try {
+      const response = await fetch("/api/news/evidence-gaps", { cache:"no-store" });
+      setEvidenceGaps(await response.json() as EvidenceGapPreview);
+      setEvidenceGapShortlist([]);
+    } catch {
+      setMessage("补证清单生成失败；没有自动搜索、保存选择、写入数据库或解锁草稿。");
+    } finally {
+      setEvidenceGapsBusy(false);
+    }
+  };
+  const toggleEvidenceGap = (id:string) => {
+    setEvidenceGapShortlist((current) => current.includes(id) ? current.filter((candidateId) => candidateId !== id) : current.length < 3 ? [...current, id] : current);
   };
   useEffect(() => {
     // All state updates in load happen after its network requests resolve.
@@ -642,6 +661,11 @@ export default function Home() {
           <header><div><small>RELATIVE PRIORITY · RULES V1</small><b>{topicRanking?`${topicRanking.summary.rankedCandidates} 个已评分 · ${topicRanking.summary.blockedBeforeScoring} 个评分前拦截`:"等待合格多源候选"}</b></div><button type="button" disabled={topicRankingBusy} onClick={loadTopicRanking}>{topicRankingBusy?"计算中…":"计算相对优先级（只读）"}</button></header>
           {topicRanking?.candidates.length ? <div>{topicRanking.candidates.slice(0,6).map((candidate)=><article key={candidate.id}><strong>{candidate.relativePriorityScore}</strong><div><small>趋势证据 {candidate.trendEvidenceScore} · 账号匹配 {candidate.accountFitScore}</small><b>{candidate.title}</b><span>{candidate.sourceCount} 个来源 · {candidate.itemCount} 条证据 · 主题 {candidate.matchedAccountTopics.join(" / ")||"未命中"}</span></div></article>)}</div> : <p>{topicRanking?"当前没有满足多来源与完整时间窗的候选，因此不生成任何分数。":"分数只做相对排序；没有真实账号指标校准，不输出预计播放量或爆款概率。"}</p>}
           <footer>账号画像 {topicRanking?.profile.label??"AI / 科技 / 金融规则版"} · 事实核验 {topicRanking?.factsVerified?"已完成":"未完成"} · 播放量预测 0 · 爆款概率 0 · 草稿解锁 {topicRanking?.humanSelectionUnlocked?"是":"否"} · 写库 {topicRanking?.databaseWrites?"已发生":"0"} · 发布 {topicRanking?.publishTriggered?"已触发":"0"}</footer>
+        </section>
+        <section className="evidenceGaps">
+          <header><div><small>EVIDENCE GAP · HUMAN SHORTLIST</small><b>{evidenceGaps?`${evidenceGaps.summary.leadsReturned} 条补证线索 · 已选 ${evidenceGapShortlist.length}/3`:"等待单来源线索分析"}</b></div><button type="button" disabled={evidenceGapsBusy} onClick={loadEvidenceGaps}>{evidenceGapsBusy?"分析中…":"生成补证清单（只读）"}</button></header>
+          {evidenceGaps?.leads.length ? <div>{evidenceGaps.leads.slice(0,8).map((lead)=><article className={evidenceGapShortlist.includes(lead.id)?"selected":""} key={lead.id}><div><small>账号匹配 {lead.accountFitScore} · {lead.sourceId} · {lead.ageHours} 小时前</small><b>{lead.title}</b><span>还缺 {lead.missingIndependentSources} 个独立来源 · 建议检索：{lead.suggestedQueries[0]}</span></div><button type="button" onClick={()=>toggleEvidenceGap(lead.id)}>{evidenceGapShortlist.includes(lead.id)?"移出清单":"加入补证"}</button></article>)}</div> : <p>{evidenceGaps?"当前没有同时满足七天时效和账号匹配门槛的单来源线索。":"这里只筛出值得继续找第二来源的线索；不会自动搜索，也不会把线索当成已核验选题。"}</p>}
+          <footer>本次临时选择 {evidenceGapShortlist.length} · 自动搜索 0 · 持久化 0 · 事实核验 0 · 来源锁 0 · 草稿解锁 0 · 发布 0</footer>
         </section>
         <section className="controlStrip">
           <div><small>01</small><b>选择图文平台</b></div>
