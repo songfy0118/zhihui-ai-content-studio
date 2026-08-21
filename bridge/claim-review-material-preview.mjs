@@ -18,6 +18,7 @@ function safeResult(fields = {}) {
     sourceMaterials: [],
     reviewQuestions: [],
     candidateCount: 0,
+    briefFingerprint: null,
     candidateMaterialFingerprint: null,
     readyForHumanClaimReview: false,
     sourceBodiesPersisted: false,
@@ -170,6 +171,7 @@ export function buildClaimReviewMaterialPreview(acquisitionResult, briefPreview)
       ? briefPreview.brief.researchTasks.map(({ id, question }) => ({ id, question }))
       : [],
     candidateCount,
+    briefFingerprint: briefPreview.briefFingerprint,
     candidateMaterialFingerprint: hash(JSON.stringify(fingerprintInput)),
     readyForHumanClaimReview: true,
   });
