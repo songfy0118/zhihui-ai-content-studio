@@ -99,6 +99,7 @@ npm run pilot:package
 - `npm run news:search-plan -- <cluster-id...>`：为当前最多 3 条补证线索生成带指纹的第二来源检索计划；只列出无需登录的 RSS 与官方新闻室，不执行检索、不创建来源锁、不写数据库
 - `npm run news:evidence-preview -- <cluster-id...>`：在人工选择后，仅用本轮公开 RSS 的标题、链接、来源和时间寻找可能的第二来源；不读取文章正文，所有结果必须人工判断，不执行事实核验、来源锁、草稿或发布
 - `npm run news:evidence-review`：显示证据审查的失败关闭边界；真实预览必须由人选择当前候选并确认同一事件、来源独立、时间一致和无明显冲突，预览不保存、不创建来源锁
+- `npm run news:source-lock-plan`：显示来源锁保存计划的失败关闭边界；真实计划绑定当前人工审查指纹，但授权、写库、来源锁创建与草稿解锁均保持关闭
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜

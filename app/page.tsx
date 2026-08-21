@@ -17,6 +17,7 @@ type EvidenceMetadataPreview = { status:"metadata_preview_blocked"|"metadata_can
 type EvidenceReviewCheckId = "same_event_confirmed"|"source_independence_confirmed"|"dates_consistent"|"no_material_conflict_found";
 type EvidenceReviewDecision = { candidateId:string; checks:Record<EvidenceReviewCheckId,boolean> };
 type EvidenceReviewPreview = { status:"evidence_review_preview_ready"|"evidence_review_preview_blocked";readyForAuthorizedSourceLockSave:boolean;blockers:string[];planFingerprint:string|null;reviewFingerprint:string|null;summary:{targetsRequired:number;targetsReviewed:number;targetsEligible:number};semanticReview:string;persisted:false;sourceLockCreated:false;factsVerified:false;draftsUnlocked:0;databaseWrites:false;publishTriggered:false;externalCalls:number };
+type SourceLockSavePlan = { status:"source_lock_save_plan_ready"|"source_lock_save_plan_blocked";readyForAuthorizationRequest:boolean;blockers:string[];reviewFingerprint:string|null;savePlanFingerprint:string|null;plannedRecordCount:number;authorizationRequired:true;authorizationGranted:false;singleUseAuthorizationRequired:true;writeAllowed:false;persisted:false;sourceLocksCreated:0;factsVerified:false;draftsUnlocked:0;databaseWrites:false;publishTriggered:false;externalCalls:number };
 type MetricFeedStatus = { status:"loading"|"verified"|"awaiting_verified_import"|"storage_unavailable";realDataOnly:boolean;recordsExcluded:number;acceptedSources:string[];writePerformed:boolean;publishTriggered:boolean };
 type MetricsMigrationStatus = { mode:string;localOnly:boolean;migrationTag:string;authorizationRequired:boolean;readyToApplyLocally:boolean;blockers:string[];applyPerformed:boolean;databaseWrites:boolean;storage?:{status:string;verified:boolean;columnsPresent:string[];missingColumns:string[];indexPresent:boolean} };
 type D1MigrationChainStatus = { mode:string;localOnly:boolean;authorizationRequired:boolean;status:"loading"|"empty"|"incomplete"|"current";current:boolean;emptyApplicationSchema:boolean;completedSteps:number;totalSteps:number;firstPending:string|null;blockers:string[];databaseWrites:boolean;applyPerformed:boolean };
@@ -141,6 +142,8 @@ export default function Home() {
   const [evidenceReviewDecisions, setEvidenceReviewDecisions] = useState<Record<string,EvidenceReviewDecision>>({});
   const [evidenceReviewPreview, setEvidenceReviewPreview] = useState<EvidenceReviewPreview|null>(null);
   const [evidenceReviewBusy, setEvidenceReviewBusy] = useState(false);
+  const [sourceLockSavePlan, setSourceLockSavePlan] = useState<SourceLockSavePlan|null>(null);
+  const [sourceLockSavePlanBusy, setSourceLockSavePlanBusy] = useState(false);
   const [platforms, setPlatforms] = useState(["douyin", "tiktok", "xiaohongshu"]);
   const [view, setView] = useState("ideas");
   const [message, setMessage] = useState("正在载入你的内容工厂…");
@@ -251,6 +254,7 @@ export default function Home() {
       setEvidenceMetadataPreview(null);
       setEvidenceReviewDecisions({});
       setEvidenceReviewPreview(null);
+      setSourceLockSavePlan(null);
     } catch {
       setMessage("补证清单生成失败；没有自动搜索、保存选择、写入数据库或解锁草稿。");
     } finally {
@@ -262,6 +266,7 @@ export default function Home() {
     setEvidenceMetadataPreview(null);
     setEvidenceReviewDecisions({});
     setEvidenceReviewPreview(null);
+    setSourceLockSavePlan(null);
     setEvidenceGapShortlist((current) => current.includes(id) ? current.filter((candidateId) => candidateId !== id) : current.length < 3 ? [...current, id] : current);
   };
   const previewEvidenceSearchPlan = async () => {
@@ -269,6 +274,7 @@ export default function Home() {
     setEvidenceMetadataPreview(null);
     setEvidenceReviewDecisions({});
     setEvidenceReviewPreview(null);
+    setSourceLockSavePlan(null);
     try {
       const response = await fetch("/api/news/evidence-search-plan", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ selectedIds:evidenceGapShortlist }) });
       setEvidenceSearchPlan(await response.json() as EvidenceSearchPlanPreview);
@@ -282,6 +288,7 @@ export default function Home() {
     setEvidenceMetadataBusy(true);
     setEvidenceReviewDecisions({});
     setEvidenceReviewPreview(null);
+    setSourceLockSavePlan(null);
     try {
       const response = await fetch("/api/news/evidence-metadata-preview", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ selectedIds:evidenceGapShortlist }) });
       setEvidenceMetadataPreview(await response.json() as EvidenceMetadataPreview);
@@ -293,14 +300,17 @@ export default function Home() {
   };
   const selectEvidenceCandidate = (leadId:string, candidateId:string) => {
     setEvidenceReviewPreview(null);
+    setSourceLockSavePlan(null);
     setEvidenceReviewDecisions((current) => ({ ...current, [leadId]: { candidateId, checks:Object.fromEntries(evidenceReviewChecklist.map(({id})=>[id,false])) as Record<EvidenceReviewCheckId,boolean> } }));
   };
   const toggleEvidenceReviewCheck = (leadId:string, checkId:EvidenceReviewCheckId) => {
     setEvidenceReviewPreview(null);
+    setSourceLockSavePlan(null);
     setEvidenceReviewDecisions((current) => current[leadId] ? ({ ...current, [leadId]: { ...current[leadId], checks:{ ...current[leadId].checks, [checkId]:!current[leadId].checks[checkId] } } }) : current);
   };
   const previewEvidenceReview = async () => {
     setEvidenceReviewBusy(true);
+    setSourceLockSavePlan(null);
     try {
       const decisions = Object.entries(evidenceReviewDecisions).map(([leadId,decision])=>({leadId,candidateId:decision.candidateId,checks:decision.checks}));
       const response = await fetch("/api/news/evidence-review-preview", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ selectedIds:evidenceGapShortlist, decisions }) });
@@ -309,6 +319,19 @@ export default function Home() {
       setMessage("证据审查预览失败；没有保存审查、创建来源锁、写入数据库或生成草稿。");
     } finally {
       setEvidenceReviewBusy(false);
+    }
+  };
+  const previewSourceLockSavePlan = async () => {
+    if (!evidenceReviewPreview?.reviewFingerprint) return;
+    setSourceLockSavePlanBusy(true);
+    try {
+      const decisions = Object.entries(evidenceReviewDecisions).map(([leadId,decision])=>({leadId,candidateId:decision.candidateId,checks:decision.checks}));
+      const response = await fetch("/api/news/source-lock-save-plan", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ selectedIds:evidenceGapShortlist, decisions, confirmedReviewFingerprint:evidenceReviewPreview.reviewFingerprint }) });
+      setSourceLockSavePlan(await response.json() as SourceLockSavePlan);
+    } catch {
+      setMessage("来源锁保存计划生成失败；没有授予授权、写入数据库、创建来源锁或生成草稿。");
+    } finally {
+      setSourceLockSavePlanBusy(false);
     }
   };
   useEffect(() => {
@@ -740,7 +763,7 @@ export default function Home() {
           {evidenceGaps?.leads.length ? <div>{evidenceGaps.leads.slice(0,8).map((lead)=><article className={evidenceGapShortlist.includes(lead.id)?"selected":""} key={lead.id}><div><small>账号匹配 {lead.accountFitScore} · {lead.sourceId} · {lead.ageHours} 小时前</small><b>{lead.title}</b><span>还缺 {lead.missingIndependentSources} 个独立来源 · 建议检索：{lead.suggestedQueries[0]}</span></div><button type="button" onClick={()=>toggleEvidenceGap(lead.id)}>{evidenceGapShortlist.includes(lead.id)?"移出清单":"加入补证"}</button></article>)}</div> : <p>{evidenceGaps?"当前没有同时满足七天时效和账号匹配门槛的单来源线索。":"这里只筛出值得继续找第二来源的线索；不会自动搜索，也不会把线索当成已核验选题。"}</p>}
           {evidenceGapShortlist.length>0&&<aside className="evidenceSearchPlan"><div><b>{evidenceSearchPlan?.readyForHumanResearchReview?"检索计划已生成，但尚未执行":`已选 ${evidenceGapShortlist.length} 条，等待生成计划`}</b><span>{evidenceSearchPlan?.readyForHumanResearchReview?`${evidenceSearchPlan.targets.length} 个目标 · ${evidenceSearchPlan.targets.reduce((sum,target)=>sum+target.allowedSources.length,0)} 个允许信源入口`:`最多 3 条 · 只允许公开 RSS 与官方新闻室`}</span>{evidenceSearchPlan?.planFingerprint&&<code>{evidenceSearchPlan.planFingerprint.slice(0,16)}…</code>}</div><div className="evidencePlanActions"><button type="button" disabled={evidenceSearchPlanBusy} onClick={previewEvidenceSearchPlan}>{evidenceSearchPlanBusy?"核对中…":"生成第二来源检索计划（不执行）"}</button><button type="button" disabled={!evidenceSearchPlan?.readyForHumanResearchReview||evidenceMetadataBusy} onClick={previewEvidenceMetadata}>{evidenceMetadataBusy?"检索中…":"检索公开 RSS 元数据"}</button></div></aside>}
           {evidenceMetadataPreview&&<div className="evidenceMetadataResults">{evidenceMetadataPreview.targets.flatMap((target)=>target.candidates.map((candidate)=><article className={evidenceReviewDecisions[target.leadId]?.candidateId===candidate.id?"selected":""} key={`${target.leadId}:${candidate.id}`}><div><small>待人工判断 · {candidate.sourceName} · 标题相似度 {candidate.titleSimilarity}</small><b>{candidate.title}</b><span>共同词项：{candidate.sharedTerms.join(" / ")}</span></div><div><a href={candidate.canonicalUrl} target="_blank" rel="noreferrer">查看公开来源</a><button type="button" onClick={()=>selectEvidenceCandidate(target.leadId,candidate.id)}>{evidenceReviewDecisions[target.leadId]?.candidateId===candidate.id?"已选择":"选择候选"}</button></div></article>))}{evidenceMetadataPreview.summary.candidatesReturned===0&&<p>本轮公开 RSS 元数据没有达到宽松候选阈值；不把“没有找到”解释为事件不存在。</p>}</div>}
-          {Object.keys(evidenceReviewDecisions).length>0&&<aside className="evidenceReviewForm"><header><b>人工证据审查（本次页面临时状态）</b><span>{evidenceReviewPreview?.readyForAuthorizedSourceLockSave?"预览通过，但尚未保存来源锁":"完成四项判断后只生成预览"}</span></header>{Object.entries(evidenceReviewDecisions).map(([leadId,decision])=><div key={leadId}><strong>{evidenceMetadataPreview?.targets.find((target)=>target.leadId===leadId)?.candidates.find((candidate)=>candidate.id===decision.candidateId)?.title}</strong>{evidenceReviewChecklist.map(({id,label})=><label key={id}><input type="checkbox" checked={decision.checks[id]} onChange={()=>toggleEvidenceReviewCheck(leadId,id)}/>{label}</label>)}</div>)}<button type="button" disabled={evidenceReviewBusy} onClick={previewEvidenceReview}>{evidenceReviewBusy?"核对中…":"预览证据审查（不保存）"}</button>{evidenceReviewPreview&&<footer>合格 {evidenceReviewPreview.summary.targetsEligible}/{evidenceReviewPreview.summary.targetsRequired} · 审查指纹 {evidenceReviewPreview.reviewFingerprint?.slice(0,16)??"未生成"} · 来源锁仍为 0</footer>}</aside>}
+          {Object.keys(evidenceReviewDecisions).length>0&&<aside className="evidenceReviewForm"><header><b>人工证据审查（本次页面临时状态）</b><span>{evidenceReviewPreview?.readyForAuthorizedSourceLockSave?"预览通过，但尚未保存来源锁":"完成四项判断后只生成预览"}</span></header>{Object.entries(evidenceReviewDecisions).map(([leadId,decision])=><div key={leadId}><strong>{evidenceMetadataPreview?.targets.find((target)=>target.leadId===leadId)?.candidates.find((candidate)=>candidate.id===decision.candidateId)?.title}</strong>{evidenceReviewChecklist.map(({id,label})=><label key={id}><input type="checkbox" checked={decision.checks[id]} onChange={()=>toggleEvidenceReviewCheck(leadId,id)}/>{label}</label>)}</div>)}<div className="evidenceReviewActions"><button type="button" disabled={evidenceReviewBusy} onClick={previewEvidenceReview}>{evidenceReviewBusy?"核对中…":"预览证据审查（不保存）"}</button><button type="button" disabled={!evidenceReviewPreview?.readyForAuthorizedSourceLockSave||sourceLockSavePlanBusy} onClick={previewSourceLockSavePlan}>{sourceLockSavePlanBusy?"绑定中…":"生成来源锁保存计划（不保存）"}</button></div>{evidenceReviewPreview&&<footer>合格 {evidenceReviewPreview.summary.targetsEligible}/{evidenceReviewPreview.summary.targetsRequired} · 审查指纹 {evidenceReviewPreview.reviewFingerprint?.slice(0,16)??"未生成"} · 来源锁仍为 0</footer>}{sourceLockSavePlan&&<footer>计划记录 {sourceLockSavePlan.plannedRecordCount} · 计划指纹 {sourceLockSavePlan.savePlanFingerprint?.slice(0,16)??"未生成"} · 授权未授予 · 写库 0</footer>}</aside>}
           <footer>本次临时选择 {evidenceGapShortlist.length} · RSS 元数据候选 {evidenceMetadataPreview?.summary.candidatesReturned??0} · 审查保存 0 · 事实核验 0 · 来源锁 0 · 草稿解锁 0 · 发布 0</footer>
         </section>
         <section className="controlStrip">
