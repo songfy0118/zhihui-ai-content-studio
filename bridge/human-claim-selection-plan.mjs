@@ -24,6 +24,7 @@ function safeResult(fields = {}) {
     blockers: [],
     plannedClaims: [],
     plannedClaimCount: 0,
+    candidateMaterialFingerprint: null,
     claimSelectionFingerprint: null,
     readyForHumanClaimAcceptanceRequest: false,
     claimAcceptanceRequired: true,
@@ -171,6 +172,7 @@ export function buildHumanClaimSelectionPlan(materialPreview, decisions = [], {
     status: "human_claim_selection_plan_ready",
     plannedClaims,
     plannedClaimCount: plannedClaims.length,
+    candidateMaterialFingerprint: materialPreview.candidateMaterialFingerprint,
     claimSelectionFingerprint,
     readyForHumanClaimAcceptanceRequest: true,
   });
