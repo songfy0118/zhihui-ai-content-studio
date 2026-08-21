@@ -24,6 +24,16 @@ export const MIGRATION_CHAIN = [
     "index:uq_topic_clusters_slug",
     "index:idx_topic_clusters_status_last_seen_at",
   ] },
+  { tag: "0007_silly_turbo", artifacts: [
+    "table:source_locks",
+    "table:source_lock_evidence",
+    "index:uq_source_locks_review_fingerprint",
+    "index:uq_source_locks_save_plan_fingerprint",
+    "index:idx_source_locks_lead_created_at",
+    "index:uq_source_lock_evidence_lock_role",
+    "index:idx_source_lock_evidence_canonical_url",
+    "index:idx_source_lock_evidence_source_id",
+  ] },
 ];
 
 function safeResult(fields = {}) {

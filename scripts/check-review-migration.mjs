@@ -22,6 +22,7 @@ const reviewMigration = migrations.find(({ sql }) => /CREATE TABLE `review_audit
 const receiptMigration = migrations.find(({ sql }) => /CREATE TABLE `pilot_authorization_receipts`/.test(sql));
 const metricsMigration = migrations.find(({ sql }) => /ALTER TABLE `metrics` ADD `source_kind`/.test(sql));
 const scriptReviewAcceptanceMigration = migrations.find(({ sql }) => /CREATE TABLE `script_review_acceptances`/.test(sql));
+const sourceLockMigration = migrations.find(({ sql }) => /CREATE TABLE `source_locks`/.test(sql));
 assert.ok(reviewMigration, "No migration creates review_audits");
 assert.match(reviewMigration.sql, /idx_review_audits_job_created_at/, "Review audit lookup index is missing");
 assert.ok(receiptMigration, "No migration creates pilot_authorization_receipts");
@@ -38,6 +39,12 @@ assert.ok(scriptReviewAcceptanceMigration, "No migration creates script_review_a
 assert.match(scriptReviewAcceptanceMigration.sql, /uq_script_review_acceptances_output_source_lock/, "Script review acceptance deduplication index is missing");
 assert.match(scriptReviewAcceptanceMigration.sql, /idx_script_review_acceptances_idea_reviewed_at/, "Script review acceptance history index is missing");
 assert.doesNotMatch(scriptReviewAcceptanceMigration.sql, /\b(?:DROP|DELETE|TRUNCATE)\b/i, "Script review acceptance migration contains a destructive statement");
+assert.ok(sourceLockMigration, "No migration creates source_locks");
+assert.match(sourceLockMigration.sql, /CREATE TABLE `source_lock_evidence`/, "Source lock evidence table is missing");
+assert.match(sourceLockMigration.sql, /uq_source_locks_review_fingerprint/, "Source lock review fingerprint dedupe index is missing");
+assert.match(sourceLockMigration.sql, /uq_source_locks_save_plan_fingerprint/, "Source lock save-plan dedupe index is missing");
+assert.match(sourceLockMigration.sql, /uq_source_lock_evidence_lock_role/, "Source evidence role uniqueness index is missing");
+assert.doesNotMatch(sourceLockMigration.sql, /\b(?:ALTER|DROP|DELETE|INSERT|REPLACE|TRUNCATE|UPDATE)\b/i, "Source lock migration contains a mutating statement");
 
 console.log(JSON.stringify({
   sourcePlanReady: true,
@@ -45,6 +52,6 @@ console.log(JSON.stringify({
   liveStateRequired: true,
   applied: false,
   targetBinding: hosting.d1,
-  migrations: { reviewAudit: reviewMigration.tag, pilotAuthorizationReceipts: receiptMigration.tag, metricsProvenance: metricsMigration.tag, scriptReviewAcceptances: scriptReviewAcceptanceMigration.tag },
+  migrations: { reviewAudit: reviewMigration.tag, pilotAuthorizationReceipts: receiptMigration.tag, metricsProvenance: metricsMigration.tag, scriptReviewAcceptances: scriptReviewAcceptanceMigration.tag, sourceLocks: sourceLockMigration.tag },
   destructiveStatements: false,
 }, null, 2));
