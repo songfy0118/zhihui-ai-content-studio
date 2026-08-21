@@ -49,6 +49,6 @@ test("registers schema and migration-chain artifacts without an apply route", as
   assert.match(schema, /sqliteTable\("human_claim_acceptance_items"/);
   assert.match(schema, /sqliteTable\("human_claim_acceptance_sources"/);
   assert.match(journal, /0008_overconfident_vance_astro/);
-  assert.equal(MIGRATION_CHAIN.at(-1).tag, migrationTag);
+  assert.ok(MIGRATION_CHAIN.some(({ tag }) => tag === migrationTag));
   assert.doesNotMatch(script, /getDb|\.batch\(|\.run\(|wrangler d1 migrations apply/);
 });

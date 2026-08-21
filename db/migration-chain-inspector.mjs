@@ -47,6 +47,15 @@ export const MIGRATION_CHAIN = [
     "index:idx_human_claim_acceptance_sources_candidate_id",
     "index:idx_human_claim_acceptance_sources_source_id",
   ] },
+  { tag: "0009_chunky_praxagora", artifacts: [
+    "table:platform_text_draft_review_receipts",
+    "table:platform_text_draft_review_platforms",
+    "index:uq_platform_text_draft_review_fingerprint",
+    "index:uq_platform_text_draft_review_idempotency_key",
+    "index:idx_platform_text_draft_review_preview_created_at",
+    "index:uq_platform_text_draft_review_platform_receipt_platform",
+    "index:idx_platform_text_draft_review_platform_draft",
+  ] },
 ];
 
 function safeResult(fields = {}) {

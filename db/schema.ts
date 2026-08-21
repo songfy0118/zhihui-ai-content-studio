@@ -242,3 +242,29 @@ export const humanClaimAcceptanceSources = sqliteTable("human_claim_acceptance_s
   index("idx_human_claim_acceptance_sources_candidate_id").on(table.candidateId),
   index("idx_human_claim_acceptance_sources_source_id").on(table.sourceId),
 ]);
+
+export const platformTextDraftReviewReceipts = sqliteTable("platform_text_draft_review_receipts", {
+  id: text("id").primaryKey(),
+  draftPreviewFingerprint: text("draft_preview_fingerprint").notNull(),
+  blueprintFingerprint: text("blueprint_fingerprint").notNull(),
+  reviewFingerprint: text("review_fingerprint").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  status: text("status").notNull().default("active"),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_platform_text_draft_review_fingerprint").on(table.reviewFingerprint),
+  uniqueIndex("uq_platform_text_draft_review_idempotency_key").on(table.idempotencyKey),
+  index("idx_platform_text_draft_review_preview_created_at").on(table.draftPreviewFingerprint, table.createdAt),
+]);
+
+export const platformTextDraftReviewPlatforms = sqliteTable("platform_text_draft_review_platforms", {
+  receiptId: text("receipt_id").notNull(),
+  platform: text("platform").notNull(),
+  draftFingerprint: text("draft_fingerprint").notNull(),
+  reviewNote: text("review_note").notNull(),
+  reviewChecksJson: text("review_checks_json").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_platform_text_draft_review_platform_receipt_platform").on(table.receiptId, table.platform),
+  index("idx_platform_text_draft_review_platform_draft").on(table.platform, table.draftFingerprint),
+]);
