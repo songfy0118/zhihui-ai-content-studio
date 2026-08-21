@@ -95,6 +95,7 @@ npm run pilot:package
 - 当前自动 RSS 仅包括 OpenAI、Microsoft、Google、AWS、Apple、NVIDIA 与美国监管机构的公开源；每源最多 5 条、单源上限 1.5 MB、超时 8 秒，只保留标题、原文链接、时间和最多 240 字短摘要
 - `npm run news:clusters`：在一次 RSS 只读预览上按标题词项、七天时间窗和独立来源进行确定性聚类；只输出候选资格，不执行热度预测、事实核验或数据库写入
 - `npm run news:rank`：只对合格的跨来源簇计算来源多样性、报道数量、时效、聚类一致性和默认账号主题匹配的相对优先级；不生成播放量或爆款概率，事实核验前不可进入草稿
+- `npm run news:gaps`：从七天内的单来源簇生成最多 12 条账号匹配补证线索与建议检索词；只允许加入本次页面的临时补证清单，不自动搜索、不保存选择，也不解锁来源锁或草稿
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜

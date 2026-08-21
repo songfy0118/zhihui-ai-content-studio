@@ -29,7 +29,7 @@ function recencyScore(cluster, nowMs, windowHours) {
 
 function accountFit(cluster, profile) {
   const categoryWeight = Number(profile.categoryWeights?.[cluster.category] ?? 0);
-  const searchable = [cluster.title, cluster.category, ...(cluster.evidence ?? []).map((item) => item.title)].join(" ").normalize("NFKC").toLocaleLowerCase("en-US");
+  const searchable = [cluster.title, ...(cluster.evidence ?? []).map((item) => item.title)].join(" ").normalize("NFKC").toLocaleLowerCase("en-US");
   const matchedGroups = profile.topicGroups.filter((group) => group.terms.some((term) => searchable.includes(term.toLocaleLowerCase("en-US"))));
   const topicWeight = matchedGroups.reduce((sum, group) => sum + group.weight, 0);
   const topicWeightCap = Math.max(1, ...profile.topicGroups.map((group) => group.weight));
@@ -37,6 +37,15 @@ function accountFit(cluster, profile) {
     category: rounded(categoryWeight * 60),
     topicTerms: rounded((Math.min(topicWeight, topicWeightCap) / topicWeightCap) * 40),
     matchedGroups: matchedGroups.map((group) => group.id),
+  };
+}
+
+export function scoreAccountFit(cluster, profile = DEFAULT_ACCOUNT_PROFILE) {
+  const fit = accountFit(cluster, profile);
+  return {
+    score: rounded(fit.category + fit.topicTerms),
+    breakdown: { category: fit.category, topicTerms: fit.topicTerms },
+    matchedTopics: fit.matchedGroups,
   };
 }
 
@@ -48,8 +57,8 @@ function scoreEligibleCluster(cluster, { profile, nowMs, windowHours }) {
     titleCoherence: rounded((cluster.meanSimilarity ?? 0) * 20),
   };
   const trendEvidenceScore = rounded(Object.values(evidence).reduce((sum, value) => sum + value, 0));
-  const fit = accountFit(cluster, profile);
-  const accountFitScore = rounded(fit.category + fit.topicTerms);
+  const fit = scoreAccountFit(cluster, profile);
+  const accountFitScore = fit.score;
   const relativePriorityScore = rounded(trendEvidenceScore * 0.6 + accountFitScore * 0.4);
 
   return {
@@ -64,8 +73,8 @@ function scoreEligibleCluster(cluster, { profile, nowMs, windowHours }) {
     trendEvidenceScore,
     accountFitScore,
     relativePriorityScore,
-    scoreBreakdown: { ...evidence, accountCategory: fit.category, accountTerms: fit.topicTerms },
-    matchedAccountTopics: fit.matchedGroups,
+    scoreBreakdown: { ...evidence, accountCategory: fit.breakdown.category, accountTerms: fit.breakdown.topicTerms },
+    matchedAccountTopics: fit.matchedTopics,
     scoreVersion: "rules-v1",
     predictedViews: null,
     viralProbability: null,
