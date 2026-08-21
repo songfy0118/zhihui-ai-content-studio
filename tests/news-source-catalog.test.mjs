@@ -20,9 +20,23 @@ test("wechat remains a disabled manual-review source", () => {
 
 test("catalog summary separates automatic and manual sources", () => {
   const summary = summarizeNewsSourceCatalog();
-  assert.equal(summary.totalSources, 7);
-  assert.equal(summary.enabledSources, 6);
-  assert.equal(summary.rssSources, 4);
+  assert.equal(summary.totalSources, 11);
+  assert.equal(summary.enabledSources, 10);
+  assert.equal(summary.rssSources, 8);
   assert.equal(summary.officialNewsrooms, 2);
   assert.equal(summary.manualReviewSources, 1);
+});
+
+test("expanded feeds are official, attributable and have discovery evidence", () => {
+  const expandedIds = ["google-blog", "aws-machine-learning-blog", "apple-machine-learning-research", "nvidia-blog"];
+  for (const id of expandedIds) {
+    const source = NEWS_SOURCE_CATALOG.find((candidate) => candidate.id === id);
+    assert.ok(source, `missing ${id}`);
+    assert.equal(source.sourceType, "rss");
+    assert.equal(source.requiresLogin, false);
+    assert.equal(source.rightsPolicy, "official_feed_metadata_with_attribution");
+    assert.match(source.feedEvidenceUrl, /^https:\/\//);
+  }
+  assert.equal(NEWS_SOURCE_CATALOG.find((source) => source.id === "google-blog")?.category, "company_technology");
+  assert.equal(NEWS_SOURCE_CATALOG.find((source) => source.id === "nvidia-blog")?.category, "company_technology");
 });
