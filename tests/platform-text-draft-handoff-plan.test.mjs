@@ -80,6 +80,8 @@ test("builds a deterministic two-platform visible-browser handoff plan", () => {
   assert.equal(result.status, "platform_text_draft_handoff_plan_ready");
   assert.equal(result.copyHandoffReady, true);
   assert.equal(result.eligibleForVisibleBrowserOpenAuthorization, true);
+  assert.equal(result.draftPreviewFingerprint, draftPreview.previewFingerprint);
+  assert.equal(result.reviewFingerprint, reviewRead.receipt.reviewFingerprint);
   assert.match(result.handoffFingerprint, /^[a-f0-9]{64}$/);
   assert.deepEqual(result.handoffItems.map(({ platform }) => platform), ["xiaohongshu", "douyin"]);
   assert.equal(result.handoffItems[0].creatorEntryUrl, "https://creator.xiaohongshu.com/publish");

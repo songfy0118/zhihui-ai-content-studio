@@ -121,6 +121,8 @@ function safeResult(fields = {}) {
   return {
     status: "platform_text_draft_handoff_plan_blocked",
     blockers: [],
+    draftPreviewFingerprint: null,
+    reviewFingerprint: null,
     handoffFingerprint: null,
     handoffItems: [],
     copyHandoffReady: false,
@@ -182,6 +184,8 @@ export function buildPlatformTextDraftHandoffPlan(draftPreview, reviewRead) {
   return safeResult({
     status: "platform_text_draft_handoff_plan_ready",
     blockers: [],
+    draftPreviewFingerprint: draftPreview.previewFingerprint,
+    reviewFingerprint: receipt.reviewFingerprint,
     handoffFingerprint,
     handoffItems,
     copyHandoffReady: true,
