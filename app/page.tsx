@@ -12,8 +12,11 @@ type NewsPreviewStatus = { status:"preview_ready"|"no_live_items";fetchedAt:stri
 type TopicClusterPreview = { status:"clusters_ready"|"no_items";summary:{itemsConsidered:number;clusterCount:number;crossSourceClusters:number;eligibleCandidates:number;similarityThreshold:number;windowHours:number};clusters:Array<{id:string;title:string;status:string;itemCount:number;sourceCount:number;sourceIds:string[];firstSeenAt:string|null;lastSeenAt:string|null;meanSimilarity:number|null;crossSourceConfirmed:boolean;timeWindowVerified:boolean;eligibleForHotspotScoring:boolean}>;factsVerified:boolean;heatScored:boolean;externalCalls:number;databaseWrites:boolean;publishTriggered:boolean };
 type TopicRankingPreview = { status:"ranked_candidates_ready"|"no_eligible_candidates";profile:{id:string;label:string;calibration:string};summary:{clustersConsidered:number;eligibleClusters:number;rankedCandidates:number;blockedBeforeScoring:number};candidates:Array<{id:string;title:string;sourceCount:number;itemCount:number;trendEvidenceScore:number;accountFitScore:number;relativePriorityScore:number;matchedAccountTopics:string[];predictedViews:null;viralProbability:null;factsVerified:false;selectableForDraft:false}>;scoreKind:string;heatScored:boolean;factsVerified:boolean;predictedViewsGenerated:boolean;viralProbabilityGenerated:boolean;accountMetricsUsed:boolean;humanSelectionUnlocked:boolean;externalCalls:number;databaseWrites:boolean;publishTriggered:boolean };
 type EvidenceGapPreview = { status:"evidence_gaps_ready"|"no_recent_account_fit_leads";profile:{id:string;label:string;calibration:string};summary:{clustersConsidered:number;recentSingleSourceLeads:number;leadsReturned:number;independentSourcesStillRequired:number;windowHours:number;minimumAccountFit:number};leads:Array<{id:string;title:string;category:string;sourceId:string;publishedAt:string;ageHours:number;accountFitScore:number;matchedAccountTopics:string[];status:"needs_independent_source";missingIndependentSources:1;suggestedQueries:string[];shortlistableForEvidenceSearch:true;factsVerified:false;sourceLockReady:false;selectableForDraft:false}>;humanShortlistPersisted:false;evidenceSearchTriggered:false;factsVerified:false;sourceLocksCreated:0;draftsUnlocked:0;externalCalls:number;databaseWrites:false;publishTriggered:false };
-type EvidenceSearchPlanPreview = { status:"search_plan_ready"|"search_plan_blocked";readyForHumanResearchReview:boolean;blockers:string[];selection:{requested:number;accepted:number;maximum:number};targets:Array<{leadId:string;title:string;originalSourceId:string;sourcePublishedAt:string;status:"planned_not_executed";queries:string[];allowedSources:Array<{id:string;name:string;sourceType:string;baseUrl:string;feedUrl:string|null}>;requiredIndependentSources:number;resultsFound:0;claimsVerified:0;sourceLockReady:false}>;planFingerprint:string|null;allowedMethods:string[];prohibitedMethods:string[];automaticSearchAllowed:false;searchTriggered:false;factsVerified:false;sourceLocksCreated:0;draftsUnlocked:0;databaseWrites:false;publishTriggered:false;externalCalls:number };
+type EvidenceSearchPlanPreview = { status:"search_plan_ready"|"search_plan_blocked";readyForHumanResearchReview:boolean;blockers:string[];selection:{requested:number;accepted:number;maximum:number};targets:Array<{leadId:string;title:string;originalSourceId:string;sourcePublishedAt:string;originalEvidence:Array<{id:string;sourceId:string;sourceName:string;title:string;canonicalUrl:string;publishedAt:string}>;status:"planned_not_executed";queries:string[];allowedSources:Array<{id:string;name:string;sourceType:string;baseUrl:string;feedUrl:string|null}>;requiredIndependentSources:number;resultsFound:0;claimsVerified:0;sourceLockReady:false}>;planFingerprint:string|null;allowedMethods:string[];prohibitedMethods:string[];automaticSearchAllowed:false;searchTriggered:false;factsVerified:false;sourceLocksCreated:0;draftsUnlocked:0;databaseWrites:false;publishTriggered:false;externalCalls:number };
 type EvidenceMetadataPreview = { status:"metadata_preview_blocked"|"metadata_candidates_found"|"no_metadata_candidates";blockers:string[];planFingerprint:string|null;summary:{targetsReviewed:number;itemsConsidered:number;candidatesReturned:number};targets:Array<{leadId:string;title:string;originalSourceId:string;candidateCount:number;candidates:Array<{id:string;sourceId:string;sourceName:string;title:string;canonicalUrl:string;publishedAt:string;titleSimilarity:number;sharedTerms:string[];reviewStatus:"human_review_required"}>;sourceLockReady:false;factsVerified:false}>;searchScope:string;feedMetadataMatched:boolean;articleBodiesFetched:false;humanReviewRequired?:true;factsVerified:false;sourceLocksCreated:0;draftsUnlocked:0;databaseWrites:false;publishTriggered:false;externalCalls:number };
+type EvidenceReviewCheckId = "same_event_confirmed"|"source_independence_confirmed"|"dates_consistent"|"no_material_conflict_found";
+type EvidenceReviewDecision = { candidateId:string; checks:Record<EvidenceReviewCheckId,boolean> };
+type EvidenceReviewPreview = { status:"evidence_review_preview_ready"|"evidence_review_preview_blocked";readyForAuthorizedSourceLockSave:boolean;blockers:string[];planFingerprint:string|null;reviewFingerprint:string|null;summary:{targetsRequired:number;targetsReviewed:number;targetsEligible:number};semanticReview:string;persisted:false;sourceLockCreated:false;factsVerified:false;draftsUnlocked:0;databaseWrites:false;publishTriggered:false;externalCalls:number };
 type MetricFeedStatus = { status:"loading"|"verified"|"awaiting_verified_import"|"storage_unavailable";realDataOnly:boolean;recordsExcluded:number;acceptedSources:string[];writePerformed:boolean;publishTriggered:boolean };
 type MetricsMigrationStatus = { mode:string;localOnly:boolean;migrationTag:string;authorizationRequired:boolean;readyToApplyLocally:boolean;blockers:string[];applyPerformed:boolean;databaseWrites:boolean;storage?:{status:string;verified:boolean;columnsPresent:string[];missingColumns:string[];indexPresent:boolean} };
 type D1MigrationChainStatus = { mode:string;localOnly:boolean;authorizationRequired:boolean;status:"loading"|"empty"|"incomplete"|"current";current:boolean;emptyApplicationSchema:boolean;completedSteps:number;totalSteps:number;firstPending:string|null;blockers:string[];databaseWrites:boolean;applyPerformed:boolean };
@@ -45,6 +48,12 @@ const platformMeta = {
   tiktok: { name:"TikTok", region:"美国", color:"#51e7dd" },
   xiaohongshu: { name:"小红书", region:"中国", color:"#ff2442" },
 };
+const evidenceReviewChecklist: Array<{id:EvidenceReviewCheckId;label:string}> = [
+  { id:"same_event_confirmed", label:"两条公开来源确实报道同一事件" },
+  { id:"source_independence_confirmed", label:"第二来源不是原文转载或同域镜像" },
+  { id:"dates_consistent", label:"发布时间与事件时间没有明显冲突" },
+  { id:"no_material_conflict_found", label:"标题和公开页面没有关键事实冲突" },
+];
 const runtimeServiceLabels: Record<string,string> = { studio:"知绘操作台", bridge:"本机桥接", local_mini_drama_api:"漫剧后端", local_mini_drama_web:"漫剧前端" };
 
 const fallbackIdeas: Idea[] = [
@@ -129,6 +138,9 @@ export default function Home() {
   const [evidenceSearchPlanBusy, setEvidenceSearchPlanBusy] = useState(false);
   const [evidenceMetadataPreview, setEvidenceMetadataPreview] = useState<EvidenceMetadataPreview|null>(null);
   const [evidenceMetadataBusy, setEvidenceMetadataBusy] = useState(false);
+  const [evidenceReviewDecisions, setEvidenceReviewDecisions] = useState<Record<string,EvidenceReviewDecision>>({});
+  const [evidenceReviewPreview, setEvidenceReviewPreview] = useState<EvidenceReviewPreview|null>(null);
+  const [evidenceReviewBusy, setEvidenceReviewBusy] = useState(false);
   const [platforms, setPlatforms] = useState(["douyin", "tiktok", "xiaohongshu"]);
   const [view, setView] = useState("ideas");
   const [message, setMessage] = useState("正在载入你的内容工厂…");
@@ -237,6 +249,8 @@ export default function Home() {
       setEvidenceGapShortlist([]);
       setEvidenceSearchPlan(null);
       setEvidenceMetadataPreview(null);
+      setEvidenceReviewDecisions({});
+      setEvidenceReviewPreview(null);
     } catch {
       setMessage("补证清单生成失败；没有自动搜索、保存选择、写入数据库或解锁草稿。");
     } finally {
@@ -246,11 +260,15 @@ export default function Home() {
   const toggleEvidenceGap = (id:string) => {
     setEvidenceSearchPlan(null);
     setEvidenceMetadataPreview(null);
+    setEvidenceReviewDecisions({});
+    setEvidenceReviewPreview(null);
     setEvidenceGapShortlist((current) => current.includes(id) ? current.filter((candidateId) => candidateId !== id) : current.length < 3 ? [...current, id] : current);
   };
   const previewEvidenceSearchPlan = async () => {
     setEvidenceSearchPlanBusy(true);
     setEvidenceMetadataPreview(null);
+    setEvidenceReviewDecisions({});
+    setEvidenceReviewPreview(null);
     try {
       const response = await fetch("/api/news/evidence-search-plan", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ selectedIds:evidenceGapShortlist }) });
       setEvidenceSearchPlan(await response.json() as EvidenceSearchPlanPreview);
@@ -262,6 +280,8 @@ export default function Home() {
   };
   const previewEvidenceMetadata = async () => {
     setEvidenceMetadataBusy(true);
+    setEvidenceReviewDecisions({});
+    setEvidenceReviewPreview(null);
     try {
       const response = await fetch("/api/news/evidence-metadata-preview", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ selectedIds:evidenceGapShortlist }) });
       setEvidenceMetadataPreview(await response.json() as EvidenceMetadataPreview);
@@ -269,6 +289,26 @@ export default function Home() {
       setMessage("公开 RSS 元数据检索失败；没有读取文章正文、核验事实、创建来源锁或写入数据库。");
     } finally {
       setEvidenceMetadataBusy(false);
+    }
+  };
+  const selectEvidenceCandidate = (leadId:string, candidateId:string) => {
+    setEvidenceReviewPreview(null);
+    setEvidenceReviewDecisions((current) => ({ ...current, [leadId]: { candidateId, checks:Object.fromEntries(evidenceReviewChecklist.map(({id})=>[id,false])) as Record<EvidenceReviewCheckId,boolean> } }));
+  };
+  const toggleEvidenceReviewCheck = (leadId:string, checkId:EvidenceReviewCheckId) => {
+    setEvidenceReviewPreview(null);
+    setEvidenceReviewDecisions((current) => current[leadId] ? ({ ...current, [leadId]: { ...current[leadId], checks:{ ...current[leadId].checks, [checkId]:!current[leadId].checks[checkId] } } }) : current);
+  };
+  const previewEvidenceReview = async () => {
+    setEvidenceReviewBusy(true);
+    try {
+      const decisions = Object.entries(evidenceReviewDecisions).map(([leadId,decision])=>({leadId,candidateId:decision.candidateId,checks:decision.checks}));
+      const response = await fetch("/api/news/evidence-review-preview", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ selectedIds:evidenceGapShortlist, decisions }) });
+      setEvidenceReviewPreview(await response.json() as EvidenceReviewPreview);
+    } catch {
+      setMessage("证据审查预览失败；没有保存审查、创建来源锁、写入数据库或生成草稿。");
+    } finally {
+      setEvidenceReviewBusy(false);
     }
   };
   useEffect(() => {
@@ -699,8 +739,9 @@ export default function Home() {
           <header><div><small>EVIDENCE GAP · HUMAN SHORTLIST</small><b>{evidenceGaps?`${evidenceGaps.summary.leadsReturned} 条补证线索 · 已选 ${evidenceGapShortlist.length}/3`:"等待单来源线索分析"}</b></div><button type="button" disabled={evidenceGapsBusy} onClick={loadEvidenceGaps}>{evidenceGapsBusy?"分析中…":"生成补证清单（只读）"}</button></header>
           {evidenceGaps?.leads.length ? <div>{evidenceGaps.leads.slice(0,8).map((lead)=><article className={evidenceGapShortlist.includes(lead.id)?"selected":""} key={lead.id}><div><small>账号匹配 {lead.accountFitScore} · {lead.sourceId} · {lead.ageHours} 小时前</small><b>{lead.title}</b><span>还缺 {lead.missingIndependentSources} 个独立来源 · 建议检索：{lead.suggestedQueries[0]}</span></div><button type="button" onClick={()=>toggleEvidenceGap(lead.id)}>{evidenceGapShortlist.includes(lead.id)?"移出清单":"加入补证"}</button></article>)}</div> : <p>{evidenceGaps?"当前没有同时满足七天时效和账号匹配门槛的单来源线索。":"这里只筛出值得继续找第二来源的线索；不会自动搜索，也不会把线索当成已核验选题。"}</p>}
           {evidenceGapShortlist.length>0&&<aside className="evidenceSearchPlan"><div><b>{evidenceSearchPlan?.readyForHumanResearchReview?"检索计划已生成，但尚未执行":`已选 ${evidenceGapShortlist.length} 条，等待生成计划`}</b><span>{evidenceSearchPlan?.readyForHumanResearchReview?`${evidenceSearchPlan.targets.length} 个目标 · ${evidenceSearchPlan.targets.reduce((sum,target)=>sum+target.allowedSources.length,0)} 个允许信源入口`:`最多 3 条 · 只允许公开 RSS 与官方新闻室`}</span>{evidenceSearchPlan?.planFingerprint&&<code>{evidenceSearchPlan.planFingerprint.slice(0,16)}…</code>}</div><div className="evidencePlanActions"><button type="button" disabled={evidenceSearchPlanBusy} onClick={previewEvidenceSearchPlan}>{evidenceSearchPlanBusy?"核对中…":"生成第二来源检索计划（不执行）"}</button><button type="button" disabled={!evidenceSearchPlan?.readyForHumanResearchReview||evidenceMetadataBusy} onClick={previewEvidenceMetadata}>{evidenceMetadataBusy?"检索中…":"检索公开 RSS 元数据"}</button></div></aside>}
-          {evidenceMetadataPreview&&<div className="evidenceMetadataResults">{evidenceMetadataPreview.targets.flatMap((target)=>target.candidates.map((candidate)=><article key={`${target.leadId}:${candidate.id}`}><div><small>待人工判断 · {candidate.sourceName} · 标题相似度 {candidate.titleSimilarity}</small><b>{candidate.title}</b><span>共同词项：{candidate.sharedTerms.join(" / ")}</span></div><a href={candidate.canonicalUrl} target="_blank" rel="noreferrer">查看公开来源</a></article>))}{evidenceMetadataPreview.summary.candidatesReturned===0&&<p>本轮公开 RSS 元数据没有达到宽松候选阈值；不把“没有找到”解释为事件不存在。</p>}</div>}
-          <footer>本次临时选择 {evidenceGapShortlist.length} · RSS 元数据候选 {evidenceMetadataPreview?.summary.candidatesReturned??0} · 正文读取 0 · 持久化 0 · 事实核验 0 · 来源锁 0 · 草稿解锁 0 · 发布 0</footer>
+          {evidenceMetadataPreview&&<div className="evidenceMetadataResults">{evidenceMetadataPreview.targets.flatMap((target)=>target.candidates.map((candidate)=><article className={evidenceReviewDecisions[target.leadId]?.candidateId===candidate.id?"selected":""} key={`${target.leadId}:${candidate.id}`}><div><small>待人工判断 · {candidate.sourceName} · 标题相似度 {candidate.titleSimilarity}</small><b>{candidate.title}</b><span>共同词项：{candidate.sharedTerms.join(" / ")}</span></div><div><a href={candidate.canonicalUrl} target="_blank" rel="noreferrer">查看公开来源</a><button type="button" onClick={()=>selectEvidenceCandidate(target.leadId,candidate.id)}>{evidenceReviewDecisions[target.leadId]?.candidateId===candidate.id?"已选择":"选择候选"}</button></div></article>))}{evidenceMetadataPreview.summary.candidatesReturned===0&&<p>本轮公开 RSS 元数据没有达到宽松候选阈值；不把“没有找到”解释为事件不存在。</p>}</div>}
+          {Object.keys(evidenceReviewDecisions).length>0&&<aside className="evidenceReviewForm"><header><b>人工证据审查（本次页面临时状态）</b><span>{evidenceReviewPreview?.readyForAuthorizedSourceLockSave?"预览通过，但尚未保存来源锁":"完成四项判断后只生成预览"}</span></header>{Object.entries(evidenceReviewDecisions).map(([leadId,decision])=><div key={leadId}><strong>{evidenceMetadataPreview?.targets.find((target)=>target.leadId===leadId)?.candidates.find((candidate)=>candidate.id===decision.candidateId)?.title}</strong>{evidenceReviewChecklist.map(({id,label})=><label key={id}><input type="checkbox" checked={decision.checks[id]} onChange={()=>toggleEvidenceReviewCheck(leadId,id)}/>{label}</label>)}</div>)}<button type="button" disabled={evidenceReviewBusy} onClick={previewEvidenceReview}>{evidenceReviewBusy?"核对中…":"预览证据审查（不保存）"}</button>{evidenceReviewPreview&&<footer>合格 {evidenceReviewPreview.summary.targetsEligible}/{evidenceReviewPreview.summary.targetsRequired} · 审查指纹 {evidenceReviewPreview.reviewFingerprint?.slice(0,16)??"未生成"} · 来源锁仍为 0</footer>}</aside>}
+          <footer>本次临时选择 {evidenceGapShortlist.length} · RSS 元数据候选 {evidenceMetadataPreview?.summary.candidatesReturned??0} · 审查保存 0 · 事实核验 0 · 来源锁 0 · 草稿解锁 0 · 发布 0</footer>
         </section>
         <section className="controlStrip">
           <div><small>01</small><b>选择图文平台</b></div>
