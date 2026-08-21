@@ -170,3 +170,34 @@ export const topicClusterItems = sqliteTable("topic_cluster_items", {
   uniqueIndex("uq_topic_cluster_items_cluster_item").on(table.clusterId, table.itemId),
   index("idx_topic_cluster_items_item_id").on(table.itemId),
 ]);
+
+export const sourceLocks = sqliteTable("source_locks", {
+  id: text("id").primaryKey(),
+  leadId: text("lead_id").notNull(),
+  title: text("title").notNull(),
+  reviewFingerprint: text("review_fingerprint").notNull(),
+  savePlanFingerprint: text("save_plan_fingerprint").notNull(),
+  status: text("status").notNull().default("active"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_source_locks_review_fingerprint").on(table.reviewFingerprint),
+  uniqueIndex("uq_source_locks_save_plan_fingerprint").on(table.savePlanFingerprint),
+  index("idx_source_locks_lead_created_at").on(table.leadId, table.createdAt),
+]);
+
+export const sourceLockEvidence = sqliteTable("source_lock_evidence", {
+  sourceLockId: text("source_lock_id").notNull(),
+  evidenceId: text("evidence_id").notNull(),
+  sourceId: text("source_id").notNull(),
+  sourceName: text("source_name").notNull(),
+  title: text("title").notNull(),
+  canonicalUrl: text("canonical_url").notNull(),
+  publishedAt: text("published_at"),
+  evidenceRole: text("evidence_role").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_source_lock_evidence_lock_role").on(table.sourceLockId, table.evidenceRole),
+  index("idx_source_lock_evidence_canonical_url").on(table.canonicalUrl),
+  index("idx_source_lock_evidence_source_id").on(table.sourceId),
+]);
