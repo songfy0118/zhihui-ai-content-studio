@@ -1087,9 +1087,9 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(page, /知绘工厂/);
   assert.match(page, /今日选题/);
   assert.match(page, /生成队列/);
-  assert.match(page, /审核发布/);
-  assert.match(page, /数据学习/);
-  assert.match(page, /交给本机引擎/);
+  assert.match(page, /审核交接/);
+  assert.match(page, /增长学习/);
+  assert.match(page, /生成来源锁定草稿/);
   assert.match(page, /\/api\/local\/generate/);
   assert.match(page, /LumenX 本机适配器/);
   assert.match(page, /生成竖屏静帧/);
@@ -1536,7 +1536,7 @@ test("diagnoses a stale local bridge without restarting or mutating its process"
     assert.match(launcher, new RegExp(capability));
   }
   assert.match(launcher, /bridge is stale/);
-  assert.match(launcher, /bridge reload is required/);
+  assert.match(launcher, /Close the old Zhihui local studio processes/);
   assert.doesNotMatch(launcher, /Stop-Process|taskkill|process\.kill/);
   assert.match(restartPlan, /param\(\[switch\]\$Execute\)/);
   assert.match(restartPlan, /if \(-not \$Execute\)/);
@@ -1776,7 +1776,7 @@ test("excludes metrics without platform provenance and disables unverified write
   assert.match(page, /fetch\("\/api\/local\/migration-chain-verification"/);
   assert.match(page, /ISOLATED SQLITE · 结构演练/);
   assert.match(page, /真实 D1 写入/);
-  assert.match(page, /D1 CHAIN · 0000 → 0004/);
+  assert.match(page, /D1 CHAIN · 0000 → 0006/);
   assert.match(page, /metricFeedStatus\.status==="verified"\?totalViews/);
   assert.match(styles, /\.metricProvenance/);
   assert.match(styles, /\.metricsMigration/);

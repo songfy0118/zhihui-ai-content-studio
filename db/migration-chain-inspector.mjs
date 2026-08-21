@@ -9,6 +9,21 @@ export const MIGRATION_CHAIN = [
   { tag: "0003_faithful_harry_osborn", artifacts: ["table:pilot_authorization_receipts", "index:idx_pilot_receipts_execution_hash_issued_at", "index:idx_pilot_receipts_status_expires_at"] },
   { tag: "0004_strange_doorman", artifacts: ["column:source_kind", "column:external_post_id", "column:captured_at", "column:imported_at", "index:uq_metrics_platform_post_captured_at"] },
   { tag: "0005_jazzy_toad", artifacts: ["table:script_review_acceptances", "index:uq_script_review_acceptances_output_source_lock", "index:idx_script_review_acceptances_idea_reviewed_at"] },
+  { tag: "0006_amused_vulture", artifacts: [
+    "table:news_items",
+    "table:news_sources",
+    "table:topic_cluster_items",
+    "table:topic_clusters",
+    "index:uq_news_items_canonical_url",
+    "index:idx_news_items_source_published_at",
+    "index:idx_news_items_content_hash",
+    "index:idx_news_sources_enabled_category",
+    "index:idx_news_sources_type",
+    "index:uq_topic_cluster_items_cluster_item",
+    "index:idx_topic_cluster_items_item_id",
+    "index:uq_topic_clusters_slug",
+    "index:idx_topic_clusters_status_last_seen_at",
+  ] },
 ];
 
 function safeResult(fields = {}) {

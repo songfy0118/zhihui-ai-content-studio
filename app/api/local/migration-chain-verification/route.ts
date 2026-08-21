@@ -13,7 +13,7 @@ function unavailable(blocker: string) {
     verified: false,
     appliedTags: [],
     completedSteps: 0,
-    totalSteps: 6,
+    totalSteps: 7,
     blockers: [blocker],
     rollbackPerformed: false,
     rollbackVerified: null,

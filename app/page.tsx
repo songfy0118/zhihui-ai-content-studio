@@ -7,6 +7,7 @@ type Account = { platform:string; handle:string|null; status:string; publishMode
 type Job = { id:string; ideaId:string; stage:string; progress:number; status:string; platforms:string };
 type ReviewAudit = { id:string; jobId:string; action:string; checks:Record<string,boolean>|null; publishTriggered:boolean; createdAt:string; malformed?:boolean };
 type Metric = { platform:string; views:number; likes:number; comments:number; shares:number; saves:number; completionRate:number };
+type NewsSourceCatalogStatus = { status:"loading"|"catalog_ready"|"catalog_blocked"|"unavailable";summary:{totalSources:number;enabledSources:number;rssSources:number;officialNewsrooms:number;manualReviewSources:number};contentFetched:boolean;externalCalls:boolean;databaseWrites:boolean };
 type MetricFeedStatus = { status:"loading"|"verified"|"awaiting_verified_import"|"storage_unavailable";realDataOnly:boolean;recordsExcluded:number;acceptedSources:string[];writePerformed:boolean;publishTriggered:boolean };
 type MetricsMigrationStatus = { mode:string;localOnly:boolean;migrationTag:string;authorizationRequired:boolean;readyToApplyLocally:boolean;blockers:string[];applyPerformed:boolean;databaseWrites:boolean;storage?:{status:string;verified:boolean;columnsPresent:string[];missingColumns:string[];indexPresent:boolean} };
 type D1MigrationChainStatus = { mode:string;localOnly:boolean;authorizationRequired:boolean;status:"loading"|"empty"|"incomplete"|"current";current:boolean;emptyApplicationSchema:boolean;completedSteps:number;totalSteps:number;firstPending:string|null;blockers:string[];databaseWrites:boolean;applyPerformed:boolean };
@@ -41,16 +42,16 @@ const platformMeta = {
 const runtimeServiceLabels: Record<string,string> = { studio:"知绘操作台", bridge:"本机桥接", local_mini_drama_api:"漫剧后端", local_mini_drama_web:"漫剧前端" };
 
 const fallbackIdeas: Idea[] = [
-  ["octopus","如果章鱼去面试，它能同时握几次手？","三颗心脏、分布式神经系统，用办公室喜剧纠正九个大脑的误解","动物",94,87,92],
-  ["immune","你的免疫细胞，正在身体里拍警匪片","把伤口后的免疫反应讲成一次紧急出警","人体",91,84,94],
-  ["earth-candy","把地球压成一颗糖，会发生什么？","用极端尺度解释黑洞与史瓦西半径","宇宙",88,91,86],
-  ["ai-cat","AI认得猫，为什么不一定懂猫？","用对抗样本解释识别与理解的区别","科技",85,93,89],
-  ["crow","乌鸦为什么会记仇？","让阿墨误惹一只可以记住人脸的乌鸦","动物",92,89,95],
-  ["sleep","熬夜后，大脑真的会吃掉自己吗？","从夸张标题切入，解释胶质细胞与睡眠","人体",90,86,96],
-  ["moon","月球正在偷偷离开地球","把每年约3.8厘米的距离变化变成离家故事","宇宙",87,94,90],
-  ["robot","机器人为什么突然都学会走路了？","从强化学习、仿真训练到现实迁移","科技",86,95,88],
-  ["whale","鲸鱼为什么不会被自己的体重压扁？","海水浮力与搁浅风险的反差","动物",93,90,94],
-  ["memory","你的记忆每次回想都会被改写","把记忆再巩固讲成一份反复修改的文档","人体",89,88,97],
+  ["ai-layoffs","大厂继续裁员：程序员会成为下一个土木行业吗？","从公开裁员数据、岗位结构与AI投入拆开讨论，不把单一公司传闻写成行业结论","AI职场",94,88,96],
+  ["ai-agent-work","AI Agent 正在接管哪些白领流程？","追踪企业官方案例，区分演示、试点与已经产生业务结果的部署","AI",92,91,95],
+  ["chip-war","英伟达之后，AI 芯片的下一场战争在哪里？","比较训练、推理、存储和能耗瓶颈，避免只围绕单日股价讲故事","科技金融",89,93,91],
+  ["rate-cut-tech","利率变化为什么先影响科技公司？","用融资成本、估值折现和招聘预算解释宏观变化如何传导到普通从业者","金融",86,90,94],
+  ["open-source-ai","开源模型正在让闭源 AI 失去护城河吗？","按能力、成本、部署和生态四个维度核对，不用跑分替代真实业务效果","AI",88,94,92],
+  ["coding-career","AI 会写代码之后，计算机专业还值得读吗？","把重复编码、系统设计、领域知识和岗位增长拆成四类能力","AI职场",96,89,97],
+  ["robotics-factory","人形机器人离真正进厂还有多远？","只采用厂商公告与可验证试点，标注样机、试产和规模部署的差别","机器人",91,92,90],
+  ["us-tech-policy","美国新的科技政策，真正影响了谁？","从政策原文出发，分别解释公司、投资者和技术从业者的影响","美国科技",87,95,89],
+  ["ai-bubble","AI 是泡沫，还是新一轮基础设施周期？","把资本开支、收入、利润和生产率证据放在一张表里对照","科技金融",93,90,95],
+  ["private-ai","你的公司为什么开始要求 AI 本地部署？","从数据合规、成本、延迟与模型效果解释私有化部署的真实取舍","企业AI",85,87,93],
 ].map(([id,title,angle,category,douyinScore,tiktokScore,xhsScore]) => ({ id:String(id), title:String(title), angle:String(angle), category:String(category), status:"candidate", douyinScore:Number(douyinScore), tiktokScore:Number(tiktokScore), xhsScore:Number(xhsScore), selected:false }));
 
 const reviewChecklist = [
@@ -108,6 +109,7 @@ export default function Home() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [metrics, setMetrics] = useState<Metric[]>([]);
+  const [newsSourceCatalog, setNewsSourceCatalog] = useState<NewsSourceCatalogStatus>({ status:"loading", summary:{totalSources:0,enabledSources:0,rssSources:0,officialNewsrooms:0,manualReviewSources:0}, contentFetched:false, externalCalls:false, databaseWrites:false });
   const [platforms, setPlatforms] = useState(["douyin", "tiktok", "xiaohongshu"]);
   const [view, setView] = useState("ideas");
   const [message, setMessage] = useState("正在载入你的内容工厂…");
@@ -141,8 +143,8 @@ export default function Home() {
   const [socialDraftHandoff, setSocialDraftHandoff] = useState<SocialDraftHandoffStatus>({ status:"loading", supportedPlatforms:[], supportedModes:[], interactiveLoginRequired:true, visibleBrowserRequired:true, verificationBypassAllowed:false, cookieExportAllowed:false, draftOnly:true, publishAllowed:false, publishActionImplemented:false, uploadTriggered:false, draftSaveTriggered:false, draftVerified:false, publishTriggered:false });
   const [metricFeedStatus, setMetricFeedStatus] = useState<MetricFeedStatus>({ status:"loading", realDataOnly:true, recordsExcluded:0, acceptedSources:["platform_api","platform_export"], writePerformed:false, publishTriggered:false });
   const [metricsMigration, setMetricsMigration] = useState<MetricsMigrationStatus>({ mode:"plan_only", localOnly:true, migrationTag:"0004_strange_doorman", authorizationRequired:true, readyToApplyLocally:false, blockers:["status_not_loaded"], applyPerformed:false, databaseWrites:false });
-  const [migrationChain, setMigrationChain] = useState<D1MigrationChainStatus>({ mode:"plan_only", localOnly:true, authorizationRequired:true, status:"loading", current:false, emptyApplicationSchema:false, completedSteps:0, totalSteps:6, firstPending:null, blockers:["status_not_loaded"], databaseWrites:false, applyPerformed:false });
-  const [isolatedChain, setIsolatedChain] = useState<IsolatedChainVerification>({ status:"loading", verified:false, appliedTags:[], completedSteps:0, totalSteps:6, blockers:["status_not_loaded"], rollbackPerformed:false, rollbackVerified:null, ephemeralDatabaseWrites:false, liveDatabaseWrites:false, liveApplyPerformed:false, businessResult:false });
+  const [migrationChain, setMigrationChain] = useState<D1MigrationChainStatus>({ mode:"plan_only", localOnly:true, authorizationRequired:true, status:"loading", current:false, emptyApplicationSchema:false, completedSteps:0, totalSteps:7, firstPending:null, blockers:["status_not_loaded"], databaseWrites:false, applyPerformed:false });
+  const [isolatedChain, setIsolatedChain] = useState<IsolatedChainVerification>({ status:"loading", verified:false, appliedTags:[], completedSteps:0, totalSteps:7, blockers:["status_not_loaded"], rollbackPerformed:false, rollbackVerified:null, ephemeralDatabaseWrites:false, liveDatabaseWrites:false, liveApplyPerformed:false, businessResult:false });
   const [scriptPlan, setScriptPlan] = useState<SourceLockedScriptPlan>({ mode:"local", readyForAuthorization:false, blockers:["status_not_loaded"], sourceLockFingerprint:null, claimCount:0, sourceCount:0, targetPlatforms:[], downstream:null, premiseReturned:false, requestBodyReturned:false, authorizationRequired:true, dispatchAllowed:false, plannedModelCalls:0, modelCalls:0, externalCalls:0, costIncurred:false, scriptGenerated:false, generatedMedia:false, publishTriggered:false, businessResult:false });
   const [scriptAcceptance, setScriptAcceptance] = useState<ScriptAcceptanceStatus>({ mode:"local", status:"loading", ready:false, blockers:["status_not_loaded"], scriptOutputPresent:false, sourceLockFingerprint:null, counts:{knownClaims:0,accountedClaims:0,includedClaims:0,uncitedFactualClaims:null}, semanticVerification:"human_required", automatedFactVerification:false, scriptContentReturned:false, modelCalls:0, externalCalls:false, costIncurred:false, generatedMedia:false, publishTriggered:false, businessResult:false });
   const [scriptReviewSession, setScriptReviewSession] = useState<ScriptReviewSession>({ outputFingerprint:null, checks:{} });
@@ -201,6 +203,19 @@ export default function Home() {
         }
       })
       .catch(() => setLocalEngine({ ready:false, mode:"local", message:"本机引擎未启动" }));
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/news/sources", { cache:"no-store" })
+      .then(async (response) => ({ response, payload: await response.json() as NewsSourceCatalogStatus }))
+      .then(({ response, payload }) => {
+        if (active) setNewsSourceCatalog(response.ok ? payload : { ...payload, status:"catalog_blocked" });
+      })
+      .catch(() => {
+        if (active) setNewsSourceCatalog((catalog) => ({ ...catalog, status:"unavailable" }));
+      });
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
@@ -552,24 +567,28 @@ export default function Home() {
     <aside className="sidebar">
       <div className="brand"><span>知</span><div><b>知绘工厂</b><small>CONTENT OS</small></div></div>
       <nav>
-        {[ ["ideas","今日选题","10"], ["production","生成队列",String(jobs.length)], ["review","审核发布",jobs.length ? "!" : "0"], ["metrics","数据学习",String(metrics.length)], ["accounts","账号与引擎","5"] ].map(([id,label,count]) =>
+        {[ ["ideas","热点雷达","10"], ["production","草稿工坊",String(jobs.length)], ["review","审核交接",jobs.length ? "!" : "0"], ["metrics","增长学习",String(metrics.length)], ["accounts","来源与账号","5"] ].map(([id,label,count]) =>
           <button key={id} className={view===id?"active":""} onClick={()=>setView(id)}><i>{label}</i><span>{count}</span></button>)}
       </nav>
       <div className="sidebarFoot"><span className={localEngine.ready?"pulse online":"pulse"}/> {localEngine.ready?"本机生成引擎在线":"当前为云端规划模式"}<small>RTX 4060 · 8GB VRAM</small></div>
     </aside>
 
     <section className="workspace">
-      <header className="topbar"><div><p>AI SCIENCE CONTENT FACTORY</p><h1>{view==="ideas"?"今天做什么？":view==="production"?"生成到哪了？":view==="review"?"最后把关":view==="metrics"?"让数据教会系统":"把工具接起来"}</h1></div><div className="today"><span>第 01 天</span><b>目标 30 条</b></div></header>
+      <header className="topbar"><div><p>AI · TECH · FINANCE INTELLIGENCE DESK</p><h1>{view==="ideas"?"今天什么值得写？":view==="production"?"草稿做到哪了？":view==="review"?"审核后再发布":view==="metrics"?"让真实数据教会系统":"把来源和账号接起来"}</h1></div><div className="today"><span>增长实验第 01 天</span><b>目标 10 万粉</b></div></header>
       <div className="notice"><span>●</span>{message}</div>
 
       {view === "ideas" && <>
+        <section className="intelBrief">
+          <div><small>TODAY'S INTELLIGENCE</small><h2>热点不是一条新闻，是多个可信来源的交集。</h2><p>已登记 {newsSourceCatalog.summary.totalSources || "—"} 个信源，其中 {newsSourceCatalog.summary.enabledSources || "—"} 个公开来源可进入后续采集；当前只是目录，真实抓取仍为 0。原文时间、事实主张和争议点必须随草稿一起交付。</p></div>
+          <ol><li><b>01</b><span>公开来源聚合</span><em>RSS · 官方新闻室 · 监管文件</em></li><li><b>02</b><span>聚类与风险检查</span><em>去重 · 交叉来源 · 时效</em></li><li><b>03</b><span>生成平台草稿</span><em>小红书 · 抖音图文 · 人工发送</em></li></ol>
+        </section>
         <section className="controlStrip">
-          <div><small>01</small><b>选择平台版本</b></div>
+          <div><small>01</small><b>选择图文平台</b></div>
           <div className="platformToggles">{Object.entries(platformMeta).map(([key,p])=><button key={key} className={platforms.includes(key)?"on":""} onClick={()=>togglePlatform(key)} style={{"--platform":p.color} as React.CSSProperties}><span/>{p.name}<small>{p.region}</small></button>)}</div>
           <div className="selectionCount"><strong>{selected.length}</strong><span>/ 3 已选择</span></div>
-          <button className="generate" disabled={busy} onClick={queueGeneration}>{busy?"创建中…":localEngine.ready?"交给本机引擎 →":"保存生产任务 →"}</button>
+          <button className="generate" disabled={busy} onClick={queueGeneration}>{busy?"创建中…":"生成来源锁定草稿 →"}</button>
         </section>
-        <div className="ideaHeader"><div><b>系统推荐 10 个候选</b><span>评分不是承诺播放量，而是结合题材、钩子、画面性与平台适配度的相对排序。</span></div><div className="legend"><i className="dy"/>抖音 <i className="tk"/>TikTok <i className="xhs"/>小红书</div></div>
+        <div className="ideaHeader"><div><b>今日 10 个热点角度</b><span>候选必须保留来源、时间和不确定性；评分只用于相对排序，不承诺播放量。</span></div><div className="legend"><i className="dy"/>抖音图文 <i className="tk"/>美国来源 <i className="xhs"/>小红书</div></div>
         <section className="ideasGrid">{ideas.map((idea,index)=><article key={idea.id} className={idea.selected?"idea selected":"idea"} onClick={()=>toggleIdea(idea)}>
           <div className="ideaIndex">{String(index+1).padStart(2,"0")}<button aria-label={idea.selected?"取消选择":"选择"}>{idea.selected?"✓":"+"}</button></div>
           <span className="category">{idea.category}</span><h2>{idea.title}</h2><p>{idea.angle}</p>
@@ -603,7 +622,7 @@ export default function Home() {
 
       {view === "review" && <section className="panel"><div className="panelTitle"><div><small>03 / HUMAN GATE</small><h2>没有你的确认，不会发布</h2></div></div><div className="reviewCard"><div><div className="mockVideo"><span>9:16</span><b>预览区</b><small>生成成片后显示</small></div><div className="reviewHistory"><h3>审核历史</h3>{reviewAudits.length ? reviewAudits.map((audit)=><div key={audit.id}><b>{new Date(audit.createdAt).toLocaleString("zh-CN")}</b><span>{audit.publishTriggered ? "异常：曾触发发布" : "仅记录 · 未发布"}</span></div>) : <p>{reviewHistoryStatus}</p>}</div></div><div className="checklist"><h3>发布前检查</h3><p>{reviewTarget ? `当前任务：${ideas.find((idea)=>idea.id===reviewTarget.ideaId)?.title ?? reviewTarget.ideaId} · ${reviewReady ? "可审核" : "尚未完成生产"}` : "暂无可审核任务"}</p>{reviewChecklist.map(({id,label})=><label key={id}><input type="checkbox" checked={reviewChecks[id]} disabled={!reviewReady} onChange={(event)=>setReviewChecks((checks)=>({...checks,[id]:event.target.checked}))}/>{label}</label>)}<button className={reviewReady&&reviewComplete?"ready":""} disabled={!reviewTarget || !reviewReady || !reviewComplete || reviewBusy} onClick={recordReview}>{reviewTarget?.status === "approved_for_manual_publish" ? "已记录审核 · 尚未发布" : !reviewReady ? "等待成片进入审核" : reviewBusy ? "正在记录…" : "记录人工审核（不会发布）"}</button></div></div></section>}
 
-      {view === "metrics" && <section className="panel"><div className="panelTitle"><div><small>04 / LEARNING LOOP</small><h2>账号专属评分器</h2></div></div><section className={isolatedChain.verified?"isolatedChain verified":"isolatedChain pending"}><div><small>ISOLATED SQLITE · 结构演练</small><b>{isolatedChain.verified?"0000–0004 隔离应用与结构检查通过":isolatedChain.status==="unavailable"?"等待桥接服务更新后显示隔离验证":"隔离验证尚未完成"}</b></div><span>{isolatedChain.appliedTags.length}/{isolatedChain.totalSteps} 已隔离应用 · 失败回滚 {isolatedChain.rollbackPerformed?(isolatedChain.rollbackVerified?"已验证":"待确认"):"未触发"}</span><em>真实 D1 写入 {isolatedChain.liveDatabaseWrites?"已发生":"0"} · 业务结果 {isolatedChain.businessResult?"是":"否"}</em></section><section className={migrationChain.current?"migrationChain current":"migrationChain blocked"}><div><small>D1 CHAIN · 0000 → 0004</small><b>{migrationChain.current?"完整迁移链已验证":migrationChain.emptyApplicationSchema?"本机 D1 为空，必须从 0000 开始":"迁移链不完整，禁止跳步"}</b></div><span>{migrationChain.completedSteps}/{migrationChain.totalSteps} 已完成 · 下一步 {migrationChain.firstPending??"无"}</span><em>应用 {migrationChain.applyPerformed?"已执行":"0"} · 写入 {migrationChain.databaseWrites?"已发生":"0"}</em></section><section className={metricsMigration.storage?.verified?"metricsMigration verified":"metricsMigration pending"}><div><small>D1 METRICS · 只读结构检查</small><b>{metricsMigration.storage?.verified?"指标来源结构已验证":metricsMigration.readyToApplyLocally?"0004 迁移已就绪，等待明确授权":"指标来源结构仍有阻塞"}</b></div><span>来源字段 {metricsMigration.storage?.columnsPresent.length??0}/4 · 防重复索引 {metricsMigration.storage?.indexPresent?"已存在":"未创建"}</span><em>应用 {metricsMigration.applyPerformed?"已执行":"0"} · 数据库写入 {metricsMigration.databaseWrites?"已发生":"0"}</em></section><div className={metricFeedStatus.status==="verified"?"metricProvenance verified":"metricProvenance blocked"}><b>{metricFeedStatus.status==="verified"?"只显示带平台来源证明的真实指标":metricFeedStatus.status==="storage_unavailable"?"指标存储尚未就绪":"等待平台 API 或官方导出数据"}</b><span>来源不明的记录不会展示、训练或参与排序</span><em>排除 {metricFeedStatus.recordsExcluded} 条 · 写入 {metricFeedStatus.writePerformed?"已发生":"0"} · 发布 {metricFeedStatus.publishTriggered?"已触发":"0"}</em></div><div className="metricCards"><div><span>已收集播放</span><b>{metricFeedStatus.status==="verified"?totalViews.toLocaleString():"—"}</b></div><div><span>平均完播率</span><b>{metricFeedStatus.status==="verified"?`${avgCompletion}%`:"—"}</b></div><div><span>有效样本</span><b>{metrics.length}</b></div><div><span>可训练阈值</span><b>30 条</b></div></div><div className="learningGrid"><div><h3>三平台平均播放</h3>{platformAverages.map(row=><div className="bar" key={row.key}><span>{platformMeta[row.key as keyof typeof platformMeta].name}</span><i><b style={{width:`${Math.min(100,row.views/100)}%`}}/></i><strong>{metricFeedStatus.status==="verified"?(row.views || "待积累"):"未接入"}</strong></div>)}</div><div className="formula"><h3>相对潜力分怎么来</h3><p><b>35%</b> 前5秒留存</p><p><b>25%</b> 完播率</p><p><b>20%</b> 收藏与分享</p><p><b>10%</b> 关注转化</p><p><b>10%</b> 单条制作成本</p><small>30条以前使用规则评分；30条以后按你自己的真实数据校准，不伪造具体播放量。</small></div></div></section>}
+      {view === "metrics" && <section className="panel"><div className="panelTitle"><div><small>04 / LEARNING LOOP</small><h2>账号专属评分器</h2></div></div><section className={isolatedChain.verified?"isolatedChain verified":"isolatedChain pending"}><div><small>ISOLATED SQLITE · 结构演练</small><b>{isolatedChain.verified?"0000–0006 隔离应用与结构检查通过":isolatedChain.status==="unavailable"?"等待桥接服务更新后显示隔离验证":"隔离验证尚未完成"}</b></div><span>{isolatedChain.appliedTags.length}/{isolatedChain.totalSteps} 已隔离应用 · 失败回滚 {isolatedChain.rollbackPerformed?(isolatedChain.rollbackVerified?"已验证":"待确认"):"未触发"}</span><em>真实 D1 写入 {isolatedChain.liveDatabaseWrites?"已发生":"0"} · 业务结果 {isolatedChain.businessResult?"是":"否"}</em></section><section className={migrationChain.current?"migrationChain current":"migrationChain blocked"}><div><small>D1 CHAIN · 0000 → 0006</small><b>{migrationChain.current?"完整迁移链已验证":migrationChain.emptyApplicationSchema?"本机 D1 为空，必须从 0000 开始":"迁移链不完整，禁止跳步"}</b></div><span>{migrationChain.completedSteps}/{migrationChain.totalSteps} 已完成 · 下一步 {migrationChain.firstPending??"无"}</span><em>应用 {migrationChain.applyPerformed?"已执行":"0"} · 写入 {migrationChain.databaseWrites?"已发生":"0"}</em></section><section className={metricsMigration.storage?.verified?"metricsMigration verified":"metricsMigration pending"}><div><small>D1 METRICS · 只读结构检查</small><b>{metricsMigration.storage?.verified?"指标来源结构已验证":metricsMigration.readyToApplyLocally?"0004 迁移已就绪，等待明确授权":"指标来源结构仍有阻塞"}</b></div><span>来源字段 {metricsMigration.storage?.columnsPresent.length??0}/4 · 防重复索引 {metricsMigration.storage?.indexPresent?"已存在":"未创建"}</span><em>应用 {metricsMigration.applyPerformed?"已执行":"0"} · 数据库写入 {metricsMigration.databaseWrites?"已发生":"0"}</em></section><div className={metricFeedStatus.status==="verified"?"metricProvenance verified":"metricProvenance blocked"}><b>{metricFeedStatus.status==="verified"?"只显示带平台来源证明的真实指标":metricFeedStatus.status==="storage_unavailable"?"指标存储尚未就绪":"等待平台 API 或官方导出数据"}</b><span>来源不明的记录不会展示、训练或参与排序</span><em>排除 {metricFeedStatus.recordsExcluded} 条 · 写入 {metricFeedStatus.writePerformed?"已发生":"0"} · 发布 {metricFeedStatus.publishTriggered?"已触发":"0"}</em></div><div className="metricCards"><div><span>已收集播放</span><b>{metricFeedStatus.status==="verified"?totalViews.toLocaleString():"—"}</b></div><div><span>平均完播率</span><b>{metricFeedStatus.status==="verified"?`${avgCompletion}%`:"—"}</b></div><div><span>有效样本</span><b>{metrics.length}</b></div><div><span>可训练阈值</span><b>30 条</b></div></div><div className="learningGrid"><div><h3>三平台平均播放</h3>{platformAverages.map(row=><div className="bar" key={row.key}><span>{platformMeta[row.key as keyof typeof platformMeta].name}</span><i><b style={{width:`${Math.min(100,row.views/100)}%`}}/></i><strong>{metricFeedStatus.status==="verified"?(row.views || "待积累"):"未接入"}</strong></div>)}</div><div className="formula"><h3>相对潜力分怎么来</h3><p><b>35%</b> 前5秒留存</p><p><b>25%</b> 完播率</p><p><b>20%</b> 收藏与分享</p><p><b>10%</b> 关注转化</p><p><b>10%</b> 单条制作成本</p><small>30条以前使用规则评分；30条以后按你自己的真实数据校准，不伪造具体播放量。</small></div></div></section>}
 
       {view === "accounts" && <section className="panel">
         <div className="panelTitle"><div><small>05 / CONNECTIONS</small><h2>账号与生成引擎</h2></div></div>

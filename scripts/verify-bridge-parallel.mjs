@@ -39,7 +39,7 @@ try {
     isolatedVerificationCapability: health.capabilities?.includes("isolated_d1_chain_verification") ?? false,
     migrationChainVerified: verification.verified === true,
     completedSteps: verification.completedSteps ?? 0,
-    totalSteps: verification.totalSteps ?? 5,
+    totalSteps: verification.totalSteps ?? 7,
     liveDatabaseWrites: verification.liveDatabaseWrites ?? false,
     businessResult: verification.businessResult ?? false,
     oldBridgeMutated: false,

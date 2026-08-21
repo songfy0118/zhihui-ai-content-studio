@@ -43,6 +43,13 @@
       "when": 1786359342380,
       "tag": "0005_jazzy_toad",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1787326238195,
+      "tag": "0006_amused_vulture",
+      "breakpoints": true
     }
   ]
 }
