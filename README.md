@@ -93,6 +93,7 @@ npm run pilot:package
 - `npm run bridge:verify:parallel`：在临时端口 3766 启动并回收新版桥接，验证协议 v3 与隔离迁移接口；不改动 3765 旧桥接
 - `npm run news:preview`：对已启用的公开 RSS 各发起一次限时只读请求，输出规范化标题、原文链接、时间与信源健康状态；不抓正文、不写数据库、不发布
 - `npm run news:clusters`：在一次 RSS 只读预览上按标题词项、七天时间窗和独立来源进行确定性聚类；只输出候选资格，不执行热度预测、事实核验或数据库写入
+- `npm run news:rank`：只对合格的跨来源簇计算来源多样性、报道数量、时效、聚类一致性和默认账号主题匹配的相对优先级；不生成播放量或爆款概率，事实核验前不可进入草稿
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
