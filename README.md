@@ -121,6 +121,7 @@ npm run pilot:package
 - `npm run db:platform-text-review:plan`：核验生成的双表审核回执迁移仅包含建表和建索引语句，并保持真实 D1 应用关闭；输出计划不执行 SQL、不保存平台草稿
 - `npm run db:platform-text-review:inspect:isolated`：用模拟只读 D1 响应检查双表、索引和列的 missing、partial、verified 状态；不读取业务行、不写数据库、不接入 API 或平台草稿
 - `npm run db:platform-text-review:read:isolated`：从一次性内存 SQLite 读取 active 审核回执及逐平台 7 项人工勾选，重新校验审核指纹并生成稳定只读投影；不解锁草稿交接、不保存或发布平台内容
+- `npm run news:platform-text-handoff:plan`：把当前双平台文案与持久审核指纹绑定为官方创作页的可见浏览器交接清单；只交接精确文案，图片素材、账号确认和保存草稿仍需后续人工授权，不打开页面、不上传、不发布
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
