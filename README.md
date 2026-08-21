@@ -109,6 +109,7 @@ npm run pilot:package
 - `npm run news:robots:mock`：用模拟 robots.txt 验证产品机器人组、通配符、最长路径、Allow 同长度优先、域内跳转、缺失文件和保守失败诊断；检查器必须注入网络客户端，未连接 API 或真实网络
 - `npm run news:claim-material:check`：把两篇已获取正文拆成带来源和内容哈希的短句候选，供人工逐条核验；不自动合并相似句、不判定事实、不返回完整正文，也不调用模型、生成文案或保存平台草稿
 - `npm run news:claim-selection:check`：验证人工输入主张、分别勾选原始和独立来源短句及四项人工核对后形成的只读选择计划；计划仍未接受主张、不判定事实，也不解锁文案、数据库或平台操作
+- `npm run news:claim-acceptance:check`：验证逐条确认主张措辞、双来源引用和不确定性说明后形成的接受回执预览与稳定幂等键；回执不落库，因此不声称正式接受、事实核验或文案解锁
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
