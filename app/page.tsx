@@ -41,16 +41,16 @@ const platformMeta = {
 const runtimeServiceLabels: Record<string,string> = { studio:"知绘操作台", bridge:"本机桥接", local_mini_drama_api:"漫剧后端", local_mini_drama_web:"漫剧前端" };
 
 const fallbackIdeas: Idea[] = [
-  ["octopus","如果章鱼去面试，它能同时握几次手？","三颗心脏、分布式神经系统，用办公室喜剧纠正九个大脑的误解","动物",94,87,92],
-  ["immune","你的免疫细胞，正在身体里拍警匪片","把伤口后的免疫反应讲成一次紧急出警","人体",91,84,94],
-  ["earth-candy","把地球压成一颗糖，会发生什么？","用极端尺度解释黑洞与史瓦西半径","宇宙",88,91,86],
-  ["ai-cat","AI认得猫，为什么不一定懂猫？","用对抗样本解释识别与理解的区别","科技",85,93,89],
-  ["crow","乌鸦为什么会记仇？","让阿墨误惹一只可以记住人脸的乌鸦","动物",92,89,95],
-  ["sleep","熬夜后，大脑真的会吃掉自己吗？","从夸张标题切入，解释胶质细胞与睡眠","人体",90,86,96],
-  ["moon","月球正在偷偷离开地球","把每年约3.8厘米的距离变化变成离家故事","宇宙",87,94,90],
-  ["robot","机器人为什么突然都学会走路了？","从强化学习、仿真训练到现实迁移","科技",86,95,88],
-  ["whale","鲸鱼为什么不会被自己的体重压扁？","海水浮力与搁浅风险的反差","动物",93,90,94],
-  ["memory","你的记忆每次回想都会被改写","把记忆再巩固讲成一份反复修改的文档","人体",89,88,97],
+  ["ai-layoffs","大厂继续裁员：程序员会成为下一个土木行业吗？","从公开裁员数据、岗位结构与AI投入拆开讨论，不把单一公司传闻写成行业结论","AI职场",94,88,96],
+  ["ai-agent-work","AI Agent 正在接管哪些白领流程？","追踪企业官方案例，区分演示、试点与已经产生业务结果的部署","AI",92,91,95],
+  ["chip-war","英伟达之后，AI 芯片的下一场战争在哪里？","比较训练、推理、存储和能耗瓶颈，避免只围绕单日股价讲故事","科技金融",89,93,91],
+  ["rate-cut-tech","利率变化为什么先影响科技公司？","用融资成本、估值折现和招聘预算解释宏观变化如何传导到普通从业者","金融",86,90,94],
+  ["open-source-ai","开源模型正在让闭源 AI 失去护城河吗？","按能力、成本、部署和生态四个维度核对，不用跑分替代真实业务效果","AI",88,94,92],
+  ["coding-career","AI 会写代码之后，计算机专业还值得读吗？","把重复编码、系统设计、领域知识和岗位增长拆成四类能力","AI职场",96,89,97],
+  ["robotics-factory","人形机器人离真正进厂还有多远？","只采用厂商公告与可验证试点，标注样机、试产和规模部署的差别","机器人",91,92,90],
+  ["us-tech-policy","美国新的科技政策，真正影响了谁？","从政策原文出发，分别解释公司、投资者和技术从业者的影响","美国科技",87,95,89],
+  ["ai-bubble","AI 是泡沫，还是新一轮基础设施周期？","把资本开支、收入、利润和生产率证据放在一张表里对照","科技金融",93,90,95],
+  ["private-ai","你的公司为什么开始要求 AI 本地部署？","从数据合规、成本、延迟与模型效果解释私有化部署的真实取舍","企业AI",85,87,93],
 ].map(([id,title,angle,category,douyinScore,tiktokScore,xhsScore]) => ({ id:String(id), title:String(title), angle:String(angle), category:String(category), status:"candidate", douyinScore:Number(douyinScore), tiktokScore:Number(tiktokScore), xhsScore:Number(xhsScore), selected:false }));
 
 const reviewChecklist = [
@@ -552,24 +552,28 @@ export default function Home() {
     <aside className="sidebar">
       <div className="brand"><span>知</span><div><b>知绘工厂</b><small>CONTENT OS</small></div></div>
       <nav>
-        {[ ["ideas","今日选题","10"], ["production","生成队列",String(jobs.length)], ["review","审核发布",jobs.length ? "!" : "0"], ["metrics","数据学习",String(metrics.length)], ["accounts","账号与引擎","5"] ].map(([id,label,count]) =>
+        {[ ["ideas","热点雷达","10"], ["production","草稿工坊",String(jobs.length)], ["review","审核交接",jobs.length ? "!" : "0"], ["metrics","增长学习",String(metrics.length)], ["accounts","来源与账号","5"] ].map(([id,label,count]) =>
           <button key={id} className={view===id?"active":""} onClick={()=>setView(id)}><i>{label}</i><span>{count}</span></button>)}
       </nav>
       <div className="sidebarFoot"><span className={localEngine.ready?"pulse online":"pulse"}/> {localEngine.ready?"本机生成引擎在线":"当前为云端规划模式"}<small>RTX 4060 · 8GB VRAM</small></div>
     </aside>
 
     <section className="workspace">
-      <header className="topbar"><div><p>AI SCIENCE CONTENT FACTORY</p><h1>{view==="ideas"?"今天做什么？":view==="production"?"生成到哪了？":view==="review"?"最后把关":view==="metrics"?"让数据教会系统":"把工具接起来"}</h1></div><div className="today"><span>第 01 天</span><b>目标 30 条</b></div></header>
+      <header className="topbar"><div><p>AI · TECH · FINANCE INTELLIGENCE DESK</p><h1>{view==="ideas"?"今天什么值得写？":view==="production"?"草稿做到哪了？":view==="review"?"审核后再发布":view==="metrics"?"让真实数据教会系统":"把来源和账号接起来"}</h1></div><div className="today"><span>增长实验第 01 天</span><b>目标 10 万粉</b></div></header>
       <div className="notice"><span>●</span>{message}</div>
 
       {view === "ideas" && <>
+        <section className="intelBrief">
+          <div><small>TODAY'S INTELLIGENCE</small><h2>热点不是一条新闻，是多个可信来源的交集。</h2><p>默认追踪 AI、科技、金融与美国大厂动态；原文时间、事实主张和争议点必须随草稿一起交付。</p></div>
+          <ol><li><b>01</b><span>公开来源聚合</span><em>RSS · 官方新闻室 · 监管文件</em></li><li><b>02</b><span>聚类与风险检查</span><em>去重 · 交叉来源 · 时效</em></li><li><b>03</b><span>生成平台草稿</span><em>小红书 · 抖音图文 · 人工发送</em></li></ol>
+        </section>
         <section className="controlStrip">
-          <div><small>01</small><b>选择平台版本</b></div>
+          <div><small>01</small><b>选择图文平台</b></div>
           <div className="platformToggles">{Object.entries(platformMeta).map(([key,p])=><button key={key} className={platforms.includes(key)?"on":""} onClick={()=>togglePlatform(key)} style={{"--platform":p.color} as React.CSSProperties}><span/>{p.name}<small>{p.region}</small></button>)}</div>
           <div className="selectionCount"><strong>{selected.length}</strong><span>/ 3 已选择</span></div>
-          <button className="generate" disabled={busy} onClick={queueGeneration}>{busy?"创建中…":localEngine.ready?"交给本机引擎 →":"保存生产任务 →"}</button>
+          <button className="generate" disabled={busy} onClick={queueGeneration}>{busy?"创建中…":"生成来源锁定草稿 →"}</button>
         </section>
-        <div className="ideaHeader"><div><b>系统推荐 10 个候选</b><span>评分不是承诺播放量，而是结合题材、钩子、画面性与平台适配度的相对排序。</span></div><div className="legend"><i className="dy"/>抖音 <i className="tk"/>TikTok <i className="xhs"/>小红书</div></div>
+        <div className="ideaHeader"><div><b>今日 10 个热点角度</b><span>候选必须保留来源、时间和不确定性；评分只用于相对排序，不承诺播放量。</span></div><div className="legend"><i className="dy"/>抖音图文 <i className="tk"/>美国来源 <i className="xhs"/>小红书</div></div>
         <section className="ideasGrid">{ideas.map((idea,index)=><article key={idea.id} className={idea.selected?"idea selected":"idea"} onClick={()=>toggleIdea(idea)}>
           <div className="ideaIndex">{String(index+1).padStart(2,"0")}<button aria-label={idea.selected?"取消选择":"选择"}>{idea.selected?"✓":"+"}</button></div>
           <span className="category">{idea.category}</span><h2>{idea.title}</h2><p>{idea.angle}</p>
