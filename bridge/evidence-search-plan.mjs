@@ -22,6 +22,7 @@ export function buildEvidenceSearchPlan(leads = [], selectedIds = [], sources = 
     leadId: lead.id,
     title: lead.title,
     originalSourceId: lead.sourceId,
+    sourcePublishedAt: lead.publishedAt,
     status: "planned_not_executed",
     queries: lead.suggestedQueries.slice(0, 2),
     allowedSources: allowedSources

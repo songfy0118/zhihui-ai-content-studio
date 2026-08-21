@@ -97,6 +97,7 @@ npm run pilot:package
 - `npm run news:rank`：只对合格的跨来源簇计算来源多样性、报道数量、时效、聚类一致性和默认账号主题匹配的相对优先级；不生成播放量或爆款概率，事实核验前不可进入草稿
 - `npm run news:gaps`：从七天内的单来源簇生成最多 12 条账号匹配补证线索与建议检索词；只允许加入本次页面的临时补证清单，不自动搜索、不保存选择，也不解锁来源锁或草稿
 - `npm run news:search-plan -- <cluster-id...>`：为当前最多 3 条补证线索生成带指纹的第二来源检索计划；只列出无需登录的 RSS 与官方新闻室，不执行检索、不创建来源锁、不写数据库
+- `npm run news:evidence-preview -- <cluster-id...>`：在人工选择后，仅用本轮公开 RSS 的标题、链接、来源和时间寻找可能的第二来源；不读取文章正文，所有结果必须人工判断，不执行事实核验、来源锁、草稿或发布
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
