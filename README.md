@@ -126,6 +126,7 @@ npm run pilot:package
 - `npm run news:platform-text-assets:render`：把通过指纹校验的信息卡规格渲染为内存中的确定性 SVG，内嵌可无损还原的审核文案和 SHA-256，并转义可执行标记；测试不写文件、不调用模型，视觉仍须人工复核后才能导出或上传
 - `npm run news:platform-text-assets:export:isolated`：在一次性临时工作区验证 SVG 指纹、精确导出口令、`work/platform-text-visual-previews/` 路径边界、禁止覆盖、写后校验和失败目录保留；不导出真实业务素材，不打开创作页、不保存平台草稿
 - `npm run news:platform-text-assets:inspect:isolated`：只读检查已导出 SVG 包的 manifest 指纹、固定文件集、画布尺寸、文件哈希和原文元数据；完整时只标记为“等待人工视觉审核”，不修改文件、不接受审核、不上传或保存平台草稿
+- `npm run news:platform-text-assets:review:check`：把当前 SVG 包的渲染与 manifest 指纹绑定到逐平台人工视觉检查清单，并生成稳定但未保存的审核回执预览；预览不代表审核已持久化或素材已就绪，也不上传、不保存草稿
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
