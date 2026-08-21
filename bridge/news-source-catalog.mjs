@@ -1,0 +1,129 @@
+export const NEWS_SOURCE_CATALOG_VERSION = 1;
+
+export const NEWS_SOURCE_CATALOG = Object.freeze([
+  Object.freeze({
+    id: "openai-news",
+    name: "OpenAI News",
+    region: "US",
+    language: "en",
+    category: "ai",
+    sourceType: "rss",
+    baseUrl: "https://openai.com/news/",
+    feedUrl: "https://openai.com/news/rss.xml",
+    rightsPolicy: "link_and_summarize_with_attribution",
+    requiresLogin: false,
+    enabled: true,
+    refreshMinutes: 60,
+  }),
+  Object.freeze({
+    id: "google-ai-blog",
+    name: "Google AI Blog",
+    region: "US",
+    language: "en",
+    category: "ai",
+    sourceType: "rss",
+    baseUrl: "https://blog.google/innovation-and-ai/technology/ai/",
+    feedUrl: "https://blog.google/rss/",
+    rightsPolicy: "link_and_summarize_with_attribution",
+    requiresLogin: false,
+    enabled: true,
+    refreshMinutes: 60,
+  }),
+  Object.freeze({
+    id: "microsoft-ai-source",
+    name: "Microsoft Source · AI",
+    region: "US",
+    language: "en",
+    category: "ai",
+    sourceType: "official_newsroom",
+    baseUrl: "https://news.microsoft.com/source/topics/ai/",
+    feedUrl: null,
+    rightsPolicy: "link_and_summarize_with_attribution",
+    requiresLogin: false,
+    enabled: true,
+    refreshMinutes: 120,
+  }),
+  Object.freeze({
+    id: "us-sec-press-releases",
+    name: "U.S. SEC Press Releases",
+    region: "US",
+    language: "en",
+    category: "finance_regulation",
+    sourceType: "rss",
+    baseUrl: "https://www.sec.gov/newsroom/press-releases",
+    feedUrl: "https://www.sec.gov/news/pressreleases.rss",
+    rightsPolicy: "official_public_record_with_attribution",
+    requiresLogin: false,
+    enabled: true,
+    refreshMinutes: 30,
+  }),
+  Object.freeze({
+    id: "us-federal-reserve-press-releases",
+    name: "Federal Reserve Press Releases",
+    region: "US",
+    language: "en",
+    category: "macro_finance",
+    sourceType: "rss",
+    baseUrl: "https://www.federalreserve.gov/newsevents/pressreleases.htm",
+    feedUrl: "https://www.federalreserve.gov/feeds/press_all.xml",
+    rightsPolicy: "official_public_record_with_attribution",
+    requiresLogin: false,
+    enabled: true,
+    refreshMinutes: 30,
+  }),
+  Object.freeze({
+    id: "us-bls-news-releases",
+    name: "U.S. Bureau of Labor Statistics",
+    region: "US",
+    language: "en",
+    category: "jobs_macro",
+    sourceType: "official_newsroom",
+    baseUrl: "https://www.bls.gov/bls/newsrels.htm",
+    feedUrl: null,
+    rightsPolicy: "official_public_record_with_attribution",
+    requiresLogin: false,
+    enabled: true,
+    refreshMinutes: 180,
+  }),
+  Object.freeze({
+    id: "wechat-manual-import",
+    name: "微信公众号人工导入",
+    region: "CN",
+    language: "zh-CN",
+    category: "manual_review",
+    sourceType: "manual_import",
+    baseUrl: "https://mp.weixin.qq.com/",
+    feedUrl: null,
+    rightsPolicy: "user_supplied_links_summary_only",
+    requiresLogin: true,
+    enabled: false,
+    refreshMinutes: 0,
+  }),
+]);
+
+export function validateNewsSourceCatalog(sources = NEWS_SOURCE_CATALOG) {
+  const blockers = [];
+  const ids = new Set();
+
+  for (const source of sources) {
+    if (ids.has(source.id)) blockers.push(`duplicate_id:${source.id}`);
+    ids.add(source.id);
+    if (!source.baseUrl.startsWith("https://")) blockers.push(`insecure_base_url:${source.id}`);
+    if (source.feedUrl && !source.feedUrl.startsWith("https://")) blockers.push(`insecure_feed_url:${source.id}`);
+    if (source.enabled && source.requiresLogin) blockers.push(`enabled_login_source:${source.id}`);
+    if (source.enabled && source.refreshMinutes < 15) blockers.push(`refresh_too_frequent:${source.id}`);
+    if (!source.rightsPolicy) blockers.push(`missing_rights_policy:${source.id}`);
+  }
+
+  return Object.freeze({ valid: blockers.length === 0, blockers: Object.freeze(blockers) });
+}
+
+export function summarizeNewsSourceCatalog(sources = NEWS_SOURCE_CATALOG) {
+  return Object.freeze({
+    totalSources: sources.length,
+    enabledSources: sources.filter((source) => source.enabled).length,
+    rssSources: sources.filter((source) => source.enabled && source.sourceType === "rss").length,
+    officialNewsrooms: sources.filter((source) => source.enabled && source.sourceType === "official_newsroom").length,
+    manualReviewSources: sources.filter((source) => source.sourceType === "manual_import").length,
+  });
+}

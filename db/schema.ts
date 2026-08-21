@@ -104,3 +104,69 @@ export const accounts = sqliteTable("accounts", {
   publishMode: text("publish_mode").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
+
+export const newsSources = sqliteTable("news_sources", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  region: text("region").notNull(),
+  language: text("language").notNull(),
+  category: text("category").notNull(),
+  sourceType: text("source_type").notNull(),
+  baseUrl: text("base_url").notNull(),
+  feedUrl: text("feed_url"),
+  rightsPolicy: text("rights_policy").notNull(),
+  requiresLogin: integer("requires_login", { mode: "boolean" }).notNull().default(false),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(false),
+  refreshMinutes: integer("refresh_minutes").notNull().default(60),
+  lastCheckedAt: text("last_checked_at"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [
+  index("idx_news_sources_enabled_category").on(table.enabled, table.category),
+  index("idx_news_sources_type").on(table.sourceType),
+]);
+
+export const newsItems = sqliteTable("news_items", {
+  id: text("id").primaryKey(),
+  sourceId: text("source_id").notNull(),
+  canonicalUrl: text("canonical_url").notNull(),
+  title: text("title").notNull(),
+  summary: text("summary"),
+  publishedAt: text("published_at"),
+  fetchedAt: text("fetched_at").notNull(),
+  contentHash: text("content_hash").notNull(),
+  status: text("status").notNull().default("discovered"),
+  language: text("language").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_news_items_canonical_url").on(table.canonicalUrl),
+  index("idx_news_items_source_published_at").on(table.sourceId, table.publishedAt),
+  index("idx_news_items_content_hash").on(table.contentHash),
+]);
+
+export const topicClusters = sqliteTable("topic_clusters", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull(),
+  title: text("title").notNull(),
+  category: text("category").notNull(),
+  status: text("status").notNull().default("candidate"),
+  heatScore: real("heat_score").notNull().default(0),
+  confidenceScore: real("confidence_score").notNull().default(0),
+  sourceCount: integer("source_count").notNull().default(0),
+  firstSeenAt: text("first_seen_at").notNull(),
+  lastSeenAt: text("last_seen_at").notNull(),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_topic_clusters_slug").on(table.slug),
+  index("idx_topic_clusters_status_last_seen_at").on(table.status, table.lastSeenAt),
+]);
+
+export const topicClusterItems = sqliteTable("topic_cluster_items", {
+  clusterId: text("cluster_id").notNull(),
+  itemId: text("item_id").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_topic_cluster_items_cluster_item").on(table.clusterId, table.itemId),
+  index("idx_topic_cluster_items_item_id").on(table.itemId),
+]);

@@ -103,10 +103,10 @@ npm run pilot:package
 - `npm run pilot:readiness`：只读核对事实来源、三平台包、成片/音轨/字幕文件及 SHA-256；只有全部真实存在才返回 `review_pending`
 - `npm run db:generate`：数据库结构变化后生成迁移
 - `npm run db:preflight`：只读核对 Sites D1 绑定、审核表迁移和破坏性 SQL；不会执行迁移
-- `npm run db:local:chain:plan`：把 0000–0005 源文件与本机 D1 真实结构合并核对；只输出完整应用计划，不执行 SQL
+- `npm run db:local:chain:plan`：把 0000–0006 源文件与本机 D1 真实结构合并核对；只输出完整应用计划，不执行 SQL
 - `npm run db:local:chain:apply`：默认仍为计划模式，只输出精确确认短语和应用守卫结果；当前执行器未连接，不执行 SQL
 - `npm run db:local:chain:prepare`：结合真实结构检查与隔离验证生成整链指纹；只返回标签、语句数量、类型和 SHA-256，不返回 SQL 或执行命令
-- `npm run db:chain:verify:isolated`：在一次性内存 SQLite 中按顺序真实应用 0000–0005 并检查最终结构；不接触本机或线上 D1，也不代表业务结果
+- `npm run db:chain:verify:isolated`：在一次性内存 SQLite 中按顺序真实应用 0000–0006 并检查最终结构；不接触本机或线上 D1，也不代表业务结果
 
 隔离验证按每个迁移文件开启独立事务；若某条语句失败，会回滚该文件并只报告迁移标签、语句序号、错误代码和回滚校验结果，不输出 SQL 内容，也不会继续执行后续迁移。
 
@@ -114,7 +114,7 @@ npm run pilot:package
 
 ## 审核审计迁移
 
-审核历史使用 Sites 管理的 D1 `DB` 绑定。`npm run db:preflight` 只证明迁移源文件完整，因此固定输出 `sourcePlanReady: true`、`readyToApply: false`；协作者还必须运行 `npm run db:local:chain:plan` 核对真实数据库状态。只有完整计划返回 `readyForAuthorizedApply: true` 后，项目维护者才可在一次单独、明确授权的操作中按 0000–0005 顺序应用迁移。预检不会登录账号、修改数据库或发布内容；不要绕过 Sites 直接绑定个人 Cloudflare 资源。
+审核历史与信源聚类结构使用 Sites 管理的 D1 `DB` 绑定。`npm run db:preflight` 只证明迁移源文件完整，因此固定输出 `sourcePlanReady: true`、`readyToApply: false`；协作者还必须运行 `npm run db:local:chain:plan` 核对真实数据库状态。只有完整计划返回 `readyForAuthorizedApply: true` 后，项目维护者才可在一次单独、明确授权的操作中按 0000–0006 顺序应用迁移。预检不会登录账号、修改数据库或发布内容；不要绕过 Sites 直接绑定个人 Cloudflare 资源。
 
 `npm run db:local:chain:apply` 目前只是授权前守卫：不带参数运行时必定阻止应用并报告 `executorInvoked: false`、`databaseWrites: false`。传入执行参数和精确确认短语后，它只准备 `wrangler d1 migrations apply DB --local` 的结构化本机命令，不调用子进程、不执行迁移，也不会切换到远程 D1；实际运行仍需要用户另行明确授权。
 

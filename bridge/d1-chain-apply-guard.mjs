@@ -1,4 +1,4 @@
-export const FULL_CHAIN_CONFIRMATION = "APPLY_FULL_LOCAL_D1_CHAIN_0000_TO_0005";
+export const FULL_CHAIN_CONFIRMATION = "APPLY_FULL_LOCAL_D1_CHAIN_0000_TO_0006";
 
 export function assessD1ChainApplyRequest({ plan = {}, executeRequested = false, confirmation = "" } = {}) {
   const migrationLedgerObjects = Array.isArray(plan.migrationLedgerObjects) ? plan.migrationLedgerObjects : [];
