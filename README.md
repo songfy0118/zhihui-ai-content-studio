@@ -120,6 +120,7 @@ npm run pilot:package
 - `npm run db:platform-text-review:store:isolated`：在一次性内存 SQLite 中验证文案审核回执的授权口令、指纹绑定、原子写入、幂等重放与失败回滚；不接触迁移、真实 D1 或平台草稿，也不代表业务落库结果
 - `npm run db:platform-text-review:plan`：核验生成的双表审核回执迁移仅包含建表和建索引语句，并保持真实 D1 应用关闭；输出计划不执行 SQL、不保存平台草稿
 - `npm run db:platform-text-review:inspect:isolated`：用模拟只读 D1 响应检查双表、索引和列的 missing、partial、verified 状态；不读取业务行、不写数据库、不接入 API 或平台草稿
+- `npm run db:platform-text-review:read:isolated`：从一次性内存 SQLite 读取 active 审核回执及逐平台 7 项人工勾选，重新校验审核指纹并生成稳定只读投影；不解锁草稿交接、不保存或发布平台内容
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
