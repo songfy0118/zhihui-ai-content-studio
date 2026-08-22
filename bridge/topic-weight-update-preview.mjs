@@ -130,6 +130,7 @@ function safeResult(fields = {}) {
   return {
     status: "topic_weight_update_preview_blocked",
     blockers: [],
+    profileId: null,
     metricsProjectionFingerprint: null,
     ideaMetadataFingerprint: null,
     weightUpdatePreviewFingerprint: null,
@@ -218,6 +219,7 @@ export function buildTopicWeightUpdatePreview({
   const recommendationCount = categoryWeightProposals.length + topicWeightProposals.length;
   return safeResult({
     status: enoughOutcomes ? "topic_weight_update_human_review_pending" : "topic_weight_update_insufficient_verified_outcomes",
+    profileId: profile.id,
     metricsProjectionFingerprint,
     ideaMetadataFingerprint,
     weightUpdatePreviewFingerprint,
