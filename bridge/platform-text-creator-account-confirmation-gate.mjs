@@ -100,6 +100,7 @@ function safeResult(fields = {}) {
     status: "platform_text_creator_account_confirmation_blocked",
     eligible: false,
     blockers: [],
+    sourceContractFingerprint: null,
     confirmedIdentityPreviewFingerprint: null,
     identityConfirmationFingerprint: null,
     confirmedAccountCount: 0,
@@ -164,6 +165,7 @@ export function assessPlatformTextCreatorAccountConfirmation({
   if (blockers.length) return safeResult({ blockers: [...new Set(blockers)] });
 
   const confirmationPayload = {
+    sourceContractFingerprint: preview.contractFingerprint,
     identityPreviewFingerprint: preview.identityPreviewFingerprint,
     confirmedAccounts,
   };
@@ -171,6 +173,7 @@ export function assessPlatformTextCreatorAccountConfirmation({
     status: "platform_text_creator_account_confirmation_accepted",
     eligible: true,
     blockers: [],
+    sourceContractFingerprint: preview.contractFingerprint,
     confirmedIdentityPreviewFingerprint: preview.identityPreviewFingerprint,
     identityConfirmationFingerprint: hash(confirmationPayload),
     confirmedAccountCount: confirmedAccounts.length,

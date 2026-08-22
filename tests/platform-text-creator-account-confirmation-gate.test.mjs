@@ -99,6 +99,7 @@ test("accepts exact per-platform human account confirmations deterministically",
   assert.equal(first.status, "platform_text_creator_account_confirmation_accepted");
   assert.equal(first.eligible, true);
   assert.equal(first.accountIdentityVerified, true);
+  assert.equal(first.sourceContractFingerprint, preview.contractFingerprint);
   assert.equal(first.confirmedAccountCount, 2);
   assert.equal(first.identityConfirmationFingerprint, repeat.identityConfirmationFingerprint);
   assert.deepEqual(first.confirmedAccounts.map(({ platform }) => platform), ["xiaohongshu", "douyin"]);
