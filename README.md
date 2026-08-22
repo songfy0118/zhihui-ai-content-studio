@@ -139,6 +139,7 @@ npm run pilot:package
 - `npm run news:platform-text-creator-account:preview`：把显式传入的可见创作页账号名称整理为逐平台人工确认预览，并绑定打开契约指纹；不读取隐藏登录态，不自动认定账号正确，不登录、不上传、不保存或发布
 - `npm run news:platform-text-creator-account:confirm:check`：只在当前身份预览指纹、逐平台可见账号名称和人工确认全部一致时生成账号确认指纹；确认不授权登录、上传、草稿保存或发布，也不接入路由
 - `npm run news:platform-text-creator-form-fill:preview`：把当前已审核文案、素材引用、创作页打开契约和人工确认账号绑定为“仅预填表单”的一次性授权预览；不触发浏览器交互、上传、填表、保存草稿或发布
+- `npm run news:platform-text-creator-form-fill:authorize:check`：仅在一次性预填口令、当前预览指纹和明确执行意图全部一致时生成“上传已审核素材并预填已审核字段”的执行契约；契约禁止登录、保存草稿和发布，检查本身不执行任何平台动作
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
