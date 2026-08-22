@@ -142,6 +142,7 @@ npm run pilot:package
 - `npm run news:platform-text-creator-form-fill:authorize:check`：仅在一次性预填口令、当前预览指纹和明确执行意图全部一致时生成“上传已审核素材并预填已审核字段”的执行契约；契约禁止登录、保存草稿和发布，检查本身不执行任何平台动作
 - `npm run news:platform-text-creator-form-fill:execute:isolated`：用注入式模拟适配器验证已授权创作页的账号仍可见、字段与素材指纹完全一致、顺序预填和部分失败诊断；仓库未接真实浏览器或路由，不登录、不保存草稿、不发布
 - `npm run news:platform-text-creator-form-fill:review:preview`：把完整预填报告整理为逐平台可见人工复核清单，绑定账号、字段与素材指纹并生成一次性复核口令；预览本身不打开页面、不完成复核、不授权保存草稿或发布
+- `npm run news:platform-text-creator-form-fill:review:confirm:check`：仅在当前复核指纹、一次性口令和每个平台五项可见人工检查全部一致时确认复核，并解锁后续“保存草稿授权预览”的资格；检查本身不打开页面、不保存草稿、不发布
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
