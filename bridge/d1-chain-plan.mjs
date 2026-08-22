@@ -19,7 +19,7 @@ export function buildD1ChainPlan({ journalEntries = [], migrations = [], liveSta
       if (!/^(?:CREATE (?:TABLE|INDEX|UNIQUE INDEX)|ALTER TABLE\b.+\bADD\b)/i.test(statement)) unsupportedStatements.push({ tag, statementType: statement.split(/\s+/).slice(0, 3).join(" ") });
     }
   }
-  const expectedOrder = ["0000_serious_tinkerer", "0001_modern_hydra", "0002_shiny_spitfire", "0003_faithful_harry_osborn", "0004_strange_doorman", "0005_jazzy_toad", "0006_amused_vulture", "0007_silly_turbo", "0008_overconfident_vance_astro", "0009_chunky_praxagora", "0010_tranquil_donald_blake"];
+  const expectedOrder = ["0000_serious_tinkerer", "0001_modern_hydra", "0002_shiny_spitfire", "0003_faithful_harry_osborn", "0004_strange_doorman", "0005_jazzy_toad", "0006_amused_vulture", "0007_silly_turbo", "0008_overconfident_vance_astro", "0009_chunky_praxagora", "0010_tranquil_donald_blake", "0011_living_logan"];
   const orderMatches = JSON.stringify(tags) === JSON.stringify(expectedOrder);
   const sourcePlanReady = orderMatches && missingFiles.length === 0 && unsafeFiles.length === 0 && unsupportedStatements.length === 0;
   const liveStateVerified = liveStatus?.verification === "read_only_sqlite_schema";

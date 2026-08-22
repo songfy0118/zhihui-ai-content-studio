@@ -1669,7 +1669,10 @@ test("excludes metrics without platform provenance and disables unverified write
       const [type, name] = artifact.split(":");
       return { type, name };
     });
-  const currentChain = await inspectMigrationChain(createSchemaD1({ objects: completeObjects, columns: REQUIRED_METRICS_PROVENANCE_COLUMNS }));
+  const completeColumns = MIGRATION_CHAIN.flatMap((step) => step.artifacts)
+    .filter((artifact) => artifact.startsWith("column:"))
+    .map((artifact) => artifact.slice(7));
+  const currentChain = await inspectMigrationChain(createSchemaD1({ objects: completeObjects, columns: completeColumns }));
   assert.equal(currentChain.status, "current");
   assert.equal(currentChain.current, true);
   assert.equal(currentChain.completedSteps, MIGRATION_CHAIN.length);

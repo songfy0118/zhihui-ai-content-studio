@@ -68,6 +68,15 @@ export const MIGRATION_CHAIN = [
     "index:uq_platform_text_visual_review_asset_receipt_platform_card",
     "index:idx_platform_text_visual_review_asset_svg_fingerprint",
   ] },
+  { tag: "0011_living_logan", artifacts: [
+    "column:content_fingerprint",
+    "column:published_post_url",
+    "column:published_at",
+    "column:source_reference",
+    "column:source_evidence_fingerprint",
+    "index:idx_metrics_content_fingerprint",
+    "index:idx_metrics_source_evidence_fingerprint",
+  ] },
 ];
 
 function safeResult(fields = {}) {
