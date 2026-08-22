@@ -90,10 +90,17 @@ export const metrics = sqliteTable("metrics", {
   externalPostId: text("external_post_id"),
   capturedAt: text("captured_at"),
   importedAt: text("imported_at"),
+  contentFingerprint: text("content_fingerprint"),
+  publishedPostUrl: text("published_post_url"),
+  publishedAt: text("published_at"),
+  sourceReference: text("source_reference"),
+  sourceEvidenceFingerprint: text("source_evidence_fingerprint"),
   createdAt: text("created_at").notNull(),
 }, (table) => [
   index("idx_metrics_platform_created_at").on(table.platform, table.createdAt),
   index("idx_metrics_idea_id").on(table.ideaId),
+  index("idx_metrics_content_fingerprint").on(table.contentFingerprint),
+  index("idx_metrics_source_evidence_fingerprint").on(table.sourceEvidenceFingerprint),
   uniqueIndex("uq_metrics_platform_post_captured_at").on(table.platform, table.externalPostId, table.capturedAt),
 ]);
 

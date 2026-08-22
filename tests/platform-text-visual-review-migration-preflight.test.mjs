@@ -49,6 +49,6 @@ test("registers visual review schema and migration-chain artifacts without an ap
   assert.match(schema, /sqliteTable\("platform_text_visual_review_platforms"/);
   assert.match(schema, /sqliteTable\("platform_text_visual_review_assets"/);
   assert.match(journal, /0010_tranquil_donald_blake/);
-  assert.equal(MIGRATION_CHAIN.at(-1).tag, migrationTag);
+  assert.ok(MIGRATION_CHAIN.some(({ tag }) => tag === migrationTag));
   assert.doesNotMatch(script, /getDb|\.batch\(|\.run\(|wrangler d1 migrations apply/);
 });

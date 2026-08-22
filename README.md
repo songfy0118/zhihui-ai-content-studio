@@ -149,6 +149,7 @@ npm run pilot:package
 - `npm run news:platform-text-creator-draft-save:review:preview`：把完整、未发布的保存执行报告绑定为逐平台人工验收清单，要求在创作中心草稿管理中核对账号、草稿引用、内容和素材；预览自身不打开页面、不保存或修改草稿、不发布
 - `npm run news:platform-text-creator-draft-save:review:confirm:check`：仅在当前验收指纹、确认口令和逐平台五项人工检查全部一致时生成“草稿可见且未发布”的验收凭据；确认门不打开页面、不修改草稿，也不授予发布权限
 - `npm run news:platform-text-metrics:import:preview`：把人工验收过的草稿与真实作品链接、平台 API/官方导出来源、证据指纹和采集时间绑定为指标导入复核预览；拒绝模拟来源、负数、未来时间、重复快照和额外秘密字段，不读文件、不调平台、不写数据库或更新学习权重
+- `npm run db:platform-text-metrics-evidence:plan`：只读校验指标强来源证据的 5 个新增字段和 2 个索引迁移；只接受向 `metrics` 增列/建索引的生成 SQL，不应用迁移、不写数据库，也不导入指标或更新学习权重
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
