@@ -56,6 +56,18 @@ export const MIGRATION_CHAIN = [
     "index:uq_platform_text_draft_review_platform_receipt_platform",
     "index:idx_platform_text_draft_review_platform_draft",
   ] },
+  { tag: "0010_tranquil_donald_blake", artifacts: [
+    "table:platform_text_visual_review_receipts",
+    "table:platform_text_visual_review_platforms",
+    "table:platform_text_visual_review_assets",
+    "index:uq_platform_text_visual_review_fingerprint",
+    "index:uq_platform_text_visual_review_idempotency_key",
+    "index:idx_platform_text_visual_review_render_created_at",
+    "index:uq_platform_text_visual_review_platform_receipt_platform",
+    "index:idx_platform_text_visual_review_platform_platform",
+    "index:uq_platform_text_visual_review_asset_receipt_platform_card",
+    "index:idx_platform_text_visual_review_asset_svg_fingerprint",
+  ] },
 ];
 
 function safeResult(fields = {}) {

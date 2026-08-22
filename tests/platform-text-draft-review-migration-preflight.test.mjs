@@ -48,6 +48,6 @@ test("registers review schema and migration-chain artifacts without an apply rou
   assert.match(schema, /sqliteTable\("platform_text_draft_review_receipts"/);
   assert.match(schema, /sqliteTable\("platform_text_draft_review_platforms"/);
   assert.match(journal, /0009_chunky_praxagora/);
-  assert.equal(MIGRATION_CHAIN.at(-1).tag, migrationTag);
+  assert.ok(MIGRATION_CHAIN.some(({ tag }) => tag === migrationTag));
   assert.doesNotMatch(script, /getDb|\.batch\(|\.run\(|wrangler d1 migrations apply/);
 });
