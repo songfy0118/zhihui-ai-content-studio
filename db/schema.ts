@@ -268,3 +268,43 @@ export const platformTextDraftReviewPlatforms = sqliteTable("platform_text_draft
   uniqueIndex("uq_platform_text_draft_review_platform_receipt_platform").on(table.receiptId, table.platform),
   index("idx_platform_text_draft_review_platform_draft").on(table.platform, table.draftFingerprint),
 ]);
+
+export const platformTextVisualReviewReceipts = sqliteTable("platform_text_visual_review_receipts", {
+  id: text("id").primaryKey(),
+  renderFingerprint: text("render_fingerprint").notNull(),
+  bundleManifestFingerprint: text("bundle_manifest_fingerprint").notNull(),
+  visualReviewFingerprint: text("visual_review_fingerprint").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  status: text("status").notNull().default("active"),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_platform_text_visual_review_fingerprint").on(table.visualReviewFingerprint),
+  uniqueIndex("uq_platform_text_visual_review_idempotency_key").on(table.idempotencyKey),
+  index("idx_platform_text_visual_review_render_created_at").on(table.renderFingerprint, table.createdAt),
+]);
+
+export const platformTextVisualReviewPlatforms = sqliteTable("platform_text_visual_review_platforms", {
+  receiptId: text("receipt_id").notNull(),
+  platform: text("platform").notNull(),
+  assetCount: integer("asset_count").notNull(),
+  reviewNote: text("review_note").notNull(),
+  reviewChecksJson: text("review_checks_json").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_platform_text_visual_review_platform_receipt_platform").on(table.receiptId, table.platform),
+  index("idx_platform_text_visual_review_platform_platform").on(table.platform),
+]);
+
+export const platformTextVisualReviewAssets = sqliteTable("platform_text_visual_review_assets", {
+  receiptId: text("receipt_id").notNull(),
+  platform: text("platform").notNull(),
+  cardIndex: integer("card_index").notNull(),
+  role: text("role").notNull(),
+  filename: text("filename").notNull(),
+  copyFingerprint: text("copy_fingerprint").notNull(),
+  svgFingerprint: text("svg_fingerprint").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_platform_text_visual_review_asset_receipt_platform_card").on(table.receiptId, table.platform, table.cardIndex),
+  index("idx_platform_text_visual_review_asset_svg_fingerprint").on(table.svgFingerprint),
+]);
