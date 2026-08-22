@@ -131,6 +131,7 @@ npm run pilot:package
 - `npm run db:platform-text-visual-review:plan`：静态检查三张视觉审核表的生成迁移只包含建表和建索引，并注册到迁移链；不会连接或修改真实 D1，且没有迁移应用入口
 - `npm run db:platform-text-visual-review:inspect:isolated`：用模拟只读 D1 响应检查视觉审核三表、索引和字段的 missing、partial、verified 状态；不读取业务行、不写数据库，也不解锁素材或平台草稿
 - `npm run db:platform-text-visual-review:read:isolated`：从一次性内存 SQLite 只读重建已持久化的视觉审核回执，复核双平台检查、逐素材顺序与指纹并重算审核指纹；不写数据库、不接 API，也不解锁素材或平台草稿
+- `npm run news:platform-text-assets:handoff:plan`：把当前只读 SVG 包检查与已持久化视觉审核回执绑定成双平台素材引用计划；只准备相对路径和指纹供后续单独授权，不读取或移动文件、不解锁素材、不上传或保存平台草稿
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
