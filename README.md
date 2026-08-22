@@ -137,6 +137,7 @@ npm run pilot:package
 - `npm run news:platform-text-creator-open:authorize:check`：只在执行开关、当前授权预览指纹和一次性口令全部一致时生成“仅打开可见官方创作页”的执行契约；契约禁止登录、上传、草稿保存和发布，且检查本身不打开页面
 - `npm run news:platform-text-creator-open:execute:isolated`：用注入式模拟打开器验证已授权官方创作页的顺序打开、同源结果和部分失败诊断；仓库未接真实浏览器适配器或路由，不检查账号、不登录、不上传、不保存或发布
 - `npm run news:platform-text-creator-account:preview`：把显式传入的可见创作页账号名称整理为逐平台人工确认预览，并绑定打开契约指纹；不读取隐藏登录态，不自动认定账号正确，不登录、不上传、不保存或发布
+- `npm run news:platform-text-creator-account:confirm:check`：只在当前身份预览指纹、逐平台可见账号名称和人工确认全部一致时生成账号确认指纹；确认不授权登录、上传、草稿保存或发布，也不接入路由
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
