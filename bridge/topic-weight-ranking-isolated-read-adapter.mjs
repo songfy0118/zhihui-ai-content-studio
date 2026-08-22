@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 import { readAccountTopicWeightProjection } from "../db/account-topic-weight-reader.mjs";
 import { inspectAccountTopicWeightStorage } from "../db/account-topic-weight-storage-inspector.mjs";
 import { buildTopicWeightRankingLiveReadPlan } from "./topic-weight-ranking-live-read-plan.mjs";
@@ -14,6 +16,7 @@ function safeResult(fields = {}) {
     diagnostics: [],
     profileId: null,
     sourceLiveReadPlanFingerprint: null,
+    isolatedReadResultFingerprint: null,
     storageStatus: null,
     storageVerified: false,
     weights: [],
@@ -41,6 +44,26 @@ function safeResult(fields = {}) {
     businessResult: false,
     ...fields,
   };
+}
+
+function fingerprintPayload(result) {
+  return {
+    profileId: result.profileId,
+    sourceLiveReadPlanFingerprint: result.sourceLiveReadPlanFingerprint,
+    storageStatus: result.storageStatus,
+    storageVerified: result.storageVerified,
+    weights: result.weights,
+    weightCount: result.weightCount,
+    queryAttemptCount: result.queryAttemptCount,
+    queryCompletionCount: result.queryCompletionCount,
+    executionMode: result.executionMode,
+    simulatedReadPerformed: result.simulatedReadPerformed,
+    liveReadPerformed: result.liveReadPerformed,
+  };
+}
+
+export function fingerprintTopicWeightRankingIsolatedReadResult(result) {
+  return createHash("sha256").update(JSON.stringify(fingerprintPayload(result))).digest("hex");
 }
 
 function exactJson(left, right) {
@@ -173,7 +196,7 @@ export async function executeTopicWeightRankingIsolatedRead(input = {}, { execut
     });
   }
 
-  return safeResult({
+  const completed = safeResult({
     status: "topic_weight_ranking_isolated_read_complete",
     profileId: input.plan.profileId,
     sourceLiveReadPlanFingerprint: input.plan.liveReadPlanFingerprint,
@@ -188,4 +211,8 @@ export async function executeTopicWeightRankingIsolatedRead(input = {}, { execut
     simulatedReadPerformed: true,
     inspectedDataRows: true,
   });
+  return {
+    ...completed,
+    isolatedReadResultFingerprint: fingerprintTopicWeightRankingIsolatedReadResult(completed),
+  };
 }
