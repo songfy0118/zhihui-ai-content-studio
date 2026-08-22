@@ -154,6 +154,7 @@ npm run pilot:package
 - `npm run db:platform-text-metrics:read:isolated`：按确定性指标 ID 只读投影完整快照，并再次校验真实作品 URL、来源类型、证据指纹、时间和计数器；缺失或篡改时不返回部分数据，且仍不启用学习权重更新
 - `npm run news:topic-weight-update:preview`：仅从强来源、只读真实指标投影生成有样本阈值、收缩系数和最大 0.05 变化幅度的候选权重差值；先按内容再按类别/主题聚合，等待人工复核，不写配置或数据库，也不生成播放量和爆款概率预测
 - `npm run news:topic-weight-update:review:confirm:check`：将当前候选权重预览指纹、确认口令和逐项批准/拒绝决定绑定为人工复核凭据；即使批准也只允许进入后续独立授权，不应用权重、不写配置或数据库
+- `npm run news:topic-weight-update:authorize:preview`：仅把人工批准项整理为指纹绑定的权重变更授权预览和确认口令；明确要求后续持久化配置适配器与预检，本阶段不授予权限、不改权重、不写文件或数据库
 - `npm run db:platform-text-metrics-evidence:plan`：只读校验指标强来源证据的 5 个新增字段和 2 个索引迁移；只接受向 `metrics` 增列/建索引的生成 SQL，不应用迁移、不写数据库，也不导入指标或更新学习权重
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
