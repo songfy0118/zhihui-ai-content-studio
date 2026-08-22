@@ -156,6 +156,7 @@ npm run pilot:package
 - `npm run news:topic-weight-update:review:confirm:check`：将当前候选权重预览指纹、确认口令和逐项批准/拒绝决定绑定为人工复核凭据；即使批准也只允许进入后续独立授权，不应用权重、不写配置或数据库
 - `npm run news:topic-weight-update:authorize:preview`：仅把人工批准项整理为指纹绑定的权重变更授权预览和确认口令；明确要求后续持久化配置适配器与预检，本阶段不授予权限、不改权重、不写文件或数据库
 - `npm run db:topic-weight-store:plan`：只读校验“当前账号权重 + 不可变更新凭据 + 更新明细”三表和八个索引的纯新增迁移；不应用迁移、不读取权重数据、不授予更新权限
+- `npm run db:topic-weight-store:isolated`：在一次性内存 SQLite 中核对精确授权指纹和基线权重，验证更新凭据、明细与当前值的原子写入、幂等重放及失败回滚；未连接真实 D1、未应用迁移，也不代表账号学习权重已更新
 - `npm run db:platform-text-metrics-evidence:plan`：只读校验指标强来源证据的 5 个新增字段和 2 个索引迁移；只接受向 `metrics` 增列/建索引的生成 SQL，不应用迁移、不写数据库，也不导入指标或更新学习权重
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
