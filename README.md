@@ -133,6 +133,7 @@ npm run pilot:package
 - `npm run db:platform-text-visual-review:read:isolated`：从一次性内存 SQLite 只读重建已持久化的视觉审核回执，复核双平台检查、逐素材顺序与指纹并重算审核指纹；不写数据库、不接 API，也不解锁素材或平台草稿
 - `npm run news:platform-text-assets:handoff:plan`：把当前只读 SVG 包检查与已持久化视觉审核回执绑定成双平台素材引用计划；只准备相对路径和指纹供后续单独授权，不读取或移动文件、不解锁素材、不上传或保存平台草稿
 - `npm run news:platform-text-draft-package:plan`：逐级复核已审核文案交接、视觉规划、SVG 渲染和已审核素材引用的全部指纹，再组合成双平台草稿包计划；只表示具备请求打开创作页的条件，不打开页面、不上传、不保存草稿或发布
+- `npm run news:platform-text-creator-open:preview`：为用户选择的小红书/抖音目标生成官方创作页、可见账号身份检查和一次性确认口令的授权预览；不读取登录态、不打开页面、不触发登录、上传、草稿保存或发布
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
