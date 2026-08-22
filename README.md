@@ -163,6 +163,7 @@ npm run pilot:package
 - `npm run news:topic-weight-ranking-activation:authorize:preview`：把已接受的排序影响人工审核绑定为一个不可执行的启用目标和精确确认串；要求后续凭据权重投影、真实迁移核验与可回滚方案，当前不授予授权、不实现适配器，也不改生产排序
 - `npm run news:topic-weight-ranking-activation:preflight`：只读核对授权链、排序影响指纹、凭据支持权重投影和 15 分钟内的 live D1 存储证据，并生成切回默认账号画像的无删数回滚计划；只表示可请求后续明确授权，不授予授权、不执行回滚或修改排序
 - `npm run news:topic-weight-ranking:live-read:plan`：生成绑定人工审核授权链的 5 条 SQL 白名单计划（schema、3 个表结构、凭据权重联查），参数仅含账号画像及至多 20 个类别/主题键；不读取 live D1、不新增凭据或权限、不保存结果，也不接入路由
+- `npm run news:topic-weight-ranking:isolated-read:check`：通过依赖注入模拟执行上述 5 条白名单查询，核对完整 schema 和凭据权重投影并诊断失败；只接受 `isolated_simulation`，明确拒绝 live D1，且不接路由、不写数据库、不修改排序
 - `npm run db:platform-text-metrics-evidence:plan`：只读校验指标强来源证据的 5 个新增字段和 2 个索引迁移；只接受向 `metrics` 增列/建索引的生成 SQL，不应用迁移、不写数据库，也不导入指标或更新学习权重
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
