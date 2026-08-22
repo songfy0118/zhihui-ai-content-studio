@@ -161,6 +161,7 @@ npm run pilot:package
 - `npm run news:topic-weight-ranking-impact:preview`：复用现有 `rules-v1` 排序器对比默认账号权重与完整凭据支持权重下的账号匹配分、相对优先级和名次；趋势证据不变，不改排序路由、不预测播放量或爆款概率，也不解锁选题
 - `npm run news:topic-weight-ranking-impact:review`：逐候选人工核对身份、分数差值和名次变化，再作一次接受或拒绝决定；接受只表示可进入后续独立启用授权，不改生产排序、不写配置或数据库，也不解锁选题
 - `npm run news:topic-weight-ranking-activation:authorize:preview`：把已接受的排序影响人工审核绑定为一个不可执行的启用目标和精确确认串；要求后续凭据权重投影、真实迁移核验与可回滚方案，当前不授予授权、不实现适配器，也不改生产排序
+- `npm run news:topic-weight-ranking-activation:preflight`：只读核对授权链、排序影响指纹、凭据支持权重投影和 15 分钟内的 live D1 存储证据，并生成切回默认账号画像的无删数回滚计划；只表示可请求后续明确授权，不授予授权、不执行回滚或修改排序
 - `npm run db:platform-text-metrics-evidence:plan`：只读校验指标强来源证据的 5 个新增字段和 2 个索引迁移；只接受向 `metrics` 增列/建索引的生成 SQL，不应用迁移、不写数据库，也不导入指标或更新学习权重
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
