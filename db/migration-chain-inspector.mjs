@@ -77,6 +77,19 @@ export const MIGRATION_CHAIN = [
     "index:idx_metrics_content_fingerprint",
     "index:idx_metrics_source_evidence_fingerprint",
   ] },
+  { tag: "0012_kind_emma_frost", artifacts: [
+    "table:account_topic_weight_update_items",
+    "table:account_topic_weight_update_receipts",
+    "table:account_topic_weight_values",
+    "index:uq_account_topic_weight_update_item_receipt_scope_key",
+    "index:idx_account_topic_weight_update_item_receipt",
+    "index:uq_account_topic_weight_update_source_review",
+    "index:uq_account_topic_weight_update_authorization_preview",
+    "index:uq_account_topic_weight_update_idempotency_key",
+    "index:idx_account_topic_weight_update_profile_created_at",
+    "index:uq_account_topic_weight_value_profile_scope_key",
+    "index:idx_account_topic_weight_value_source_receipt",
+  ] },
 ];
 
 function safeResult(fields = {}) {

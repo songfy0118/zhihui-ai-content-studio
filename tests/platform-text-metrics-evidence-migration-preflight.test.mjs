@@ -90,7 +90,7 @@ test("registers generated schema and migration-chain artifacts without an apply 
   ]);
   for (const column of METRICS_EVIDENCE_COLUMNS) assert.match(schema, new RegExp(column));
   assert.match(journal, new RegExp(PLATFORM_TEXT_METRICS_EVIDENCE_MIGRATION_TAG));
-  assert.equal(MIGRATION_CHAIN.at(-1).tag, PLATFORM_TEXT_METRICS_EVIDENCE_MIGRATION_TAG);
+  assert.ok(MIGRATION_CHAIN.some(({ tag }) => tag === PLATFORM_TEXT_METRICS_EVIDENCE_MIGRATION_TAG));
   assert.doesNotMatch(script, /getDb|\.batch\(|\.run\(|wrangler d1 migrations apply/);
   assert.doesNotMatch(inspector, /\b(?:INSERT|UPDATE|DELETE|DROP|ALTER|CREATE)\b/i);
 });

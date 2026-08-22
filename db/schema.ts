@@ -315,3 +315,45 @@ export const platformTextVisualReviewAssets = sqliteTable("platform_text_visual_
   uniqueIndex("uq_platform_text_visual_review_asset_receipt_platform_card").on(table.receiptId, table.platform, table.cardIndex),
   index("idx_platform_text_visual_review_asset_svg_fingerprint").on(table.svgFingerprint),
 ]);
+
+export const accountTopicWeightUpdateReceipts = sqliteTable("account_topic_weight_update_receipts", {
+  id: text("id").primaryKey(),
+  profileId: text("profile_id").notNull(),
+  sourceReviewFingerprint: text("source_review_fingerprint").notNull(),
+  authorizationPreviewFingerprint: text("authorization_preview_fingerprint").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  status: text("status").notNull().default("active"),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_account_topic_weight_update_source_review").on(table.sourceReviewFingerprint),
+  uniqueIndex("uq_account_topic_weight_update_authorization_preview").on(table.authorizationPreviewFingerprint),
+  uniqueIndex("uq_account_topic_weight_update_idempotency_key").on(table.idempotencyKey),
+  index("idx_account_topic_weight_update_profile_created_at").on(table.profileId, table.createdAt),
+]);
+
+export const accountTopicWeightUpdateItems = sqliteTable("account_topic_weight_update_items", {
+  receiptId: text("receipt_id").notNull(),
+  scope: text("scope").notNull(),
+  weightKey: text("weight_key").notNull(),
+  previousWeight: real("previous_weight").notNull(),
+  appliedWeight: real("applied_weight").notNull(),
+  delta: real("delta").notNull(),
+  sourceUniqueIdeaCount: integer("source_unique_idea_count").notNull(),
+  sourceMeanSignal: real("source_mean_signal").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_account_topic_weight_update_item_receipt_scope_key").on(table.receiptId, table.scope, table.weightKey),
+  index("idx_account_topic_weight_update_item_receipt").on(table.receiptId),
+]);
+
+export const accountTopicWeightValues = sqliteTable("account_topic_weight_values", {
+  profileId: text("profile_id").notNull(),
+  scope: text("scope").notNull(),
+  weightKey: text("weight_key").notNull(),
+  weight: real("weight").notNull(),
+  sourceUpdateReceiptId: text("source_update_receipt_id").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [
+  uniqueIndex("uq_account_topic_weight_value_profile_scope_key").on(table.profileId, table.scope, table.weightKey),
+  index("idx_account_topic_weight_value_source_receipt").on(table.sourceUpdateReceiptId),
+]);
