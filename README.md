@@ -129,6 +129,7 @@ npm run pilot:package
 - `npm run news:platform-text-assets:review:check`：把当前 SVG 包的渲染与 manifest 指纹绑定到逐平台人工视觉检查清单，并生成稳定但未保存的审核回执预览；预览不代表审核已持久化或素材已就绪，也不上传、不保存草稿
 - `npm run db:platform-text-visual-review:store:isolated`：在一次性内存 SQLite 中验证视觉审核回执、双平台检查和逐素材指纹的原子写入、幂等重放与失败回滚；未创建迁移、未接入真实 D1，也不代表真实审核已保存或素材已解锁
 - `npm run db:platform-text-visual-review:plan`：静态检查三张视觉审核表的生成迁移只包含建表和建索引，并注册到迁移链；不会连接或修改真实 D1，且没有迁移应用入口
+- `npm run db:platform-text-visual-review:inspect:isolated`：用模拟只读 D1 响应检查视觉审核三表、索引和字段的 missing、partial、verified 状态；不读取业务行、不写数据库，也不解锁素材或平台草稿
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
 - `npm run pilot:import`：幂等导入试播剧本、角色和分镜
