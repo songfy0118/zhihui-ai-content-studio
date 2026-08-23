@@ -13,6 +13,27 @@ function hash(value) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
 
+function contractFingerprintPayload(value) {
+  return {
+    profileId: value.profileId,
+    sourceLiveReadPlanFingerprint: value.sourceLiveReadPlanFingerprint,
+    sourceReadEvidenceReviewFingerprint: value.sourceReadEvidenceReviewFingerprint,
+    authorizationPreviewFingerprint: value.authorizationPreviewFingerprint,
+    authorizationRecordedAt: value.authorizationRecordedAt,
+    authorizationExpiresAt: value.authorizationExpiresAt,
+    targetBinding: value.targetBinding,
+    operation: value.operation,
+    queryWhitelist: value.queryWhitelist,
+    requestedWeights: value.requestedWeights,
+    maximumExecutionCount: value.maximumExecutionCount,
+    constraints: value.constraints,
+  };
+}
+
+export function fingerprintTopicWeightRankingLiveReadExecutionContract(value) {
+  return hash(contractFingerprintPayload(value));
+}
+
 function safeTimestamp(value) {
   if (typeof value !== "string" || value.length < 20 || value.length > MAX_CLOCK_LENGTH) return null;
   const timestamp = Date.parse(value);
@@ -193,7 +214,7 @@ export function assessTopicWeightRankingLiveReadAuthorization({
     authorizationExpiresAt,
     executionContract: {
       ...contractPayload,
-      contractFingerprint: hash(contractPayload),
+      contractFingerprint: fingerprintTopicWeightRankingLiveReadExecutionContract(contractPayload),
       status: "authorized_not_executed",
     },
     executionContractCreated: true,
