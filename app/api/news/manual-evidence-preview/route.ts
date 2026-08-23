@@ -27,17 +27,8 @@ export async function POST(request: Request) {
     && body.inputs.every(validInput);
   if (!validSelections || !validInputs) {
     return Response.json({
-      status: "manual_evidence_preview_blocked",
-      readyForHumanEvidenceReview: false,
+      ...buildManualPublicEvidencePreview(null, []),
       blockers: ["invalid_manual_evidence_request"],
-      candidateUrlFetched: false,
-      articleBodiesFetched: false,
-      manualInputPersisted: false,
-      factsVerified: false,
-      sourceLocksCreated: 0,
-      draftsUnlocked: 0,
-      databaseWrites: false,
-      publishTriggered: false,
       externalCalls: 0,
     }, { status: 400 });
   }

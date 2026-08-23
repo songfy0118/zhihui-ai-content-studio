@@ -12,10 +12,25 @@ test("rejects malformed manual evidence before any external call", async () => {
   }));
   const body = await response.json();
   assert.equal(response.status, 400);
+  assert.equal(body.status, "manual_evidence_preview_blocked");
   assert.deepEqual(body.blockers, ["invalid_manual_evidence_request"]);
+  assert.equal(body.readyForHumanEvidenceReview, false);
+  assert.equal(body.planFingerprint, null);
+  assert.deepEqual(body.summary, { inputsReceived: 0, candidatesAccepted: 0, maximum: 3 });
+  assert.deepEqual(body.targets, []);
+  assert.deepEqual(body.validationPolicy, {
+    publicHttpsOnly: true,
+    exactHostDifferentRequired: true,
+    windowHours: 168,
+    minimumSimilarity: 0.12,
+    minimumSharedTerms: 2,
+  });
   assert.equal(body.externalCalls, 0);
   assert.equal(body.candidateUrlFetched, false);
+  assert.equal(body.articleBodiesFetched, false);
   assert.equal(body.manualInputPersisted, false);
+  assert.equal(body.sourceLocksCreated, 0);
+  assert.equal(body.draftsUnlocked, 0);
   assert.equal(body.databaseWrites, false);
   assert.equal(body.publishTriggered, false);
 });
