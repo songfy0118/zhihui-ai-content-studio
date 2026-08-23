@@ -51,12 +51,15 @@ test("returns no score when clustering has no eligible cross-source candidate", 
 });
 
 test("wires ranking as a read-only route and console action", async () => {
-  const [page, route] = await Promise.all([
+  const [page, route, script] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/news/ranked-candidates/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/preview-ranked-candidates.mjs", import.meta.url), "utf8"),
   ]);
   assert.match(page, /计算相对优先级（只读）/);
   assert.match(page, /fetch\("\/api\/news\/ranked-candidates"/);
-  assert.match(route, /rankTopicCandidates/);
+  assert.match(route, /buildTopicWorkflowPreview/);
+  assert.match(script, /buildTopicWorkflowPreview/);
+  assert.match(page, /payload\.evidenceGapFallback/);
   assert.doesNotMatch(route, /getDb|\.insert\(|\.update\(|\.delete\(/);
 });
