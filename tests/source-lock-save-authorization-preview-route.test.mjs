@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { POST } from "../app/api/news/source-lock-save-authorization-preview/route.ts";
+import { formatSourceLockAuthorizationBlocker } from "../app/source-lock-authorization-diagnostics.ts";
 
 function hash(value) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -43,6 +44,11 @@ function readySavePlan() {
     publishTriggered: false,
   };
 }
+
+test("formats authorization preview blockers as actionable Chinese diagnostics", () => {
+  assert.equal(formatSourceLockAuthorizationBlocker("source_lock_save_plan_invalid_or_tampered"), "保存计划无效或已变化，请重新生成来源锁保存计划");
+  assert.equal(formatSourceLockAuthorizationBlocker("future_blocker"), "future_blocker");
+});
 
 test("returns a no-write authorization preview for the exact save plan", async () => {
   const response = await POST(new Request("http://localhost/api/news/source-lock-save-authorization-preview", {
@@ -90,6 +96,7 @@ test("wires only a preview action without connecting the source-lock writer", as
   assert.match(page, /预览单次保存授权（不授权）/);
   assert.match(page, /fetch\("\/api\/news\/source-lock-save-authorization-preview"/);
   assert.match(page, /const preview = await response\.json\(\) as SourceLockSaveAuthorizationPreview;\s*if \(requestRevision !== evidencePipelineRevision\.current\) return;\s*setSourceLockSaveAuthorizationPreview\(preview\);/);
+  assert.match(page, /sourceLockSaveAuthorizationPreview\.blockers\.map\(formatSourceLockAuthorizationBlocker\)\.join\(" \/ "\)/);
   assert.match(page, /const clearSourceLockSavePreviews = \(\) => \{\s*setSourceLockSavePlan\(null\);\s*setSourceLockSaveAuthorizationPreview\(null\);\s*evidencePipelineRevision\.current \+= 1;\s*\};/);
   assert.equal(page.match(/clearSourceLockSavePreviews\(\);/g)?.length, 11);
   assert.match(route, /buildSourceLockSaveAuthorizationPreview/);
