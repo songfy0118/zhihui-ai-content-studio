@@ -1107,12 +1107,16 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(page, /不会自动配对/);
   assert.match(page, /目录暂不可读/);
   assert.match(page, /存储可读，当前没有真实持久化记录/);
+  assert.match(page, /fetch\("\/api\/news\/platform-text-review-storage-readiness"/);
+  assert.match(page, /诊断审核表结构（只读）/);
+  assert.match(page, /迁移执行 0 · 数据库写入 0/);
   assert.match(layout, /知绘工厂/);
   assert.match(css, /\.localProjects/);
   assert.match(css, /\.adapterPlan/);
   assert.match(css, /\.unifiedDraftPackagePlan/);
   assert.match(css, /\.durableReviewInputs/);
   assert.match(css, /\.durableReviewCatalog/);
+  assert.match(css, /\.reviewStorageReadiness/);
   await assert.rejects(access(new URL("app/_sites-preview", projectRoot)));
 });
 
