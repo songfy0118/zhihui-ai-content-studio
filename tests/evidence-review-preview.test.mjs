@@ -78,6 +78,19 @@ test("keeps a successful preview ephemeral and does not create a source lock", (
   assert.equal(preview.publishTriggered, false);
 });
 
+test("can complete human review while explicitly blocking an unsupported save path", () => {
+  const { plan, metadata } = fixtures();
+  const preview = buildEvidenceReviewPreview(plan, metadata, [{ leadId: lead.id, candidateId: "b-match", checks: completeChecks }], {
+    downstreamSaveSupported: false,
+    downstreamBlocker: "manual_evidence_save_path_not_connected",
+  });
+  assert.equal(preview.humanEvidenceReviewComplete, true);
+  assert.equal(preview.readyForAuthorizedSourceLockSave, false);
+  assert.deepEqual(preview.downstreamBlockers, ["manual_evidence_save_path_not_connected"]);
+  assert.match(preview.reviewFingerprint, /^[a-f0-9]{64}$/);
+  assert.equal(preview.sourceLockCreated, false);
+});
+
 test("wires a guarded review preview without persistence", async () => {
   const [page, route] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),

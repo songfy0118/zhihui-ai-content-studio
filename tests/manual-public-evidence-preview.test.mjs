@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { buildEvidenceSearchPlan } from "../bridge/evidence-search-plan.mjs";
+import { buildEvidenceReviewPreview, EVIDENCE_REVIEW_CHECKS } from "../bridge/evidence-review-preview.mjs";
 import { buildManualPublicEvidencePreview } from "../bridge/manual-public-evidence-preview.mjs";
 
 const lead = {
@@ -68,4 +69,19 @@ test("blocks missing plans, empty input and duplicate lead candidates", () => {
   assert.ok(buildManualPublicEvidencePreview(plan, []).blockers.includes("manual_evidence_input_empty"));
   const duplicate = buildManualPublicEvidencePreview(plan, [input(), input({ canonicalUrl: "https://second.news/report" })]);
   assert.ok(duplicate.blockers.some((value) => value.endsWith("duplicate_lead")));
+});
+
+test("allows human review completion while keeping the manual save path blocked", () => {
+  const metadata = buildManualPublicEvidencePreview(plan, [input()]);
+  const checks = Object.fromEntries(EVIDENCE_REVIEW_CHECKS.map((check) => [check, true]));
+  const preview = buildEvidenceReviewPreview(plan, metadata, [{ leadId: lead.id, candidateId: metadata.targets[0].candidates[0].id, checks }], {
+    downstreamSaveSupported: false,
+    downstreamBlocker: "manual_evidence_save_path_not_connected",
+  });
+  assert.equal(preview.humanEvidenceReviewComplete, true);
+  assert.equal(preview.readyForAuthorizedSourceLockSave, false);
+  assert.deepEqual(preview.downstreamBlockers, ["manual_evidence_save_path_not_connected"]);
+  assert.match(preview.reviewFingerprint, /^[a-f0-9]{64}$/);
+  assert.equal(preview.persisted, false);
+  assert.equal(preview.sourceLockCreated, false);
 });

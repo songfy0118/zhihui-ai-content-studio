@@ -17,7 +17,7 @@ function host(value) {
   }
 }
 
-export function buildEvidenceReviewPreview(plan, metadataPreview, decisions = []) {
+export function buildEvidenceReviewPreview(plan, metadataPreview, decisions = [], { downstreamSaveSupported = true, downstreamBlocker = null } = {}) {
   const blockers = [];
   if (!plan?.readyForHumanResearchReview || !plan.planFingerprint) blockers.push("search_plan_not_ready");
   if (!metadataPreview || metadataPreview.planFingerprint !== plan?.planFingerprint) blockers.push("metadata_preview_not_current");
@@ -66,16 +66,18 @@ export function buildEvidenceReviewPreview(plan, metadataPreview, decisions = []
     };
   });
   blockers.push(...reviewedTargets.flatMap((target) => target.blockers.map((blocker) => `${target.leadId}:${blocker}`)));
-  const ready = blockers.length === 0 && reviewedTargets.length > 0;
-  const reviewFingerprint = ready ? createHash("sha256").update(JSON.stringify({
+  const reviewComplete = blockers.length === 0 && reviewedTargets.length > 0;
+  const reviewFingerprint = reviewComplete ? createHash("sha256").update(JSON.stringify({
     planFingerprint: plan.planFingerprint,
     targets: reviewedTargets.map((target) => ({ leadId: target.leadId, original: target.originalEvidence.canonicalUrl, candidate: target.candidate.canonicalUrl, checks: target.checks })),
   })).digest("hex") : null;
 
   return {
-    status: ready ? "evidence_review_preview_ready" : "evidence_review_preview_blocked",
-    readyForAuthorizedSourceLockSave: ready,
+    status: reviewComplete ? "evidence_review_preview_ready" : "evidence_review_preview_blocked",
+    humanEvidenceReviewComplete: reviewComplete,
+    readyForAuthorizedSourceLockSave: reviewComplete && downstreamSaveSupported,
     blockers,
+    downstreamBlockers: reviewComplete && !downstreamSaveSupported ? [downstreamBlocker ?? "downstream_save_not_supported"] : [],
     planFingerprint: plan?.planFingerprint ?? null,
     reviewFingerprint,
     summary: {
@@ -84,7 +86,7 @@ export function buildEvidenceReviewPreview(plan, metadataPreview, decisions = []
       targetsEligible: reviewedTargets.filter((target) => target.eligibleForSourceLockProposal).length,
     },
     reviewedTargets,
-    semanticReview: ready ? "human_confirmed_in_preview" : "incomplete",
+    semanticReview: reviewComplete ? "human_confirmed_in_preview" : "incomplete",
     persisted: false,
     sourceLockCreated: false,
     factsVerified: false,
