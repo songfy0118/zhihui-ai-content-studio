@@ -76,7 +76,7 @@ test("keeps authorization, writes, source locks, drafts and publication closed",
   assert.equal(result.businessResult, false);
 });
 
-test("does not connect the preview contract to a route, store or live database", async () => {
+test("does not connect the preview contract to a save route, store or live database", async () => {
   const [source, savePlanRoute, migrationRoute] = await Promise.all([
     readFile(new URL("../bridge/source-lock-save-authorization-preview.mjs", import.meta.url), "utf8"),
     readFile(new URL("../app/api/news/source-lock-save-plan/route.ts", import.meta.url), "utf8"),
