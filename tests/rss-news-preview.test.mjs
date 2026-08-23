@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-import { buildRssNewsPreview, dedupeRssItems, diagnoseRssFailure, normalizeCanonicalUrl, parseRssItems } from "../bridge/rss-news-preview.mjs";
+import { assessRssTransport, buildRssNewsPreview, dedupeRssItems, diagnoseRssFailure, normalizeCanonicalUrl, parseRssItems } from "../bridge/rss-news-preview.mjs";
 
 const source = {
   id: "official-ai",
@@ -58,6 +58,15 @@ test("builds a partial live preview with explicit source health and no writes", 
   assert.equal(preview.sourceHealth.find((row) => row.sourceId === "failed").errorCode, "http_403");
   assert.equal(preview.sourceHealth.find((row) => row.sourceId === "failed").failureClass, "access_refused");
   assert.equal(preview.sourceHealth.find((row) => row.sourceId === "failed").retryable, false);
+  assert.deepEqual(preview.transportAssessment, {
+    status: "mixed_reachability",
+    reachableSources: 1,
+    failedSources: 1,
+    tlsOrProxyFailures: 0,
+    runtimeOutboundReachable: true,
+    globalOutageProven: false,
+    operatorAction: "inspect_failed_source_paths",
+  });
   assert.equal(preview.databaseWrites, false);
   assert.equal(preview.publishTriggered, false);
   assert.equal(preview.factsVerified, false);
@@ -81,6 +90,26 @@ test("classifies TLS or proxy failures without weakening transport security", ()
     retryable: true,
     operatorAction: "check_tls_or_proxy_and_retry",
   });
+});
+
+test("distinguishes partial feed failure from an unproven runtime-wide outage", () => {
+  const partial = assessRssTransport([
+    { status: "ready", failureClass: null },
+    { status: "error", failureClass: "tls_or_proxy_error" },
+  ]);
+  assert.equal(partial.status, "mixed_reachability");
+  assert.equal(partial.runtimeOutboundReachable, true);
+  assert.equal(partial.tlsOrProxyFailures, 1);
+  assert.equal(partial.globalOutageProven, false);
+
+  const inconclusive = assessRssTransport([
+    { status: "error", failureClass: "network_error" },
+    { status: "error", failureClass: "tls_or_proxy_error" },
+  ]);
+  assert.equal(inconclusive.status, "all_feeds_failed_inconclusive");
+  assert.equal(inconclusive.runtimeOutboundReachable, false);
+  assert.equal(inconclusive.globalOutageProven, false);
+  assert.equal(inconclusive.operatorAction, "inspect_runtime_network_and_retry");
 });
 
 test("wires the preview as an explicit read-only UI action", async () => {

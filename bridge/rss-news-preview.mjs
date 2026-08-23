@@ -17,6 +17,23 @@ export function diagnoseRssFailure(errorCode) {
   return { failureClass: "fetch_error", retryable: false, operatorAction: "inspect_source_failure" };
 }
 
+export function assessRssTransport(sourceHealth = []) {
+  const reachableSources = sourceHealth.filter((source) => source.status === "ready" || source.status === "empty").length;
+  const failedSources = sourceHealth.filter((source) => source.status === "error").length;
+  const tlsOrProxyFailures = sourceHealth.filter((source) => source.failureClass === "tls_or_proxy_error").length;
+
+  if (!sourceHealth.length) {
+    return { status: "not_assessed", reachableSources, failedSources, tlsOrProxyFailures, runtimeOutboundReachable: false, globalOutageProven: false, operatorAction: null };
+  }
+  if (!failedSources) {
+    return { status: "all_feeds_reachable", reachableSources, failedSources, tlsOrProxyFailures, runtimeOutboundReachable: true, globalOutageProven: false, operatorAction: null };
+  }
+  if (reachableSources) {
+    return { status: "mixed_reachability", reachableSources, failedSources, tlsOrProxyFailures, runtimeOutboundReachable: true, globalOutageProven: false, operatorAction: "inspect_failed_source_paths" };
+  }
+  return { status: "all_feeds_failed_inconclusive", reachableSources, failedSources, tlsOrProxyFailures, runtimeOutboundReachable: false, globalOutageProven: false, operatorAction: "inspect_runtime_network_and_retry" };
+}
+
 function decodeXml(value = "") {
   return value
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
@@ -160,6 +177,7 @@ export async function buildRssNewsPreview({ sources = [], fetcher = fetch, maxBy
       itemsReturned: items.length,
     },
     sourceHealth,
+    transportAssessment: assessRssTransport(sourceHealth),
     items,
     contentFetched: items.length > 0,
     factsVerified: false,
