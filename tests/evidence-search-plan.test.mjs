@@ -26,6 +26,12 @@ test("builds a fingerprinted plan using only independent public sources", () => 
   assert.equal(plan.selection.accepted, 1);
   assert.match(plan.planFingerprint, /^[a-f0-9]{64}$/);
   assert.deepEqual(plan.targets[0].allowedSources.map((source) => source.id), ["source-b"]);
+  assert.deepEqual(plan.targets[0].allowedSources.map(({ id, collectionMode, automaticCollectionBlockedReason }) => ({ id, collectionMode, automaticCollectionBlockedReason })), [{
+    id: "source-b",
+    collectionMode: "manual_public_page_review",
+    automaticCollectionBlockedReason: "official_newsroom_manual_review_only",
+  }]);
+  assert.deepEqual(plan.targets[0].allowedSourceSummary, { rssMetadataSources: 0, manualPublicPageSources: 1 });
   assert.deepEqual(plan.targets[0].independenceDiagnostics.originalHosts, ["a.example"]);
   assert.deepEqual(plan.targets[0].independenceDiagnostics.excludedSources.map(({ id, reason }) => ({ id, reason })), [
     { id: "source-a", reason: "same_source_id" },
@@ -65,6 +71,12 @@ test("offers Chinese public newsrooms for manual independent-source research", (
   const allowedIds = plan.targets[0].allowedSources.map((source) => source.id);
   assert.ok(allowedIds.includes("jiqizhixin-public-newsroom"));
   assert.ok(allowedIds.includes("leiphone-public-newsroom"));
+  const machineHeart = plan.targets[0].allowedSources.find((source) => source.id === "jiqizhixin-public-newsroom");
+  const leiphone = plan.targets[0].allowedSources.find((source) => source.id === "leiphone-public-newsroom");
+  assert.equal(machineHeart.collectionMode, "manual_public_page_review");
+  assert.equal(machineHeart.automaticCollectionBlockedReason, "rss_requires_application_or_subscription");
+  assert.equal(leiphone.collectionMode, "manual_public_page_review");
+  assert.equal(leiphone.automaticCollectionBlockedReason, "no_confirmed_official_rss_feed");
   assert.equal(plan.searchTriggered, false);
 });
 
@@ -74,6 +86,8 @@ test("wires a guarded non-executing plan endpoint and console action", async () 
     readFile(new URL("../app/api/news/evidence-search-plan/route.ts", import.meta.url), "utf8"),
   ]);
   assert.match(page, /生成第二来源检索计划（不执行）/);
+  assert.match(page, /RSS 元数据/);
+  assert.match(page, /人工公开页/);
   assert.match(page, /fetch\("\/api\/news\/evidence-search-plan"/);
   assert.match(route, /body\.selectedIds\.length > 3/);
   assert.doesNotMatch(route, /getDb|\.insert\(|\.update\(|\.delete\(/);

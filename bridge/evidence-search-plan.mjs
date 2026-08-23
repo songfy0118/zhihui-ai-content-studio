@@ -46,7 +46,18 @@ export function buildEvidenceSearchPlan(leads = [], selectedIds = [], sources = 
         return [];
       }
       const { id, name, sourceType, baseUrl, feedUrl } = source;
-      return [{ id, name, sourceType, baseUrl, feedUrl }];
+      const collectionMode = sourceType === "rss" && feedUrl ? "rss_metadata_only" : "manual_public_page_review";
+      return [{
+        id,
+        name,
+        sourceType,
+        baseUrl,
+        feedUrl,
+        collectionMode,
+        automaticCollectionBlockedReason: collectionMode === "manual_public_page_review"
+          ? source.automaticCollectionBlockedReason ?? "official_newsroom_manual_review_only"
+          : null,
+      }];
     });
     if (!allowedSources.length) blockers.push(`no_independent_public_sources:${lead.id}`);
     return {
@@ -58,6 +69,10 @@ export function buildEvidenceSearchPlan(leads = [], selectedIds = [], sources = 
       status: "planned_not_executed",
       queries: lead.suggestedQueries.slice(0, 2),
       allowedSources,
+      allowedSourceSummary: {
+        rssMetadataSources: allowedSources.filter((source) => source.collectionMode === "rss_metadata_only").length,
+        manualPublicPageSources: allowedSources.filter((source) => source.collectionMode === "manual_public_page_review").length,
+      },
       independenceDiagnostics: {
         policy: "source_id_and_exact_normalized_host",
         originalHosts,
@@ -71,7 +86,7 @@ export function buildEvidenceSearchPlan(leads = [], selectedIds = [], sources = 
   });
   const ready = blockers.length === 0 && targets.length > 0;
   const fingerprint = ready
-    ? createHash("sha256").update(targets.map((target) => `${target.leadId}\n${target.title}\n${target.allowedSources.map((source) => source.id).join(",")}`).join("\n---\n")).digest("hex")
+    ? createHash("sha256").update(targets.map((target) => `${target.leadId}\n${target.title}\n${target.allowedSources.map((source) => `${source.id}:${source.collectionMode}`).join(",")}`).join("\n---\n")).digest("hex")
     : null;
 
   return {
