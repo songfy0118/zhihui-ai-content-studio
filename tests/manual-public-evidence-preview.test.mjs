@@ -6,7 +6,7 @@ import { buildEvidenceSearchPlan } from "../bridge/evidence-search-plan.mjs";
 import { buildEvidenceReviewPreview, EVIDENCE_REVIEW_CHECKS } from "../bridge/evidence-review-preview.mjs";
 import { buildManualPublicEvidencePreview } from "../bridge/manual-public-evidence-preview.mjs";
 import { buildSourceLockSavePlan } from "../bridge/source-lock-save-plan.mjs";
-import { formatManualEvidenceBlocker } from "../app/manual-evidence-diagnostics.ts";
+import { formatManualEvidenceBlocker, formatManualEvidencePublisherRole } from "../app/manual-evidence-diagnostics.ts";
 
 const lead = {
   id: "cluster:one",
@@ -31,6 +31,12 @@ test("formats manual evidence blockers as actionable Chinese diagnostics", () =>
   assert.equal(formatManualEvidenceBlocker("future_blocker"), "future_blocker");
 });
 
+test("formats declared publisher roles for the human review card", () => {
+  assert.equal(formatManualEvidencePublisherRole("original_publisher"), "原始发布者");
+  assert.equal(formatManualEvidencePublisherRole("syndicated_or_repost"), "转载页 / 聚合页（需继续核对转载链）");
+  assert.equal(formatManualEvidencePublisherRole(null), "发布者身份未声明");
+});
+
 test("wires manual source name suggestions without automatic article collection", async () => {
   const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   assert.match(page, /listManualSourceNameSuggestions\(newsSourceCatalog\.sources\)/);
@@ -39,6 +45,8 @@ test("wires manual source name suggestions without automatic article collection"
   assert.match(page, /仅提供已登记的名称建议；不会自动抓取公众号/);
   assert.match(page, /describeManualSourceLinkHost\(manualEvidenceDraft\.sourceName, manualEvidenceDraft\.canonicalUrl, manualSourceNameSuggestions\)/);
   assert.match(page, /manualSourceLinkHostHint&&<span>\{manualSourceLinkHostHint\}<\/span>/);
+  assert.match(page, /decision\.candidateMode==="manual_public_metadata"&&<span>发布者身份：/);
+  assert.match(page, /formatManualEvidencePublisherRole\(manualEvidencePreview\?\.targets\?/);
 });
 const plan = buildEvidenceSearchPlan([lead], [lead.id], sources);
 

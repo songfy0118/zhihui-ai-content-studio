@@ -23,3 +23,9 @@ export function formatManualEvidenceBlocker(blocker: string) {
   }
   return manualEvidenceBlockerLabels[blocker] ?? blocker;
 }
+
+export function formatManualEvidencePublisherRole(role: string | null | undefined) {
+  if (role === "original_publisher") return "原始发布者";
+  if (role === "syndicated_or_repost") return "转载页 / 聚合页（需继续核对转载链）";
+  return "发布者身份未声明";
+}
