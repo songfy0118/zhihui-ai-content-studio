@@ -34,12 +34,32 @@ test("requires a current candidate and every explicit human evidence check", () 
   assert.match(preview.reviewFingerprint, /^[a-f0-9]{64}$/);
   assert.equal(preview.summary.targetsEligible, 1);
   assert.equal(preview.readyForAuthorizedSourceLockSave, true);
+  assert.deepEqual(EVIDENCE_REVIEW_CHECKS, [
+    "same_event_confirmed",
+    "source_independence_confirmed",
+    "publisher_relationship_checked",
+    "syndication_or_citation_chain_checked",
+    "dates_consistent",
+    "no_material_conflict_found",
+  ]);
+  assert.deepEqual(preview.reviewedTargets[0].independenceAssessment, {
+    automaticScope: "exact_normalized_host_only",
+    originalHost: "a.example",
+    candidateHost: "b.example",
+    exactHostDifferent: true,
+    publisherRelationshipChecked: true,
+    syndicationOrCitationChainChecked: true,
+  });
 });
 
 test("blocks incomplete checks, stale candidates and same-host evidence", () => {
   const { plan, metadata } = fixtures();
   const incomplete = buildEvidenceReviewPreview(plan, metadata, [{ leadId: lead.id, candidateId: "b-match", checks: { ...completeChecks, dates_consistent: false } }]);
   assert.ok(incomplete.blockers.some((blocker) => blocker.includes("human_check_missing:dates_consistent")));
+  const ownershipUnchecked = buildEvidenceReviewPreview(plan, metadata, [{ leadId: lead.id, candidateId: "b-match", checks: { ...completeChecks, publisher_relationship_checked: false } }]);
+  assert.ok(ownershipUnchecked.blockers.some((blocker) => blocker.includes("human_check_missing:publisher_relationship_checked")));
+  const syndicationUnchecked = buildEvidenceReviewPreview(plan, metadata, [{ leadId: lead.id, candidateId: "b-match", checks: { ...completeChecks, syndication_or_citation_chain_checked: false } }]);
+  assert.ok(syndicationUnchecked.blockers.some((blocker) => blocker.includes("human_check_missing:syndication_or_citation_chain_checked")));
   const stale = buildEvidenceReviewPreview(plan, metadata, [{ leadId: lead.id, candidateId: "missing", checks: completeChecks }]);
   assert.ok(stale.blockers.some((blocker) => blocker.includes("candidate_not_current")));
   const sameHostMetadata = buildEvidenceMetadataPreview(plan, [{ ...candidateItems[0], canonicalUrl: "https://a.example/other" }]);
@@ -64,6 +84,8 @@ test("wires a guarded review preview without persistence", async () => {
     readFile(new URL("../app/api/news/evidence-review-preview/route.ts", import.meta.url), "utf8"),
   ]);
   assert.match(page, /预览证据审查（不保存）/);
+  assert.match(page, /同集团、子品牌或内容合作关系/);
+  assert.match(page, /转载、通稿复刻或仅引用原来源/);
   assert.match(page, /fetch\("\/api\/news\/evidence-review-preview"/);
   assert.match(route, /externalCalls: 0/);
   assert.doesNotMatch(route, /getDb|\.insert\(|\.update\(|\.delete\(/);

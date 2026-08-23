@@ -3,6 +3,8 @@ import { createHash } from "node:crypto";
 export const EVIDENCE_REVIEW_CHECKS = Object.freeze([
   "same_event_confirmed",
   "source_independence_confirmed",
+  "publisher_relationship_checked",
+  "syndication_or_citation_chain_checked",
   "dates_consistent",
   "no_material_conflict_found",
 ]);
@@ -51,6 +53,14 @@ export function buildEvidenceReviewPreview(plan, metadataPreview, decisions = []
       originalEvidence,
       candidate: candidate ?? null,
       checks,
+      independenceAssessment: {
+        automaticScope: "exact_normalized_host_only",
+        originalHost,
+        candidateHost,
+        exactHostDifferent: Boolean(originalHost && candidateHost && originalHost !== candidateHost),
+        publisherRelationshipChecked: checks.publisher_relationship_checked,
+        syndicationOrCitationChainChecked: checks.syndication_or_citation_chain_checked,
+      },
       blockers: targetBlockers,
       eligibleForSourceLockProposal: targetBlockers.length === 0,
     };
