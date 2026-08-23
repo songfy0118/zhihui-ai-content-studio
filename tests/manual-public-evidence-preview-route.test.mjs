@@ -28,6 +28,9 @@ test("wires preview-only routes and manual review/save-plan actions without URL 
     readFile(new URL("../app/api/news/source-lock-save-plan/route.ts", import.meta.url), "utf8"),
   ]);
   assert.match(page, /人工公开来源预览（不保存）/);
+  assert.match(page, /修改任一字段会清除旧预览/);
+  assert.match(page, /const updateManualEvidenceDraft = \(field:keyof ManualEvidenceDraft, value:string\) => \{\s*setManualEvidenceDraft[\s\S]*?setManualEvidencePreview\(null\);[\s\S]*?setEvidenceReviewDecisions\(\{\}\);[\s\S]*?setEvidenceReviewPreview\(null\);[\s\S]*?clearSourceLockSavePreviews\(\);\s*\};/);
+  assert.equal(page.match(/updateManualEvidenceDraft\("(?:leadId|sourceName|title|canonicalUrl|publishedAt)",event\.target\.value\)/g)?.length, 5);
   assert.match(page, /fetch\("\/api\/news\/manual-evidence-preview"/);
   assert.match(route, /buildManualPublicEvidencePreview/);
   assert.match(route, /externalCalls: 0/);

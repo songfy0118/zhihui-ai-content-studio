@@ -90,7 +90,7 @@ test("wires only a preview action without connecting the source-lock writer", as
   assert.match(page, /预览单次保存授权（不授权）/);
   assert.match(page, /fetch\("\/api\/news\/source-lock-save-authorization-preview"/);
   assert.match(page, /const clearSourceLockSavePreviews = \(\) => \{\s*setSourceLockSavePlan\(null\);\s*setSourceLockSaveAuthorizationPreview\(null\);\s*\};/);
-  assert.equal(page.match(/clearSourceLockSavePreviews\(\);/g)?.length, 10);
+  assert.equal(page.match(/clearSourceLockSavePreviews\(\);/g)?.length, 11);
   assert.match(route, /buildSourceLockSaveAuthorizationPreview/);
   assert.doesNotMatch(route, /source-lock-store|\bgetDb\b|\.batch\(|\.run\(|SAVE_REVIEWED_SOURCE_LOCK/);
   assert.doesNotMatch(savePlanRoute, /source-lock-save-authorization-preview|source-lock-store|\.batch\(|\.run\(/);
