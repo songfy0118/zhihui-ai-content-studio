@@ -8,7 +8,20 @@ function publishedAgeHours(cluster, nowMs) {
   return Math.max(0, (nowMs - publishedAt) / 3_600_000);
 }
 
-export function buildEvidenceGapQueue(clustering, { profile = DEFAULT_ACCOUNT_PROFILE, now = new Date(), windowHours = DEFAULT_WINDOW_HOURS, minimumAccountFit = 30, maxLeads = 12 } = {}) {
+export function selectSourceDiverseLeads(candidates = [], maxLeads = 12, maxLeadsPerSource = 3) {
+  const selected = [];
+  const sourceCounts = new Map();
+  for (const candidate of candidates) {
+    if (selected.length >= maxLeads) break;
+    const sourceCount = sourceCounts.get(candidate.sourceId) ?? 0;
+    if (sourceCount >= maxLeadsPerSource) continue;
+    selected.push(candidate);
+    sourceCounts.set(candidate.sourceId, sourceCount + 1);
+  }
+  return selected;
+}
+
+export function buildEvidenceGapQueue(clustering, { profile = DEFAULT_ACCOUNT_PROFILE, now = new Date(), windowHours = DEFAULT_WINDOW_HOURS, minimumAccountFit = 30, maxLeads = 12, maxLeadsPerSource = 3 } = {}) {
   const nowMs = new Date(now).getTime();
   const candidates = (clustering?.clusters ?? []).flatMap((cluster) => {
     if (cluster.sourceCount !== 1 || cluster.eligibleForHotspotScoring) return [];
@@ -36,9 +49,9 @@ export function buildEvidenceGapQueue(clustering, { profile = DEFAULT_ACCOUNT_PR
     }];
   });
 
-  const leads = candidates
-    .sort((left, right) => right.accountFitScore - left.accountFitScore || left.ageHours - right.ageHours || left.id.localeCompare(right.id))
-    .slice(0, maxLeads);
+  const orderedCandidates = candidates
+    .sort((left, right) => right.accountFitScore - left.accountFitScore || left.ageHours - right.ageHours || left.id.localeCompare(right.id));
+  const leads = selectSourceDiverseLeads(orderedCandidates, maxLeads, maxLeadsPerSource);
 
   return {
     status: leads.length ? "evidence_gaps_ready" : "no_recent_account_fit_leads",
@@ -48,6 +61,8 @@ export function buildEvidenceGapQueue(clustering, { profile = DEFAULT_ACCOUNT_PR
       recentSingleSourceLeads: candidates.length,
       leadsReturned: leads.length,
       independentSourcesStillRequired: leads.length,
+      sourcesRepresented: new Set(leads.map((lead) => lead.sourceId)).size,
+      maxLeadsPerSource,
       windowHours,
       minimumAccountFit,
     },

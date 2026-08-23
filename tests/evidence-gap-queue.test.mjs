@@ -3,7 +3,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 
 import { buildTopicClusters } from "../bridge/topic-clustering.mjs";
-import { buildEvidenceGapQueue } from "../bridge/evidence-gap-queue.mjs";
+import { buildEvidenceGapQueue, selectSourceDiverseLeads } from "../bridge/evidence-gap-queue.mjs";
 
 function item(id, sourceId, title, publishedAt, category = "ai") {
   return { id, sourceId, sourceName: sourceId, title, canonicalUrl: `https://${sourceId}.example/${id}`, publishedAt, category };
@@ -44,6 +44,21 @@ test("keeps shortlist ephemeral and blocks fact, source-lock and draft claims", 
   assert.equal(queue.databaseWrites, false);
   assert.equal(queue.publishTriggered, false);
   assert.equal(queue.leads[0].selectableForDraft, false);
+});
+
+test("limits each source so one publisher cannot occupy the whole shortlist", () => {
+  const candidates = [
+    { id: "a1", sourceId: "source-a" },
+    { id: "a2", sourceId: "source-a" },
+    { id: "a3", sourceId: "source-a" },
+    { id: "a4", sourceId: "source-a" },
+    { id: "b1", sourceId: "source-b" },
+    { id: "b2", sourceId: "source-b" },
+    { id: "c1", sourceId: "source-c" },
+  ];
+  const selected = selectSourceDiverseLeads(candidates, 5, 2);
+  assert.deepEqual(selected.map((candidate) => candidate.id), ["a1", "a2", "b1", "b2", "c1"]);
+  assert.equal(Math.max(...[...new Set(selected.map((candidate) => candidate.sourceId))].map((sourceId) => selected.filter((candidate) => candidate.sourceId === sourceId).length)), 2);
 });
 
 test("wires the evidence-gap queue as a read-only console action", async () => {
