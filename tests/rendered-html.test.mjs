@@ -1096,9 +1096,13 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(page, /静帧生成视频/);
   assert.match(page, /完整提示词不返回/);
   assert.match(page, /外部调用 \{packageReadiness\.lumenxAdapterPlan\.externalCalls\}/);
+  assert.match(page, /fetch\("\/api\/news\/platform-text-unified-draft-package-plan"/);
+  assert.match(page, /检查双平台草稿包（不会打开平台）/);
+  assert.match(page, /浏览器打开 0 · 登录 0 · 上传 0 · 草稿保存 0 · 发布 0/);
   assert.match(layout, /知绘工厂/);
   assert.match(css, /\.localProjects/);
   assert.match(css, /\.adapterPlan/);
+  assert.match(css, /\.unifiedDraftPackagePlan/);
   await assert.rejects(access(new URL("app/_sites-preview", projectRoot)));
 });
 
