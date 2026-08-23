@@ -7,6 +7,7 @@ import { buildEvidenceMetadataPreview } from "../bridge/evidence-metadata-previe
 import { buildEvidenceReviewPreview, EVIDENCE_REVIEW_CHECKS } from "../bridge/evidence-review-preview.mjs";
 import { buildSourceLockSavePlan } from "../bridge/source-lock-save-plan.mjs";
 import { POST } from "../app/api/news/source-lock-save-plan/route.ts";
+import { formatSourceLockPlanBlocker } from "../app/source-lock-plan-diagnostics.ts";
 
 const lead = {
   id: "cluster:one",
@@ -28,6 +29,13 @@ function readyReview() {
   const checks = Object.fromEntries(EVIDENCE_REVIEW_CHECKS.map((check) => [check, true]));
   return buildEvidenceReviewPreview(plan, metadata, [{ leadId: lead.id, candidateId: "b-match", checks }]);
 }
+
+test("formats source lock plan blockers as actionable Chinese diagnostics", () => {
+  assert.equal(formatSourceLockPlanBlocker("invalid_save_plan_request"), "保存计划请求已失效，请重新完成证据审查");
+  assert.equal(formatSourceLockPlanBlocker("review_fingerprint_mismatch"), "审查指纹已变化，请重新生成计划");
+  assert.equal(formatSourceLockPlanBlocker("review_target_not_eligible:cluster:one"), "线索 cluster:one：审查证据不完整，不能进入保存计划");
+  assert.equal(formatSourceLockPlanBlocker("future_blocker"), "future_blocker");
+});
 
 test("binds a save plan to the exact current review fingerprint", () => {
   const review = readyReview();
@@ -89,6 +97,7 @@ test("wires a save-plan-only endpoint without a database adapter", async () => {
   assert.match(page, /fetch\("\/api\/news\/source-lock-save-plan"/);
   assert.match(page, /setSourceLockSavePlanBusy\(true\);\s*setSourceLockSavePlan\(null\);\s*setSourceLockSaveAuthorizationPreview\(null\);\s*evidencePipelineRevision\.current \+= 1;/);
   assert.match(page, /const plan = await response\.json\(\) as SourceLockSavePlan;\s*if \(requestRevision !== evidencePipelineRevision\.current\) return;\s*setSourceLockSavePlan\(plan\);/);
+  assert.match(page, /sourceLockSavePlan\.blockers\.map\(formatSourceLockPlanBlocker\)\.join\(" \/ "\)/);
   assert.match(route, /buildManualPublicEvidencePreview/);
   assert.match(route, /manualInputs/);
   assert.match(route, /\.\.\.buildSourceLockSavePlan\(null\)/);
