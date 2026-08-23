@@ -7,6 +7,14 @@ function normalizedIds(selectedIds) {
   return [...new Set(selectedIds.filter((value) => typeof value === "string").map((value) => value.trim()).filter(Boolean))];
 }
 
+function normalizedHost(value) {
+  try {
+    return new URL(value).hostname.toLocaleLowerCase("en-US").replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
 export function buildEvidenceSearchPlan(leads = [], selectedIds = [], sources = []) {
   const selection = normalizedIds(selectedIds);
   const blockers = [];
@@ -17,23 +25,50 @@ export function buildEvidenceSearchPlan(leads = [], selectedIds = [], sources = 
     if (!leadsById.has(id)) blockers.push(`selected_lead_not_current:${id}`);
   }
   const selectedLeads = selection.flatMap((id) => leadsById.get(id) ?? []);
-  const allowedSources = sources.filter((source) => source.enabled && !source.requiresLogin && ["rss", "official_newsroom"].includes(source.sourceType));
-  const targets = selectedLeads.map((lead) => ({
-    leadId: lead.id,
-    title: lead.title,
-    originalSourceId: lead.sourceId,
-    sourcePublishedAt: lead.publishedAt,
-    originalEvidence: (lead.evidence ?? []).slice(0, 1).map(({ id, sourceId, sourceName, title, canonicalUrl, publishedAt }) => ({ id, sourceId, sourceName, title, canonicalUrl, publishedAt })),
-    status: "planned_not_executed",
-    queries: lead.suggestedQueries.slice(0, 2),
-    allowedSources: allowedSources
-      .filter((source) => source.id !== lead.sourceId)
-      .map(({ id, name, sourceType, baseUrl, feedUrl }) => ({ id, name, sourceType, baseUrl, feedUrl })),
-    requiredIndependentSources: lead.missingIndependentSources,
-    resultsFound: 0,
-    claimsVerified: 0,
-    sourceLockReady: false,
-  }));
+  const publicSources = sources.filter((source) => source.enabled && !source.requiresLogin && ["rss", "official_newsroom"].includes(source.sourceType));
+  const sourcesById = new Map(sources.map((source) => [source.id, source]));
+  const targets = selectedLeads.map((lead) => {
+    const originalEvidence = (lead.evidence ?? []).slice(0, 1).map(({ id, sourceId, sourceName, title, canonicalUrl, publishedAt }) => ({ id, sourceId, sourceName, title, canonicalUrl, publishedAt }));
+    const originalSource = sourcesById.get(lead.sourceId);
+    const originalHosts = [...new Set([
+      ...originalEvidence.map((item) => normalizedHost(item.canonicalUrl)),
+      normalizedHost(originalSource?.baseUrl),
+      normalizedHost(originalSource?.feedUrl),
+    ].filter(Boolean))].sort();
+    const excludedSources = [];
+    const allowedSources = publicSources.flatMap((source) => {
+      const sourceHost = normalizedHost(source.baseUrl);
+      const reason = source.id === lead.sourceId
+        ? "same_source_id"
+        : sourceHost && originalHosts.includes(sourceHost) ? "same_exact_host" : null;
+      if (reason) {
+        excludedSources.push({ id: source.id, name: source.name, host: sourceHost, reason });
+        return [];
+      }
+      const { id, name, sourceType, baseUrl, feedUrl } = source;
+      return [{ id, name, sourceType, baseUrl, feedUrl }];
+    });
+    if (!allowedSources.length) blockers.push(`no_independent_public_sources:${lead.id}`);
+    return {
+      leadId: lead.id,
+      title: lead.title,
+      originalSourceId: lead.sourceId,
+      sourcePublishedAt: lead.publishedAt,
+      originalEvidence,
+      status: "planned_not_executed",
+      queries: lead.suggestedQueries.slice(0, 2),
+      allowedSources,
+      independenceDiagnostics: {
+        policy: "source_id_and_exact_normalized_host",
+        originalHosts,
+        excludedSources,
+      },
+      requiredIndependentSources: lead.missingIndependentSources,
+      resultsFound: 0,
+      claimsVerified: 0,
+      sourceLockReady: false,
+    };
+  });
   const ready = blockers.length === 0 && targets.length > 0;
   const fingerprint = ready
     ? createHash("sha256").update(targets.map((target) => `${target.leadId}\n${target.title}\n${target.allowedSources.map((source) => source.id).join(",")}`).join("\n---\n")).digest("hex")

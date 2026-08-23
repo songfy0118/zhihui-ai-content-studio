@@ -14,6 +14,7 @@ const leads = [{
 }];
 const sources = [
   { id: "source-a", name: "Original", sourceType: "rss", baseUrl: "https://a.example/", feedUrl: "https://a.example/feed", enabled: true, requiresLogin: false },
+  { id: "source-a-alias", name: "Same host alias", sourceType: "official_newsroom", baseUrl: "https://www.a.example/news", feedUrl: null, enabled: true, requiresLogin: false },
   { id: "source-b", name: "Independent", sourceType: "official_newsroom", baseUrl: "https://b.example/", feedUrl: null, enabled: true, requiresLogin: false },
   { id: "source-c", name: "Login source", sourceType: "rss", baseUrl: "https://c.example/", feedUrl: "https://c.example/feed", enabled: true, requiresLogin: true },
 ];
@@ -24,9 +25,20 @@ test("builds a fingerprinted plan using only independent public sources", () => 
   assert.equal(plan.selection.accepted, 1);
   assert.match(plan.planFingerprint, /^[a-f0-9]{64}$/);
   assert.deepEqual(plan.targets[0].allowedSources.map((source) => source.id), ["source-b"]);
+  assert.deepEqual(plan.targets[0].independenceDiagnostics.originalHosts, ["a.example"]);
+  assert.deepEqual(plan.targets[0].independenceDiagnostics.excludedSources.map(({ id, reason }) => ({ id, reason })), [
+    { id: "source-a", reason: "same_source_id" },
+    { id: "source-a-alias", reason: "same_exact_host" },
+  ]);
   assert.deepEqual(plan.targets[0].queries, leads[0].suggestedQueries);
   assert.doesNotMatch(plan.targets[0].queries.join(" "), /independent confirmation/);
   assert.equal(plan.targets[0].resultsFound, 0);
+});
+
+test("blocks plans that have no independent public source left", () => {
+  const plan = buildEvidenceSearchPlan(leads, ["cluster:one"], sources.slice(0, 2));
+  assert.equal(plan.status, "search_plan_blocked");
+  assert.ok(plan.blockers.includes("no_independent_public_sources:cluster:one"));
 });
 
 test("blocks empty, excessive and stale selections", () => {
