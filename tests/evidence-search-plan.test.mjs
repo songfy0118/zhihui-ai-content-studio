@@ -88,6 +88,10 @@ test("wires a guarded non-executing plan endpoint and console action", async () 
   assert.match(page, /生成第二来源检索计划（不执行）/);
   assert.match(page, /RSS 元数据/);
   assert.match(page, /人工公开页/);
+  assert.match(page, /人工公开页直达入口/);
+  assert.match(page, /仅人工打开：\{source\.name\}/);
+  assert.match(page, /href=\{source\.baseUrl\}/);
+  assert.match(page, /只在新标签页打开，不自动检索或读取正文/);
   assert.match(page, /fetch\("\/api\/news\/evidence-search-plan"/);
   assert.match(route, /body\.selectedIds\.length > 3/);
   assert.doesNotMatch(route, /getDb|\.insert\(|\.update\(|\.delete\(/);
