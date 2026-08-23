@@ -1112,7 +1112,8 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(page, /迁移执行 0 · 数据库写入 0/);
   assert.match(page, /fetch\("\/api\/news\/platform-text-review-migration-authorization-preview"/);
   assert.match(page, /预览迁移授权范围（不执行）/);
-  assert.match(page, /命令准备 0 · 执行器连接 0 · 迁移执行 0 · 数据库写入 0/);
+  assert.match(page, /清单只读 · SQL 不执行 · 命令准备 0 · 执行器连接 0 · 迁移执行 0 · 数据库写入 0/);
+  assert.match(page, /migration\.tables\.join\(" · "\)/);
   assert.match(layout, /知绘工厂/);
   assert.match(css, /\.localProjects/);
   assert.match(css, /\.adapterPlan/);
@@ -1121,6 +1122,7 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(css, /\.durableReviewCatalog/);
   assert.match(css, /\.reviewStorageReadiness/);
   assert.match(css, /\.reviewMigrationAuthorizationPreview/);
+  assert.match(css, /\.reviewMigrationManifest/);
   await assert.rejects(access(new URL("app/_sites-preview", projectRoot)));
 });
 

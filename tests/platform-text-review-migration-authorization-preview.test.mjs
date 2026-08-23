@@ -29,6 +29,8 @@ test("builds a deterministic non-executing authorization preview for exactly 000
   assert.equal(first.migrationScopeFingerprint, repeat.migrationScopeFingerprint);
   assert.match(first.requiredConfirmation, /^AUTHORIZE LOCAL REVIEW STORAGE MIGRATIONS 0009 0010 [a-f0-9]{64}$/);
   assert.deepEqual(first.migrationTags, ["0009_chunky_praxagora", "0010_tranquil_donald_blake"]);
+  assert.equal(first.migrationManifest.length, 2);
+  assert.deepEqual(first.migrationManifest.map(({ tables, indexes }) => [tables.length, indexes.length]), [[2, 5], [3, 7]]);
   assert.equal(first.tableCount, 5);
   assert.equal(first.indexCount, 12);
   assert.equal(first.objectCount, 17);
@@ -42,6 +44,20 @@ test("builds a deterministic non-executing authorization preview for exactly 000
   assert.equal(first.applyPerformed, false);
   assert.equal(first.databaseWrites, false);
   assert.equal(first.publishTriggered, false);
+});
+
+test("binds the displayed object manifest to the checked-in create-only SQL", async () => {
+  const preview = buildPlatformTextReviewMigrationAuthorizationPreview(missingStorageReadiness());
+  for (const migration of preview.migrationManifest) {
+    const sql = await readFile(new URL(`../drizzle/${migration.tag}.sql`, import.meta.url), "utf8");
+    const tables = [...sql.matchAll(/CREATE TABLE `([^`]+)`/g)].map((match) => match[1]);
+    const indexes = [...sql.matchAll(/CREATE (?:UNIQUE )?INDEX `([^`]+)`/g)].map((match) => match[1]);
+    assert.deepEqual(migration.tables, tables);
+    assert.deepEqual(migration.indexes, indexes);
+    assert.doesNotMatch(sql, /\b(?:DROP|DELETE|UPDATE|ALTER)\b/i);
+  }
+  assert.equal(preview.databaseWrites, false);
+  assert.equal(preview.applyPerformed, false);
 });
 
 test("blocks stale, partial, already verified or write-bearing readiness", () => {

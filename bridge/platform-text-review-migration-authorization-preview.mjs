@@ -1,9 +1,43 @@
 import { createHash } from "node:crypto";
 
 const MIGRATIONS = [
-  { tag: "0009_chunky_praxagora", tables: 2, indexes: 5, objects: 7 },
-  { tag: "0010_tranquil_donald_blake", tables: 3, indexes: 7, objects: 10 },
+  {
+    tag: "0009_chunky_praxagora",
+    tables: ["platform_text_draft_review_platforms", "platform_text_draft_review_receipts"],
+    indexes: [
+      "uq_platform_text_draft_review_platform_receipt_platform",
+      "idx_platform_text_draft_review_platform_draft",
+      "uq_platform_text_draft_review_fingerprint",
+      "uq_platform_text_draft_review_idempotency_key",
+      "idx_platform_text_draft_review_preview_created_at",
+    ],
+  },
+  {
+    tag: "0010_tranquil_donald_blake",
+    tables: [
+      "platform_text_visual_review_assets",
+      "platform_text_visual_review_platforms",
+      "platform_text_visual_review_receipts",
+    ],
+    indexes: [
+      "uq_platform_text_visual_review_asset_receipt_platform_card",
+      "idx_platform_text_visual_review_asset_svg_fingerprint",
+      "uq_platform_text_visual_review_platform_receipt_platform",
+      "idx_platform_text_visual_review_platform_platform",
+      "uq_platform_text_visual_review_fingerprint",
+      "uq_platform_text_visual_review_idempotency_key",
+      "idx_platform_text_visual_review_render_created_at",
+    ],
+  },
 ];
+
+const TABLE_COUNT = MIGRATIONS.reduce((total, migration) => total + migration.tables.length, 0);
+const INDEX_COUNT = MIGRATIONS.reduce((total, migration) => total + migration.indexes.length, 0);
+const MIGRATION_MANIFEST = MIGRATIONS.map(({ tag, tables, indexes }) => ({
+  tag,
+  tables: [...tables],
+  indexes: [...indexes],
+}));
 
 function hash(value) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -16,9 +50,10 @@ function safeResult(fields = {}) {
     migrationScopeFingerprint: null,
     requiredConfirmation: null,
     migrationTags: MIGRATIONS.map(({ tag }) => tag),
-    tableCount: 5,
-    indexCount: 12,
-    objectCount: 17,
+    migrationManifest: MIGRATION_MANIFEST,
+    tableCount: TABLE_COUNT,
+    indexCount: INDEX_COUNT,
+    objectCount: TABLE_COUNT + INDEX_COUNT,
     localOnly: true,
     remoteAllowed: false,
     createOnly: true,
@@ -54,11 +89,11 @@ function validReadiness(value) {
     && value?.databaseWrites === false
     && value?.draftReviewStorage?.status === "missing"
     && value?.draftReviewStorage?.migrationTag === MIGRATIONS[0].tag
-    && value?.draftReviewStorage?.missingObjectCount === MIGRATIONS[0].objects
+    && value?.draftReviewStorage?.missingObjectCount === MIGRATIONS[0].tables.length + MIGRATIONS[0].indexes.length
     && value?.draftReviewStorage?.missingColumnCount === 13
     && value?.visualReviewStorage?.status === "missing"
     && value?.visualReviewStorage?.migrationTag === MIGRATIONS[1].tag
-    && value?.visualReviewStorage?.missingObjectCount === MIGRATIONS[1].objects
+    && value?.visualReviewStorage?.missingObjectCount === MIGRATIONS[1].tables.length + MIGRATIONS[1].indexes.length
     && value?.visualReviewStorage?.missingColumnCount === 21;
 }
 
@@ -70,7 +105,7 @@ export function buildPlatformTextReviewMigrationAuthorizationPreview(storageRead
   const scope = {
     targetBinding: "DB",
     localOnly: true,
-    migrations: MIGRATIONS,
+    migrations: MIGRATION_MANIFEST,
     observedStorage: {
       draft: storageReadiness.draftReviewStorage.status,
       visual: storageReadiness.visualReviewStorage.status,

@@ -9,6 +9,7 @@ function closedResult(blocker: string) {
     migrationScopeFingerprint: null,
     requiredConfirmation: null,
     migrationTags: ["0009_chunky_praxagora", "0010_tranquil_donald_blake"],
+    migrationManifest: [],
     tableCount: 5,
     indexCount: 12,
     objectCount: 17,
