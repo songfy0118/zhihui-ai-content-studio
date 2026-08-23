@@ -3,7 +3,7 @@ const DEFAULT_WINDOW_HOURS = 24 * 7;
 export const DEFAULT_ACCOUNT_PROFILE = Object.freeze({
   id: "zhihui-ai-tech-finance-v1",
   label: "知绘工厂 · AI / 科技 / 金融",
-  categoryWeights: Object.freeze({ ai: 1, technology: 0.95, finance_regulation: 0.9, macro_finance: 0.9, jobs_macro: 0.85, robotics: 0.85 }),
+  categoryWeights: Object.freeze({ ai: 1, ai_media: 1, technology: 0.95, tech_media: 0.4, company_technology: 0.4, finance_regulation: 0.9, macro_finance: 0.9, jobs_macro: 0.85, robotics: 0.85 }),
   topicGroups: Object.freeze([
     Object.freeze({ id: "ai", weight: 1, terms: Object.freeze(["ai", "artificial intelligence", "openai", "chatgpt", "agent", "model", "人工智能", "大模型", "智能体"]) }),
     Object.freeze({ id: "technology", weight: 0.9, terms: Object.freeze(["technology", "software", "chip", "cloud", "developer", "科技", "软件", "芯片", "云计算", "程序员"]) }),
@@ -46,6 +46,17 @@ export function scoreAccountFit(cluster, profile = DEFAULT_ACCOUNT_PROFILE) {
     score: rounded(fit.category + fit.topicTerms),
     breakdown: { category: fit.category, topicTerms: fit.topicTerms },
     matchedTopics: fit.matchedGroups,
+  };
+}
+
+export function assessProfileCategoryCoverage(clustering, profile = DEFAULT_ACCOUNT_PROFILE) {
+  const categories = [...new Set((clustering?.clusters ?? []).map((cluster) => cluster.category).filter(Boolean))].sort();
+  const unmappedCategories = categories.filter((category) => !Object.hasOwn(profile.categoryWeights ?? {}, category));
+  return {
+    categoriesPresent: categories.length,
+    mappedCategories: categories.length - unmappedCategories.length,
+    unmappedCategories,
+    complete: unmappedCategories.length === 0,
   };
 }
 
@@ -93,7 +104,7 @@ export function rankTopicCandidates(clustering, { profile = DEFAULT_ACCOUNT_PROF
 
   return {
     status: candidates.length ? "ranked_candidates_ready" : "no_eligible_candidates",
-    profile: { id: profile.id, label: profile.label, calibration: "rules_only_no_verified_account_metrics" },
+    profile: { id: profile.id, label: profile.label, calibration: "rules_only_no_verified_account_metrics", categoryCoverage: assessProfileCategoryCoverage(clustering, profile) },
     summary: {
       clustersConsidered: clustering?.clusters?.length ?? 0,
       eligibleClusters: eligibleClusters.length,

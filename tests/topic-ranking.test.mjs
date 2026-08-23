@@ -3,7 +3,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 
 import { buildTopicClusters } from "../bridge/topic-clustering.mjs";
-import { rankTopicCandidates } from "../bridge/topic-ranking.mjs";
+import { assessProfileCategoryCoverage, DEFAULT_ACCOUNT_PROFILE, rankTopicCandidates, scoreAccountFit } from "../bridge/topic-ranking.mjs";
 
 function item(id, sourceId, title, publishedAt, category = "ai") {
   return { id, sourceId, sourceName: sourceId, title, canonicalUrl: `https://${sourceId}.example/${id}`, publishedAt, category };
@@ -48,6 +48,31 @@ test("returns no score when clustering has no eligible cross-source candidate", 
   assert.equal(result.status, "no_eligible_candidates");
   assert.equal(result.candidates.length, 0);
   assert.equal(result.heatScored, false);
+});
+
+test("covers enabled media and company source categories without silently scoring them as zero", () => {
+  assert.equal(DEFAULT_ACCOUNT_PROFILE.categoryWeights.ai_media, 1);
+  assert.equal(DEFAULT_ACCOUNT_PROFILE.categoryWeights.tech_media, 0.4);
+  assert.equal(DEFAULT_ACCOUNT_PROFILE.categoryWeights.company_technology, 0.4);
+
+  const qbitaiFit = scoreAccountFit({ category: "ai_media", title: "具身智能进入真实产线", evidence: [] });
+  assert.equal(qbitaiFit.breakdown.category, 60);
+  assert.equal(qbitaiFit.score, 60);
+
+  const unrelatedCompanyPost = scoreAccountFit({ category: "company_technology", title: "Community garden publishes meeting calendar", evidence: [] });
+  assert.equal(unrelatedCompanyPost.score, 24);
+
+  const coverage = assessProfileCategoryCoverage({ clusters: [
+    { category: "ai_media" },
+    { category: "tech_media" },
+    { category: "company_technology" },
+  ] });
+  assert.deepEqual(coverage, { categoriesPresent: 3, mappedCategories: 3, unmappedCategories: [], complete: true });
+});
+
+test("reports unmapped categories instead of hiding taxonomy drift", () => {
+  const coverage = assessProfileCategoryCoverage({ clusters: [{ category: "new_category" }] });
+  assert.deepEqual(coverage, { categoriesPresent: 1, mappedCategories: 0, unmappedCategories: ["new_category"], complete: false });
 });
 
 test("wires ranking as a read-only route and console action", async () => {
