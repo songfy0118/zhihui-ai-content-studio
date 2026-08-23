@@ -5,9 +5,11 @@ import { buildEvidenceGapQueue } from "../../../../bridge/evidence-gap-queue.mjs
 import { buildEvidenceSearchPlan } from "../../../../bridge/evidence-search-plan.mjs";
 import { buildEvidenceMetadataPreview } from "../../../../bridge/evidence-metadata-preview.mjs";
 import { buildEvidenceReviewPreview } from "../../../../bridge/evidence-review-preview.mjs";
+import { buildManualPublicEvidencePreview } from "../../../../bridge/manual-public-evidence-preview.mjs";
 import { buildSourceLockSavePlan } from "../../../../bridge/source-lock-save-plan.mjs";
 
 type ReviewDecision = { leadId?: unknown; candidateId?: unknown; checks?: unknown };
+type ManualInput = { leadId?: unknown; sourceName?: unknown; title?: unknown; canonicalUrl?: unknown; publishedAt?: unknown };
 
 function validDecision(decision: ReviewDecision) {
   return typeof decision?.leadId === "string" && decision.leadId.length <= 80
@@ -15,20 +17,45 @@ function validDecision(decision: ReviewDecision) {
     && typeof decision?.checks === "object" && decision.checks !== null;
 }
 
+function validString(value: unknown, minimum: number, maximum: number) {
+  return typeof value === "string" && value.trim().length >= minimum && value.length <= maximum;
+}
+
+function validManualInput(input: ManualInput) {
+  return validString(input?.leadId, 1, 80)
+    && validString(input?.sourceName, 2, 80)
+    && validString(input?.title, 8, 300)
+    && validString(input?.canonicalUrl, 8, 2048)
+    && validString(input?.publishedAt, 8, 40);
+}
+
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({})) as { selectedIds?: unknown; decisions?: unknown; confirmedReviewFingerprint?: unknown };
-  const validSelections = Array.isArray(body.selectedIds) && body.selectedIds.length > 0 && body.selectedIds.length <= 3 && body.selectedIds.every((id) => typeof id === "string" && id.length <= 80);
+  const body = await request.json().catch(() => ({})) as { selectedIds?: unknown; decisions?: unknown; manualInputs?: unknown; confirmedReviewFingerprint?: unknown };
+  const selectedIds = Array.isArray(body.selectedIds) ? body.selectedIds : [];
+  const manualInputs = Array.isArray(body.manualInputs) ? body.manualInputs : [];
+  const validSelections = selectedIds.length > 0 && selectedIds.length <= 3 && selectedIds.every((id) => typeof id === "string" && id.length <= 80);
   const validDecisions = Array.isArray(body.decisions) && body.decisions.length > 0 && body.decisions.length <= 3 && body.decisions.every(validDecision);
   const validFingerprint = typeof body.confirmedReviewFingerprint === "string" && /^[a-f0-9]{64}$/.test(body.confirmedReviewFingerprint);
-  if (!validSelections || !validDecisions || !validFingerprint) {
+  const manualEvidenceUsed = manualInputs.length > 0;
+  const validManualInputs = !manualEvidenceUsed || (selectedIds.length === 1 && manualInputs.length === 1 && manualInputs.every(validManualInput));
+  if (!validSelections || !validDecisions || !validFingerprint || !validManualInputs) {
     return Response.json({ status: "source_lock_save_plan_blocked", blockers: ["invalid_save_plan_request"], authorizationRequired: true, authorizationGranted: false, writeAllowed: false, persisted: false, sourceLocksCreated: 0, factsVerified: false, draftsUnlocked: 0, databaseWrites: false, publishTriggered: false, externalCalls: 0 }, { status: 400 });
   }
   const feedPreview = await buildRssNewsPreview({ sources: NEWS_SOURCE_CATALOG });
   const clustering = buildTopicClusters(feedPreview.items);
   const queue = buildEvidenceGapQueue(clustering);
-  const plan = buildEvidenceSearchPlan(queue.leads, body.selectedIds, NEWS_SOURCE_CATALOG);
-  const metadataPreview = buildEvidenceMetadataPreview(plan, feedPreview.items);
+  const plan = buildEvidenceSearchPlan(queue.leads, selectedIds, NEWS_SOURCE_CATALOG);
+  const metadataPreview = manualEvidenceUsed
+    ? buildManualPublicEvidencePreview(plan, manualInputs)
+    : buildEvidenceMetadataPreview(plan, feedPreview.items);
   const reviewPreview = buildEvidenceReviewPreview(plan, metadataPreview, body.decisions);
   const savePlan = buildSourceLockSavePlan(reviewPreview, { confirmedReviewFingerprint: body.confirmedReviewFingerprint });
-  return Response.json({ ...savePlan, fetchedAt: feedPreview.fetchedAt, externalCalls: feedPreview.externalCalls }, { status: savePlan.readyForAuthorizationRequest ? 200 : 409 });
+  return Response.json({
+    ...savePlan,
+    manualEvidenceUsed,
+    candidateUrlFetched: false,
+    manualInputPersisted: false,
+    fetchedAt: feedPreview.fetchedAt,
+    externalCalls: feedPreview.externalCalls,
+  }, { status: savePlan.readyForAuthorizationRequest ? 200 : 409 });
 }

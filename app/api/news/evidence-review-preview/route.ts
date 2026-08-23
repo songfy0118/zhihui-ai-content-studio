@@ -46,9 +46,6 @@ export async function POST(request: Request) {
   const metadataPreview = manualEvidenceUsed
     ? buildManualPublicEvidencePreview(plan, manualInputs)
     : buildEvidenceMetadataPreview(plan, feedPreview.items);
-  const reviewPreview = buildEvidenceReviewPreview(plan, metadataPreview, body.decisions, {
-    downstreamSaveSupported: !manualEvidenceUsed,
-    downstreamBlocker: manualEvidenceUsed ? "manual_evidence_save_path_not_connected" : null,
-  });
+  const reviewPreview = buildEvidenceReviewPreview(plan, metadataPreview, body.decisions);
   return Response.json({ ...reviewPreview, manualEvidenceUsed, fetchedAt: feedPreview.fetchedAt, externalCalls: feedPreview.externalCalls }, { status: reviewPreview.humanEvidenceReviewComplete ? 200 : 409 });
 }

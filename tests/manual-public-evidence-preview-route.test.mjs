@@ -20,11 +20,12 @@ test("rejects malformed manual evidence before any external call", async () => {
   assert.equal(body.publishTriggered, false);
 });
 
-test("wires preview-only routes and a manual review action without URL fetching or storage", async () => {
-  const [page, route, reviewRoute] = await Promise.all([
+test("wires preview-only routes and manual review/save-plan actions without URL fetching or storage", async () => {
+  const [page, route, reviewRoute, savePlanRoute] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/news/manual-evidence-preview/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/news/evidence-review-preview/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/news/source-lock-save-plan/route.ts", import.meta.url), "utf8"),
   ]);
   assert.match(page, /人工公开来源预览（不保存）/);
   assert.match(page, /fetch\("\/api\/news\/manual-evidence-preview"/);
@@ -32,7 +33,12 @@ test("wires preview-only routes and a manual review action without URL fetching 
   assert.match(route, /externalCalls: 0/);
   assert.match(page, /进入六项审查预览/);
   assert.match(reviewRoute, /buildManualPublicEvidencePreview/);
-  assert.match(reviewRoute, /manual_evidence_save_path_not_connected/);
+  assert.match(savePlanRoute, /buildManualPublicEvidencePreview/);
+  assert.match(savePlanRoute, /manualInputs/);
+  assert.match(savePlanRoute, /candidateUrlFetched: false/);
+  assert.match(savePlanRoute, /manualInputPersisted: false/);
+  assert.doesNotMatch(reviewRoute, /manual_evidence_save_path_not_connected/);
   assert.doesNotMatch(route, /fetch\(.*canonicalUrl|axios|got\(|getDb|\.insert\(|\.update\(|\.delete\(/s);
   assert.doesNotMatch(reviewRoute, /fetch\(.*canonicalUrl|axios|got\(|getDb|\.insert\(|\.update\(|\.delete\(/s);
+  assert.doesNotMatch(savePlanRoute, /fetch\(.*canonicalUrl|axios|got\(|getDb|\.insert\(|\.update\(|\.delete\(/s);
 });

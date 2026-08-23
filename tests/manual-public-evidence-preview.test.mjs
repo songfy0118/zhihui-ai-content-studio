@@ -4,6 +4,7 @@ import test from "node:test";
 import { buildEvidenceSearchPlan } from "../bridge/evidence-search-plan.mjs";
 import { buildEvidenceReviewPreview, EVIDENCE_REVIEW_CHECKS } from "../bridge/evidence-review-preview.mjs";
 import { buildManualPublicEvidencePreview } from "../bridge/manual-public-evidence-preview.mjs";
+import { buildSourceLockSavePlan } from "../bridge/source-lock-save-plan.mjs";
 
 const lead = {
   id: "cluster:one",
@@ -71,17 +72,20 @@ test("blocks missing plans, empty input and duplicate lead candidates", () => {
   assert.ok(duplicate.blockers.some((value) => value.endsWith("duplicate_lead")));
 });
 
-test("allows human review completion while keeping the manual save path blocked", () => {
+test("builds a no-write source-lock save plan after manual evidence review", () => {
   const metadata = buildManualPublicEvidencePreview(plan, [input()]);
   const checks = Object.fromEntries(EVIDENCE_REVIEW_CHECKS.map((check) => [check, true]));
-  const preview = buildEvidenceReviewPreview(plan, metadata, [{ leadId: lead.id, candidateId: metadata.targets[0].candidates[0].id, checks }], {
-    downstreamSaveSupported: false,
-    downstreamBlocker: "manual_evidence_save_path_not_connected",
-  });
+  const preview = buildEvidenceReviewPreview(plan, metadata, [{ leadId: lead.id, candidateId: metadata.targets[0].candidates[0].id, checks }]);
   assert.equal(preview.humanEvidenceReviewComplete, true);
-  assert.equal(preview.readyForAuthorizedSourceLockSave, false);
-  assert.deepEqual(preview.downstreamBlockers, ["manual_evidence_save_path_not_connected"]);
+  assert.equal(preview.readyForAuthorizedSourceLockSave, true);
+  assert.deepEqual(preview.downstreamBlockers, []);
   assert.match(preview.reviewFingerprint, /^[a-f0-9]{64}$/);
-  assert.equal(preview.persisted, false);
-  assert.equal(preview.sourceLockCreated, false);
+  const savePlan = buildSourceLockSavePlan(preview, { confirmedReviewFingerprint: preview.reviewFingerprint });
+  assert.equal(savePlan.status, "source_lock_save_plan_ready");
+  assert.equal(savePlan.plannedRecordCount, 1);
+  assert.equal(savePlan.authorizationGranted, false);
+  assert.equal(savePlan.writeAllowed, false);
+  assert.equal(savePlan.persisted, false);
+  assert.equal(savePlan.sourceLocksCreated, 0);
+  assert.equal(savePlan.databaseWrites, false);
 });
