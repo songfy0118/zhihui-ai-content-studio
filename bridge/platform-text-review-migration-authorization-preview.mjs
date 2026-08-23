@@ -33,7 +33,7 @@ const MIGRATIONS = [
 
 const TABLE_COUNT = MIGRATIONS.reduce((total, migration) => total + migration.tables.length, 0);
 const INDEX_COUNT = MIGRATIONS.reduce((total, migration) => total + migration.indexes.length, 0);
-const MIGRATION_MANIFEST = MIGRATIONS.map(({ tag, tables, indexes }) => ({
+export const REVIEW_MIGRATION_MANIFEST = MIGRATIONS.map(({ tag, tables, indexes }) => ({
   tag,
   tables: [...tables],
   indexes: [...indexes],
@@ -50,7 +50,7 @@ function safeResult(fields = {}) {
     migrationScopeFingerprint: null,
     requiredConfirmation: null,
     migrationTags: MIGRATIONS.map(({ tag }) => tag),
-    migrationManifest: MIGRATION_MANIFEST,
+    migrationManifest: REVIEW_MIGRATION_MANIFEST,
     tableCount: TABLE_COUNT,
     indexCount: INDEX_COUNT,
     objectCount: TABLE_COUNT + INDEX_COUNT,
@@ -105,7 +105,7 @@ export function buildPlatformTextReviewMigrationAuthorizationPreview(storageRead
   const scope = {
     targetBinding: "DB",
     localOnly: true,
-    migrations: MIGRATION_MANIFEST,
+    migrations: REVIEW_MIGRATION_MANIFEST,
     observedStorage: {
       draft: storageReadiness.draftReviewStorage.status,
       visual: storageReadiness.visualReviewStorage.status,

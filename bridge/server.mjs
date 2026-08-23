@@ -15,6 +15,7 @@ import { buildGenerationPlan } from "./generation-plan.mjs";
 import { buildLumenXPilotPlan, summarizeLumenXPilotPlan } from "./lumenx-pilot-adapter.mjs";
 import { buildXiaohongshuDraftPackagePlan } from "./xiaohongshu-draft-package.mjs";
 import { verifyMigrationChainInMemory } from "../db/isolated-migration-verifier.mjs";
+import { runPlatformTextReviewMigrationIsolatedRehearsal } from "./platform-text-review-migration-isolated-rehearsal.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "..");
@@ -51,6 +52,16 @@ const server = createServer(async (request, response) => {
       return json(response, result.verified ? 200 : 409, result);
     } catch {
       return json(response, 503, { status: "unavailable", verified: false, blockers: ["isolated_verification_failed"], ephemeralDatabaseWrites: false, liveDatabaseWrites: false, liveApplyPerformed: false, externalCalls: false, costIncurred: false, publishTriggered: false, businessResult: false });
+    }
+  }
+  if (request.method === "POST" && requestUrl.pathname === "/d1/review-migrations/isolated") {
+    try {
+      const tags = ["0009_chunky_praxagora", "0010_tranquil_donald_blake"];
+      const migrations = await Promise.all(tags.map(async (tag) => ({ tag, sql: await readFile(join(root, "drizzle", `${tag}.sql`), "utf8") })));
+      const result = runPlatformTextReviewMigrationIsolatedRehearsal({ migrations });
+      return json(response, result.successPathVerified && result.failurePathVerified ? 200 : 409, result);
+    } catch {
+      return json(response, 503, { status: "platform_text_review_migration_isolated_rehearsal_blocked", blockers: ["platform_text_review_migration_isolated_rehearsal_failed"], mode: "isolated_in_memory_sqlite", appliedTags: [], tableCount: 0, indexCount: 0, schemaVerified: false, successPathVerified: false, rollbackScenarios: [], rollbackScenarioCount: 0, rollbackVerifiedCount: 0, failurePathVerified: false, intentionalFailureProbes: 0, ephemeralDatabaseWrites: false, liveDatabaseAccessed: false, liveDatabaseWrites: false, liveApplyPerformed: false, filesystemMutations: false, externalCalls: false, publishTriggered: false, businessResult: false });
     }
   }
   if (request.method === "GET" && requestUrl.pathname === "/readiness") {
