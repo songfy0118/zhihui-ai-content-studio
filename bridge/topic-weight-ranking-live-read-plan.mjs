@@ -20,6 +20,17 @@ function hash(value) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
 
+export function fingerprintTopicWeightRankingLiveReadPlan(plan) {
+  return hash({
+    profileId: plan.profileId,
+    sourceAuthorizationPreviewFingerprint: plan.sourceAuthorizationPreviewFingerprint,
+    requestedWeights: plan.requestedWeights,
+    requestedBinding: plan.requestedBinding,
+    inspectionScope: plan.inspectionScope,
+    queries: plan.queries,
+  });
+}
+
 function exactKeys(value, keys) {
   return JSON.stringify(Object.keys(value ?? {}).sort()) === JSON.stringify([...keys].sort());
 }
@@ -132,7 +143,7 @@ export function buildTopicWeightRankingLiveReadPlan({
   return safeResult({
     status: "topic_weight_ranking_live_read_plan_ready",
     ...fingerprintPayload,
-    liveReadPlanFingerprint: hash(fingerprintPayload),
+    liveReadPlanFingerprint: fingerprintTopicWeightRankingLiveReadPlan(fingerprintPayload),
     requestedWeightCount: weights.length,
     queryCount: queries.length,
     readOnlyStatementsOnly,

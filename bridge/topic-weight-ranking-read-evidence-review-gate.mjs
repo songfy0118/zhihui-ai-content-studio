@@ -32,6 +32,23 @@ function hash(value) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
 
+function reviewFingerprintPayload(result) {
+  return {
+    evidenceKind: result.evidenceKind,
+    profileId: result.profileId,
+    sourceLiveReadPlanFingerprint: result.sourceLiveReadPlanFingerprint,
+    readEvidencePreviewFingerprint: result.confirmedReadEvidencePreviewFingerprint,
+    checks: result.reviewChecks,
+    reviewedWeights: result.reviewedWeights,
+    overallDecision: result.overallDecision,
+    overallReviewNote: result.overallReviewNote,
+  };
+}
+
+export function fingerprintTopicWeightRankingReadEvidenceReview(result) {
+  return hash(reviewFingerprintPayload(result));
+}
+
 function exactKeys(value, keys) {
   return JSON.stringify(Object.keys(value ?? {}).sort()) === JSON.stringify([...keys].sort());
 }
@@ -144,8 +161,10 @@ function safeResult(fields = {}) {
     blockers: [],
     evidenceKind: "isolated_simulation_only",
     profileId: null,
+    sourceLiveReadPlanFingerprint: null,
     confirmedReadEvidencePreviewFingerprint: null,
     readEvidenceReviewFingerprint: null,
+    reviewChecks: null,
     reviewedWeights: [],
     reviewedWeightCount: 0,
     overallDecision: null,
@@ -209,20 +228,12 @@ export function assessTopicWeightRankingReadEvidenceReview({
   ) blockers.push("topic_weight_ranking_read_evidence_acceptance_conflicts_with_weight_rejection");
   if (blockers.length || !reviewedWeights) return safeResult({ blockers: [...new Set(blockers)] });
 
-  const reviewPayload = {
-    evidenceKind: preview.evidenceKind,
-    profileId: preview.profileId,
-    readEvidencePreviewFingerprint: preview.readEvidencePreviewFingerprint,
-    checks,
-    reviewedWeights,
-    overallDecision,
-    overallReviewNote,
-  };
-  return safeResult({
+  const reviewed = safeResult({
     status: "topic_weight_ranking_read_evidence_review_recorded",
     profileId: preview.profileId,
+    sourceLiveReadPlanFingerprint: preview.sourceLiveReadPlanFingerprint,
     confirmedReadEvidencePreviewFingerprint: preview.readEvidencePreviewFingerprint,
-    readEvidenceReviewFingerprint: hash(reviewPayload),
+    reviewChecks: { ...checks },
     reviewedWeights,
     reviewedWeightCount: reviewedWeights.length,
     overallDecision,
@@ -230,4 +241,8 @@ export function assessTopicWeightRankingReadEvidenceReview({
     humanReviewCompleted: true,
     isolatedEvidenceAccepted: overallDecision === "accept_isolated_read_evidence_review",
   });
+  return {
+    ...reviewed,
+    readEvidenceReviewFingerprint: fingerprintTopicWeightRankingReadEvidenceReview(reviewed),
+  };
 }
