@@ -10,6 +10,14 @@ function timestamp(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function normalizedHost(value) {
+  try {
+    return new URL(value).hostname.toLocaleLowerCase("en-US").replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
 function sharedTerms(leftTitle, rightTitle) {
   const left = tokenizeNewsTitle(leftTitle);
   const right = tokenizeNewsTitle(rightTitle);
@@ -58,6 +66,8 @@ export function buildEvidenceMetadataPreview(plan, items = [], {
         title: item.title,
         canonicalUrl: item.canonicalUrl,
         publishedAt: item.publishedAt,
+        candidateHost: normalizedHost(item.canonicalUrl),
+        publishedDeltaHours: Number(((itemTime - targetTime) / 3_600_000).toFixed(1)),
         titleSimilarity: Number(similarity.toFixed(4)),
         sharedTerms: terms,
         reviewStatus: "human_review_required",
@@ -68,6 +78,8 @@ export function buildEvidenceMetadataPreview(plan, items = [], {
       leadId: target.leadId,
       title: target.title,
       originalSourceId: target.originalSourceId,
+      originalEvidence: target.originalEvidence?.[0] ?? null,
+      originalHost: normalizedHost(target.originalEvidence?.[0]?.canonicalUrl),
       candidates,
       candidateCount: candidates.length,
       sourceLockReady: false,

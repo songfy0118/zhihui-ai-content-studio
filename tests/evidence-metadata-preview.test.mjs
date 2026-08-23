@@ -12,6 +12,7 @@ const leads = [{
   publishedAt: "2026-08-20T12:00:00.000Z",
   missingIndependentSources: 1,
   suggestedQueries: ["OpenAI enterprise agent platform"],
+  evidence: [{ id: "a-original", sourceId: "source-a", sourceName: "Original", title: "OpenAI launches enterprise agent platform", canonicalUrl: "https://www.a.example/story", publishedAt: "2026-08-20T12:00:00.000Z" }],
 }];
 const sources = [
   { id: "source-a", name: "Original", sourceType: "rss", baseUrl: "https://a.example/", feedUrl: "https://a.example/feed", enabled: true, requiresLogin: false },
@@ -31,6 +32,10 @@ test("returns only bounded independent RSS metadata candidates for human review"
   assert.equal(preview.status, "metadata_candidates_found");
   assert.equal(preview.summary.candidatesReturned, 1);
   assert.equal(preview.targets[0].candidates[0].id, "b-match");
+  assert.equal(preview.targets[0].originalEvidence.canonicalUrl, "https://www.a.example/story");
+  assert.equal(preview.targets[0].originalHost, "a.example");
+  assert.equal(preview.targets[0].candidates[0].candidateHost, "b.example");
+  assert.equal(preview.targets[0].candidates[0].publishedDeltaHours, 2);
   assert.equal(preview.targets[0].candidates[0].reviewStatus, "human_review_required");
   assert.equal("summary" in preview.targets[0].candidates[0], false);
 });
@@ -61,6 +66,8 @@ test("wires an explicit metadata-only endpoint without storage or publication", 
     readFile(new URL("../app/api/news/evidence-metadata-preview/route.ts", import.meta.url), "utf8"),
   ]);
   assert.match(page, /检索公开 RSS 元数据/);
+  assert.match(page, /查看原来源/);
+  assert.match(page, /较原来源/);
   assert.match(page, /fetch\("\/api\/news\/evidence-metadata-preview"/);
   assert.match(route, /body\.selectedIds\.length > 3/);
   assert.doesNotMatch(route, /getDb|\.insert\(|\.update\(|\.delete\(/);
