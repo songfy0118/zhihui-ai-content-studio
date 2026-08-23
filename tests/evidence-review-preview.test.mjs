@@ -6,6 +6,7 @@ import { buildEvidenceSearchPlan } from "../bridge/evidence-search-plan.mjs";
 import { buildEvidenceMetadataPreview } from "../bridge/evidence-metadata-preview.mjs";
 import { buildEvidenceReviewPreview, EVIDENCE_REVIEW_CHECKS } from "../bridge/evidence-review-preview.mjs";
 import { POST } from "../app/api/news/evidence-review-preview/route.ts";
+import { formatEvidenceReviewBlocker } from "../app/evidence-review-diagnostics.ts";
 
 const lead = {
   id: "cluster:one",
@@ -22,6 +23,14 @@ const sources = [
 ];
 const candidateItems = [{ id: "b-match", sourceId: "source-b", sourceName: "Independent", title: "Enterprise agent platform launched by OpenAI", canonicalUrl: "https://b.example/story", publishedAt: "2026-08-20T14:00:00.000Z" }];
 const completeChecks = Object.fromEntries(EVIDENCE_REVIEW_CHECKS.map((check) => [check, true]));
+
+test("formats evidence review blockers as actionable Chinese diagnostics", () => {
+  assert.equal(formatEvidenceReviewBlocker("search_plan_not_ready"), "当前补证计划已失效，请重新生成");
+  assert.equal(formatEvidenceReviewBlocker("cluster:one:human_check_missing:dates_consistent"), "线索 cluster:one：尚未确认发布时间与事件时间一致");
+  assert.equal(formatEvidenceReviewBlocker("cluster:one:candidate_not_current"), "线索 cluster:one：所选第二来源候选已失效，请重新选择");
+  assert.equal(formatEvidenceReviewBlocker("review_decision_invalid:cluster:one"), "审查选择无效：cluster:one");
+  assert.equal(formatEvidenceReviewBlocker("future_blocker"), "future_blocker");
+});
 
 function fixtures(items = candidateItems) {
   const plan = buildEvidenceSearchPlan([lead], [lead.id], sources);
@@ -121,6 +130,7 @@ test("wires a guarded review preview without persistence", async () => {
   assert.match(page, /fetch\("\/api\/news\/evidence-review-preview"/);
   assert.match(page, /setEvidenceReviewBusy\(true\);\s*setEvidenceReviewPreview\(null\);\s*clearSourceLockSavePreviews\(\);\s*const requestRevision = evidencePipelineRevision\.current;/);
   assert.match(page, /const preview = await response\.json\(\) as EvidenceReviewPreview;\s*if \(requestRevision !== evidencePipelineRevision\.current\) return;\s*setEvidenceReviewPreview\(preview\);/);
+  assert.match(page, /evidenceReviewPreview\.blockers\.map\(formatEvidenceReviewBlocker\)\.join\(" \/ "\)/);
   assert.match(route, /externalCalls: 0/);
   assert.doesNotMatch(route, /getDb|\.insert\(|\.update\(|\.delete\(/);
 });
