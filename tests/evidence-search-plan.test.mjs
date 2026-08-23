@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 
 import { buildEvidenceSearchPlan } from "../bridge/evidence-search-plan.mjs";
+import { NEWS_SOURCE_CATALOG } from "../bridge/news-source-catalog.mjs";
 
 const leads = [{
   id: "cluster:one",
@@ -56,6 +57,15 @@ test("never executes search or advances facts, source locks, drafts or publicati
   assert.equal(plan.draftsUnlocked, 0);
   assert.equal(plan.databaseWrites, false);
   assert.equal(plan.publishTriggered, false);
+});
+
+test("offers Chinese public newsrooms for manual independent-source research", () => {
+  const qbitaiLead = [{ ...leads[0], sourceId: "qbitai", queryLanguage: "zh-CN" }];
+  const plan = buildEvidenceSearchPlan(qbitaiLead, ["cluster:one"], NEWS_SOURCE_CATALOG);
+  const allowedIds = plan.targets[0].allowedSources.map((source) => source.id);
+  assert.ok(allowedIds.includes("jiqizhixin-public-newsroom"));
+  assert.ok(allowedIds.includes("leiphone-public-newsroom"));
+  assert.equal(plan.searchTriggered, false);
 });
 
 test("wires a guarded non-executing plan endpoint and console action", async () => {

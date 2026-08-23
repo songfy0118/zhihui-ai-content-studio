@@ -1,4 +1,4 @@
-export const NEWS_SOURCE_CATALOG_VERSION = 5;
+export const NEWS_SOURCE_CATALOG_VERSION = 6;
 
 export const NEWS_SOURCE_CATALOG = Object.freeze([
   Object.freeze({
@@ -121,6 +121,40 @@ export const NEWS_SOURCE_CATALOG = Object.freeze([
     refreshMinutes: 60,
   }),
   Object.freeze({
+    id: "jiqizhixin-public-newsroom",
+    name: "机器之心 · 公开文章库",
+    region: "CN",
+    language: "zh-CN",
+    category: "ai_media",
+    sourceType: "official_newsroom",
+    baseUrl: "https://www.jiqizhixin.com/",
+    feedUrl: null,
+    feedEvidenceUrl: "https://www.jiqizhixin.com/data-service",
+    editorialAliases: Object.freeze(["机器之心", "Almost Human"]),
+    rightsPolicy: "public_page_manual_metadata_with_attribution",
+    automaticCollectionBlockedReason: "rss_requires_application_or_subscription",
+    requiresLogin: false,
+    enabled: true,
+    refreshMinutes: 180,
+  }),
+  Object.freeze({
+    id: "leiphone-public-newsroom",
+    name: "雷峰网 · 公开首页",
+    region: "CN",
+    language: "zh-CN",
+    category: "tech_media",
+    sourceType: "official_newsroom",
+    baseUrl: "https://rss.leiphone.com/",
+    feedUrl: null,
+    feedEvidenceUrl: "https://www.leiphone.com/us/index",
+    editorialAliases: Object.freeze(["雷峰网", "AI研习社"]),
+    rightsPolicy: "public_page_manual_metadata_with_attribution",
+    automaticCollectionBlockedReason: "no_confirmed_official_rss_feed",
+    requiresLogin: false,
+    enabled: true,
+    refreshMinutes: 180,
+  }),
+  Object.freeze({
     id: "anthropic-newsroom",
     name: "Anthropic Newsroom",
     region: "US",
@@ -224,6 +258,7 @@ export function validateNewsSourceCatalog(sources = NEWS_SOURCE_CATALOG) {
     if (!source.rightsPolicy) blockers.push(`missing_rights_policy:${source.id}`);
     if (source.feedEvidenceUrl && !source.feedEvidenceUrl.startsWith("https://")) blockers.push(`insecure_feed_evidence_url:${source.id}`);
     if (source.feedSummaryPolicy && !["include", "omit"].includes(source.feedSummaryPolicy)) blockers.push(`invalid_feed_summary_policy:${source.id}`);
+    if (source.sourceType === "official_newsroom" && source.feedUrl === null && !source.automaticCollectionBlockedReason && source.region === "CN") blockers.push(`missing_automatic_collection_block_reason:${source.id}`);
     if (source.includePathPrefixes !== undefined) {
       if (!Array.isArray(source.includePathPrefixes) || source.includePathPrefixes.length === 0) blockers.push(`invalid_include_path_prefixes:${source.id}`);
       else if (source.includePathPrefixes.some((prefix) => typeof prefix !== "string" || !prefix.startsWith("/") || prefix.includes("?") || prefix.includes("#"))) blockers.push(`invalid_include_path_prefix:${source.id}`);

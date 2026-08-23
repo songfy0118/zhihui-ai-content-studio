@@ -20,10 +20,10 @@ test("wechat remains a disabled manual-review source", () => {
 
 test("catalog summary separates automatic and manual sources", () => {
   const summary = summarizeNewsSourceCatalog();
-  assert.equal(summary.totalSources, 14);
-  assert.equal(summary.enabledSources, 13);
+  assert.equal(summary.totalSources, 16);
+  assert.equal(summary.enabledSources, 15);
   assert.equal(summary.rssSources, 10);
-  assert.equal(summary.officialNewsrooms, 3);
+  assert.equal(summary.officialNewsrooms, 5);
   assert.equal(summary.manualReviewSources, 1);
 });
 
@@ -103,4 +103,21 @@ test("catalog rejects malformed source path filters", () => {
     ? { ...source, includePathPrefixes: "/innovation-and-ai/" }
     : source);
   assert.deepEqual(validateNewsSourceCatalog(nonArray).blockers, ["invalid_include_path_prefixes:google-blog"]);
+});
+
+test("Chinese public newsrooms stay manual-only when no free official RSS is confirmed", () => {
+  const expected = new Map([
+    ["jiqizhixin-public-newsroom", "rss_requires_application_or_subscription"],
+    ["leiphone-public-newsroom", "no_confirmed_official_rss_feed"],
+  ]);
+  for (const [id, blockedReason] of expected) {
+    const source = NEWS_SOURCE_CATALOG.find((candidate) => candidate.id === id);
+    assert.ok(source, `missing ${id}`);
+    assert.equal(source.sourceType, "official_newsroom");
+    assert.equal(source.feedUrl, null);
+    assert.equal(source.requiresLogin, false);
+    assert.equal(source.enabled, true);
+    assert.equal(source.rightsPolicy, "public_page_manual_metadata_with_attribution");
+    assert.equal(source.automaticCollectionBlockedReason, blockedReason);
+  }
 });
