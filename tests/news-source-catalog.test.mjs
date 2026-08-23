@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { NEWS_SOURCE_CATALOG, summarizeNewsSourceCatalog, validateNewsSourceCatalog } from "../bridge/news-source-catalog.mjs";
+import { listManualSourceNameSuggestions } from "../app/manual-source-options.ts";
 
 test("news source catalog allows only public no-login sources for automatic collection", () => {
   const validation = validateNewsSourceCatalog();
@@ -28,6 +29,17 @@ test("Silicon Star Pro stays on the manual watchlist without automatic collectio
   assert.deepEqual(source.editorialAliases, ["硅星人Pro", "硅星人"]);
   assert.equal(source.rightsPolicy, "user_supplied_links_summary_only");
   assert.equal(source.automaticCollectionBlockedReason, "wechat_requires_user_supplied_public_article_url");
+});
+
+test("manual source suggestions expose labels without enabling collection", () => {
+  const suggestions = listManualSourceNameSuggestions(NEWS_SOURCE_CATALOG);
+  assert.deepEqual(suggestions.map(({ id }) => id), ["silicon-star-pro-wechat-manual", "wechat-manual-import"]);
+  assert.deepEqual(suggestions[0], {
+    id: "silicon-star-pro-wechat-manual",
+    name: "硅星人Pro · 公众号人工链接",
+    aliases: ["硅星人Pro", "硅星人"],
+  });
+  assert.equal(suggestions.some((source) => source.id === "qbitai"), false);
 });
 
 test("catalog summary separates automatic and manual sources", () => {

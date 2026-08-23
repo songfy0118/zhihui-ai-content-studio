@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { buildEvidenceSearchPlan } from "../bridge/evidence-search-plan.mjs";
@@ -27,6 +28,14 @@ test("formats manual evidence blockers as actionable Chinese diagnostics", () =>
   assert.equal(formatManualEvidenceBlocker("manual_candidate_invalid:2:same_exact_host"), "第 3 条：候选链接与原来源属于同一主机");
   assert.equal(formatManualEvidenceBlocker("manual_candidate_invalid:0:future_reason"), "第 1 条：future_reason");
   assert.equal(formatManualEvidenceBlocker("future_blocker"), "future_blocker");
+});
+
+test("wires manual source name suggestions without automatic article collection", async () => {
+  const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /listManualSourceNameSuggestions\(newsSourceCatalog\.sources\)/);
+  assert.match(page, /list="manualEvidenceSourceOptions"/);
+  assert.match(page, /manualSourceNameSuggestions\.map/);
+  assert.match(page, /仅提供已登记的名称建议；不会自动抓取公众号/);
 });
 const plan = buildEvidenceSearchPlan([lead], [lead.id], sources);
 
