@@ -38,7 +38,6 @@ export async function inspectSourceLockStorage(d1) {
     ...EXPECTED_EVIDENCE_COLUMNS.filter((column) => !evidenceColumns.has(column)).map((column) => `source_lock_evidence.${column}`),
   ];
   const presentCount = EXPECTED_OBJECTS.length - missingObjects.length + EXPECTED_LOCK_COLUMNS.length - missingColumns.filter((column) => column.startsWith("source_locks.")).length + EXPECTED_EVIDENCE_COLUMNS.length - missingColumns.filter((column) => column.startsWith("source_lock_evidence.")).length;
-  const expectedCount = EXPECTED_OBJECTS.length + EXPECTED_LOCK_COLUMNS.length + EXPECTED_EVIDENCE_COLUMNS.length;
   const status = presentCount === 0 ? "missing" : missingObjects.length || missingColumns.length ? "partial" : "verified";
   return {
     status,
