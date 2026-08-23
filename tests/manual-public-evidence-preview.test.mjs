@@ -45,6 +45,7 @@ test("wires manual source name suggestions without automatic article collection"
   assert.match(page, /仅提供已登记的名称建议；不会自动抓取公众号/);
   assert.match(page, /describeManualSourceLinkHost\(manualEvidenceDraft\.sourceName, manualEvidenceDraft\.canonicalUrl, manualSourceNameSuggestions\)/);
   assert.match(page, /manualSourceLinkHostHint&&<span>\{manualSourceLinkHostHint\}<\/span>/);
+  assert.match(page, /<a href=\{candidate\.canonicalUrl\} target="_blank" rel="noreferrer">人工打开候选来源<\/a>/);
   assert.match(page, /decision\.candidateMode==="manual_public_metadata"&&<span>发布者身份：/);
   assert.match(page, /formatManualEvidencePublisherRole\(manualEvidencePreview\?\.targets\?/);
 });
