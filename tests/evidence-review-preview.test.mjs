@@ -59,6 +59,7 @@ test("requires a current candidate and every explicit human evidence check", () 
     exactHostDifferent: true,
     publisherRelationshipChecked: true,
     syndicationOrCitationChainChecked: true,
+    candidatePublisherRole: "catalog_metadata",
   });
 });
 

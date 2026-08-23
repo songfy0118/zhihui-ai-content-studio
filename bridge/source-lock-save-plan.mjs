@@ -9,6 +9,7 @@ function sourceRecord(evidence, evidenceRole) {
     title: evidence.title,
     canonicalUrl: evidence.canonicalUrl,
     publishedAt: evidence.publishedAt,
+    publisherRole: evidence.publisherRole ?? "catalog_metadata",
     evidenceRole,
   };
 }

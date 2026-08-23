@@ -60,6 +60,7 @@ export function buildEvidenceReviewPreview(plan, metadataPreview, decisions = []
         exactHostDifferent: Boolean(originalHost && candidateHost && originalHost !== candidateHost),
         publisherRelationshipChecked: checks.publisher_relationship_checked,
         syndicationOrCitationChainChecked: checks.syndication_or_citation_chain_checked,
+        candidatePublisherRole: candidate?.publisherRole ?? "catalog_metadata",
       },
       blockers: targetBlockers,
       eligibleForSourceLockProposal: targetBlockers.length === 0,
@@ -69,7 +70,19 @@ export function buildEvidenceReviewPreview(plan, metadataPreview, decisions = []
   const reviewComplete = blockers.length === 0 && reviewedTargets.length > 0;
   const reviewFingerprint = reviewComplete ? createHash("sha256").update(JSON.stringify({
     planFingerprint: plan.planFingerprint,
-    targets: reviewedTargets.map((target) => ({ leadId: target.leadId, original: target.originalEvidence.canonicalUrl, candidate: target.candidate.canonicalUrl, checks: target.checks })),
+    targets: reviewedTargets.map((target) => ({
+      leadId: target.leadId,
+      original: target.originalEvidence.canonicalUrl,
+      candidate: {
+        sourceId: target.candidate.sourceId,
+        sourceName: target.candidate.sourceName,
+        title: target.candidate.title,
+        canonicalUrl: target.candidate.canonicalUrl,
+        publishedAt: target.candidate.publishedAt,
+        publisherRole: target.candidate.publisherRole ?? "catalog_metadata",
+      },
+      checks: target.checks,
+    })),
   })).digest("hex") : null;
 
   return {

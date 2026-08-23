@@ -45,8 +45,11 @@ test("wires preview-only routes and manual review/save-plan actions without URL 
   assert.match(page, /人工公开来源预览（不保存）/);
   assert.match(page, /修改任一字段会清除旧预览/);
   assert.match(page, /const evidencePipelineRevision = useRef\(0\)/);
-  assert.match(page, /const updateManualEvidenceDraft = \(field:keyof ManualEvidenceDraft, value:string\) => \{\s*setManualEvidenceDraft[\s\S]*?setManualEvidencePreview\(null\);[\s\S]*?setEvidenceReviewDecisions\(\{\}\);[\s\S]*?setEvidenceReviewPreview\(null\);[\s\S]*?clearSourceLockSavePreviews\(\);\s*\};/);
+  assert.match(page, /const updateManualEvidenceDraft = <K extends keyof ManualEvidenceDraft,>\(field:K, value:ManualEvidenceDraft\[K\]\) => \{\s*setManualEvidenceDraft[\s\S]*?setManualEvidencePreview\(null\);[\s\S]*?setEvidenceReviewDecisions\(\{\}\);[\s\S]*?setEvidenceReviewPreview\(null\);[\s\S]*?clearSourceLockSavePreviews\(\);\s*\};/);
   assert.equal(page.match(/updateManualEvidenceDraft\("(?:leadId|sourceName|title|canonicalUrl|publishedAt)",event\.target\.value\)/g)?.length, 5);
+  assert.match(page, /updateManualEvidenceDraft\("publisherRole",event\.target\.value as ManualEvidenceDraft\["publisherRole"\]\)/);
+  assert.match(page, /原始发布者/);
+  assert.match(page, /转载页 \/ 聚合页/);
   assert.match(page, /const requestRevision = evidencePipelineRevision\.current;[\s\S]*?const preview = await response\.json\(\) as ManualEvidencePreview;[\s\S]*?if \(requestRevision !== evidencePipelineRevision\.current\) return;\s*setManualEvidencePreview\(preview\);/);
   assert.match(page, /fetch\("\/api\/news\/manual-evidence-preview"/);
   assert.match(page, /manualEvidencePreview\.blockers\.map\(formatManualEvidenceBlocker\)\.join\(" \/ "\)/);

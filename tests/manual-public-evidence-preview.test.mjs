@@ -23,8 +23,9 @@ const sources = [
 ];
 
 test("formats manual evidence blockers as actionable Chinese diagnostics", () => {
-  assert.equal(formatManualEvidenceBlocker("invalid_manual_evidence_request"), "请完整填写待补证标题、来源名称、候选标题、公开链接和发布时间");
+  assert.equal(formatManualEvidenceBlocker("invalid_manual_evidence_request"), "请完整填写待补证标题、来源名称、发布者身份、候选标题、公开链接和发布时间");
   assert.equal(formatManualEvidenceBlocker("manual_candidate_invalid:0:public_https_url_required"), "第 1 条：请填写无需登录的公开 HTTPS 链接");
+  assert.equal(formatManualEvidenceBlocker("manual_candidate_invalid:0:publisher_role_invalid"), "第 1 条：请选择原始发布者或转载页");
   assert.equal(formatManualEvidenceBlocker("manual_candidate_invalid:2:same_exact_host"), "第 3 条：候选链接与原来源属于同一主机");
   assert.equal(formatManualEvidenceBlocker("manual_candidate_invalid:0:future_reason"), "第 1 条：future_reason");
   assert.equal(formatManualEvidenceBlocker("future_blocker"), "future_blocker");
@@ -45,6 +46,7 @@ function input(overrides = {}) {
   return {
     leadId: lead.id,
     sourceName: "Independent News",
+    publisherRole: "original_publisher",
     title: "Enterprise agent platform launched by OpenAI",
     canonicalUrl: "https://independent.news/report",
     publishedAt: "2026-08-20T14:00:00.000Z",
@@ -60,6 +62,7 @@ test("previews one public manual candidate without fetching or persisting it", (
   assert.equal(preview.targets[0].candidates[0].candidateHost, "independent.news");
   assert.equal(preview.targets[0].candidates[0].publishedDeltaHours, 2);
   assert.equal(preview.targets[0].candidates[0].inputMode, "user_supplied_public_metadata");
+  assert.equal(preview.targets[0].candidates[0].publisherRole, "original_publisher");
   assert.equal(preview.candidateUrlFetched, false);
   assert.equal(preview.articleBodiesFetched, false);
   assert.equal(preview.manualInputPersisted, false);
@@ -75,6 +78,7 @@ test("blocks unsafe, same-host, stale and unrelated manual candidates", () => {
     [input({ canonicalUrl: "https://user:secret@independent.news/report" }), "public_https_url_required"],
     [input({ canonicalUrl: "https://127.0.0.1/report" }), "public_https_url_required"],
     [input({ canonicalUrl: "https://origin.news/other" }), "same_exact_host"],
+    [input({ publisherRole: "" }), "publisher_role_invalid"],
     [input({ publishedAt: "2026-09-20T14:00:00.000Z" }), "outside_time_window"],
     [input({ title: "Local sports schedule update" }), "title_match_below_threshold"],
   ];
@@ -100,12 +104,24 @@ test("builds a no-write source-lock save plan after manual evidence review", () 
   assert.equal(preview.readyForAuthorizedSourceLockSave, true);
   assert.deepEqual(preview.downstreamBlockers, []);
   assert.match(preview.reviewFingerprint, /^[a-f0-9]{64}$/);
+  assert.equal(preview.reviewedTargets[0].independenceAssessment.candidatePublisherRole, "original_publisher");
   const savePlan = buildSourceLockSavePlan(preview, { confirmedReviewFingerprint: preview.reviewFingerprint });
   assert.equal(savePlan.status, "source_lock_save_plan_ready");
   assert.equal(savePlan.plannedRecordCount, 1);
+  assert.equal(savePlan.plannedLocks[0].sources[1].publisherRole, "original_publisher");
   assert.equal(savePlan.authorizationGranted, false);
   assert.equal(savePlan.writeAllowed, false);
   assert.equal(savePlan.persisted, false);
   assert.equal(savePlan.sourceLocksCreated, 0);
   assert.equal(savePlan.databaseWrites, false);
+});
+
+test("binds the declared publisher role into the human review fingerprint", () => {
+  const checks = Object.fromEntries(EVIDENCE_REVIEW_CHECKS.map((check) => [check, true]));
+  const original = buildManualPublicEvidencePreview(plan, [input({ publisherRole: "original_publisher" })]);
+  const repost = buildManualPublicEvidencePreview(plan, [input({ publisherRole: "syndicated_or_repost" })]);
+  const originalReview = buildEvidenceReviewPreview(plan, original, [{ leadId: lead.id, candidateId: original.targets[0].candidates[0].id, checks }]);
+  const repostReview = buildEvidenceReviewPreview(plan, repost, [{ leadId: lead.id, candidateId: repost.targets[0].candidates[0].id, checks }]);
+  assert.notEqual(originalReview.reviewFingerprint, repostReview.reviewFingerprint);
+  assert.equal(repostReview.reviewedTargets[0].independenceAssessment.candidatePublisherRole, "syndicated_or_repost");
 });

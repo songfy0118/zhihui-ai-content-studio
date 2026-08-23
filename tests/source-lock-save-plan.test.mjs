@@ -44,6 +44,7 @@ test("binds a save plan to the exact current review fingerprint", () => {
   assert.match(plan.savePlanFingerprint, /^[a-f0-9]{64}$/);
   assert.equal(plan.plannedRecordCount, 1);
   assert.equal(plan.plannedLocks[0].sources.length, 2);
+  assert.deepEqual(plan.plannedLocks[0].sources.map((source) => source.publisherRole), ["catalog_metadata", "catalog_metadata"]);
   assert.equal(plan.plannedLocks[0].claimCount, 0);
 });
 

@@ -5,7 +5,7 @@ import { buildEvidenceGapQueue } from "../../../../bridge/evidence-gap-queue.mjs
 import { buildEvidenceSearchPlan } from "../../../../bridge/evidence-search-plan.mjs";
 import { buildManualPublicEvidencePreview } from "../../../../bridge/manual-public-evidence-preview.mjs";
 
-type ManualInput = { leadId?: unknown; sourceName?: unknown; title?: unknown; canonicalUrl?: unknown; publishedAt?: unknown };
+type ManualInput = { leadId?: unknown; sourceName?: unknown; publisherRole?: unknown; title?: unknown; canonicalUrl?: unknown; publishedAt?: unknown };
 
 function validString(value: unknown, minimum: number, maximum: number) {
   return typeof value === "string" && value.trim().length >= minimum && value.length <= maximum;
@@ -14,6 +14,7 @@ function validString(value: unknown, minimum: number, maximum: number) {
 function validInput(input: ManualInput) {
   return validString(input?.leadId, 1, 80)
     && validString(input?.sourceName, 2, 80)
+    && ["original_publisher", "syndicated_or_repost"].includes(String(input?.publisherRole))
     && validString(input?.title, 8, 300)
     && validString(input?.canonicalUrl, 8, 2048)
     && validString(input?.publishedAt, 8, 40);

@@ -7,6 +7,7 @@ const MAX_INPUTS = 3;
 const DEFAULT_WINDOW_HOURS = 24 * 7;
 const DEFAULT_MINIMUM_SIMILARITY = 0.12;
 const DEFAULT_MINIMUM_SHARED_TERMS = 2;
+const PUBLISHER_ROLES = new Set(["original_publisher", "syndicated_or_repost"]);
 
 function timestamp(value) {
   const parsed = Date.parse(value ?? "");
@@ -77,6 +78,7 @@ export function buildManualPublicEvidencePreview(plan, inputs = [], {
     const target = targetsById.get(leadId);
     const sourceName = typeof input?.sourceName === "string" ? input.sourceName.normalize("NFKC").trim() : "";
     const title = typeof input?.title === "string" ? input.title.normalize("NFKC").replace(/\s+/g, " ").trim() : "";
+    const publisherRole = typeof input?.publisherRole === "string" ? input.publisherRole : "";
     const parsedUrl = parsePublicHttpsUrl(input?.canonicalUrl);
     const publishedAtMs = timestamp(input?.publishedAt);
     const targetTimeMs = timestamp(target?.sourcePublishedAt);
@@ -85,6 +87,7 @@ export function buildManualPublicEvidencePreview(plan, inputs = [], {
     if (seenLeadIds.has(leadId)) inputBlockers.push(`${prefix}:duplicate_lead`);
     if (sourceName.length < 2 || sourceName.length > 80) inputBlockers.push(`${prefix}:source_name_invalid`);
     if (title.length < 8 || title.length > 300) inputBlockers.push(`${prefix}:title_invalid`);
+    if (!PUBLISHER_ROLES.has(publisherRole)) inputBlockers.push(`${prefix}:publisher_role_invalid`);
     if (!parsedUrl) inputBlockers.push(`${prefix}:public_https_url_required`);
     if (publishedAtMs === null || targetTimeMs === null) inputBlockers.push(`${prefix}:published_at_invalid`);
     if (publishedAtMs !== null && targetTimeMs !== null && Math.abs(publishedAtMs - targetTimeMs) > windowHours * 3_600_000) inputBlockers.push(`${prefix}:outside_time_window`);
@@ -104,6 +107,7 @@ export function buildManualPublicEvidencePreview(plan, inputs = [], {
         sourceId: `manual-public:${parsedUrl.host}`,
         sourceName,
         title,
+        publisherRole,
         canonicalUrl: parsedUrl.canonicalUrl,
         publishedAt: new Date(publishedAtMs).toISOString(),
         candidateHost: parsedUrl.host,
