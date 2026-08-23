@@ -37,7 +37,12 @@ export async function POST(request: Request) {
   const manualEvidenceUsed = manualInputs.length > 0;
   const validManualInputs = !manualEvidenceUsed || (selectedIds.length === 1 && manualInputs.length === 1 && manualInputs.every(validManualInput));
   if (!validSelections || !validDecisions || !validManualInputs) {
-    return Response.json({ status: "evidence_review_preview_blocked", blockers: ["invalid_review_request"], persisted: false, sourceLockCreated: false, factsVerified: false, draftsUnlocked: 0, databaseWrites: false, publishTriggered: false, externalCalls: 0 }, { status: 400 });
+    return Response.json({
+      ...buildEvidenceReviewPreview(null, null, []),
+      blockers: ["invalid_review_request"],
+      manualEvidenceUsed: false,
+      externalCalls: 0,
+    }, { status: 400 });
   }
   const feedPreview = await buildRssNewsPreview({ sources: NEWS_SOURCE_CATALOG });
   const clustering = buildTopicClusters(feedPreview.items);

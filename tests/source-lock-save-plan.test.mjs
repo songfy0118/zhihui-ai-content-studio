@@ -6,6 +6,7 @@ import { buildEvidenceSearchPlan } from "../bridge/evidence-search-plan.mjs";
 import { buildEvidenceMetadataPreview } from "../bridge/evidence-metadata-preview.mjs";
 import { buildEvidenceReviewPreview, EVIDENCE_REVIEW_CHECKS } from "../bridge/evidence-review-preview.mjs";
 import { buildSourceLockSavePlan } from "../bridge/source-lock-save-plan.mjs";
+import { POST } from "../app/api/news/source-lock-save-plan/route.ts";
 
 const lead = {
   id: "cluster:one",
@@ -58,6 +59,27 @@ test("never grants authorization or persists the planned records", () => {
   assert.equal(plan.publishTriggered, false);
 });
 
+test("returns a complete blocked save-plan contract for malformed requests", async () => {
+  const response = await POST(new Request("http://localhost/api/news/source-lock-save-plan", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  }));
+  const body = await response.json();
+
+  assert.equal(response.status, 400);
+  assert.equal(body.status, "source_lock_save_plan_blocked");
+  assert.deepEqual(body.blockers, ["invalid_save_plan_request"]);
+  assert.equal(body.readyForAuthorizationRequest, false);
+  assert.equal(body.reviewFingerprint, null);
+  assert.equal(body.savePlanFingerprint, null);
+  assert.equal(body.plannedRecordCount, 0);
+  assert.deepEqual(body.plannedLocks, []);
+  assert.equal(body.authorizationGranted, false);
+  assert.equal(body.writeAllowed, false);
+  assert.equal(body.externalCalls, 0);
+});
+
 test("wires a save-plan-only endpoint without a database adapter", async () => {
   const [page, route] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
@@ -69,6 +91,6 @@ test("wires a save-plan-only endpoint without a database adapter", async () => {
   assert.match(page, /const plan = await response\.json\(\) as SourceLockSavePlan;\s*if \(requestRevision !== evidencePipelineRevision\.current\) return;\s*setSourceLockSavePlan\(plan\);/);
   assert.match(route, /buildManualPublicEvidencePreview/);
   assert.match(route, /manualInputs/);
-  assert.match(route, /authorizationGranted: false/);
+  assert.match(route, /\.\.\.buildSourceLockSavePlan\(null\)/);
   assert.doesNotMatch(route, /getDb|\.insert\(|\.update\(|\.delete\(/);
 });

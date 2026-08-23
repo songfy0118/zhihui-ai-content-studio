@@ -39,7 +39,14 @@ export async function POST(request: Request) {
   const manualEvidenceUsed = manualInputs.length > 0;
   const validManualInputs = !manualEvidenceUsed || (selectedIds.length === 1 && manualInputs.length === 1 && manualInputs.every(validManualInput));
   if (!validSelections || !validDecisions || !validFingerprint || !validManualInputs) {
-    return Response.json({ status: "source_lock_save_plan_blocked", blockers: ["invalid_save_plan_request"], authorizationRequired: true, authorizationGranted: false, writeAllowed: false, persisted: false, sourceLocksCreated: 0, factsVerified: false, draftsUnlocked: 0, databaseWrites: false, publishTriggered: false, externalCalls: 0 }, { status: 400 });
+    return Response.json({
+      ...buildSourceLockSavePlan(null),
+      blockers: ["invalid_save_plan_request"],
+      manualEvidenceUsed: false,
+      candidateUrlFetched: false,
+      manualInputPersisted: false,
+      externalCalls: 0,
+    }, { status: 400 });
   }
   const feedPreview = await buildRssNewsPreview({ sources: NEWS_SOURCE_CATALOG });
   const clustering = buildTopicClusters(feedPreview.items);

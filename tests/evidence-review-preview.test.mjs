@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import { buildEvidenceSearchPlan } from "../bridge/evidence-search-plan.mjs";
 import { buildEvidenceMetadataPreview } from "../bridge/evidence-metadata-preview.mjs";
 import { buildEvidenceReviewPreview, EVIDENCE_REVIEW_CHECKS } from "../bridge/evidence-review-preview.mjs";
+import { POST } from "../app/api/news/evidence-review-preview/route.ts";
 
 const lead = {
   id: "cluster:one",
@@ -89,6 +90,24 @@ test("can complete human review while explicitly blocking an unsupported save pa
   assert.deepEqual(preview.downstreamBlockers, ["manual_evidence_save_path_not_connected"]);
   assert.match(preview.reviewFingerprint, /^[a-f0-9]{64}$/);
   assert.equal(preview.sourceLockCreated, false);
+});
+
+test("returns a complete blocked review contract for malformed requests", async () => {
+  const response = await POST(new Request("http://localhost/api/news/evidence-review-preview", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: "{}",
+  }));
+  const body = await response.json();
+
+  assert.equal(response.status, 400);
+  assert.equal(body.status, "evidence_review_preview_blocked");
+  assert.deepEqual(body.blockers, ["invalid_review_request"]);
+  assert.deepEqual(body.downstreamBlockers, []);
+  assert.deepEqual(body.summary, { targetsRequired: 0, targetsReviewed: 0, targetsEligible: 0 });
+  assert.equal(body.reviewFingerprint, null);
+  assert.equal(body.readyForAuthorizedSourceLockSave, false);
+  assert.equal(body.externalCalls, 0);
 });
 
 test("wires a guarded review preview without persistence", async () => {
