@@ -1099,10 +1099,14 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(page, /fetch\("\/api\/news\/platform-text-unified-draft-package-plan"/);
   assert.match(page, /检查双平台草稿包（不会打开平台）/);
   assert.match(page, /浏览器打开 0 · 登录 0 · 上传 0 · 草稿保存 0 · 发布 0/);
+  assert.match(page, /fetch\("\/api\/news\/platform-text-durable-review-input-readiness"/);
+  assert.match(page, /查询 D1 审核记录（只读）/);
+  assert.match(page, /不会保存这里输入的指纹/);
   assert.match(layout, /知绘工厂/);
   assert.match(css, /\.localProjects/);
   assert.match(css, /\.adapterPlan/);
   assert.match(css, /\.unifiedDraftPackagePlan/);
+  assert.match(css, /\.durableReviewInputs/);
   await assert.rejects(access(new URL("app/_sites-preview", projectRoot)));
 });
 
