@@ -1,4 +1,4 @@
-export const NEWS_SOURCE_CATALOG_VERSION = 2;
+export const NEWS_SOURCE_CATALOG_VERSION = 3;
 
 export const NEWS_SOURCE_CATALOG = Object.freeze([
   Object.freeze({
@@ -118,6 +118,20 @@ export const NEWS_SOURCE_CATALOG = Object.freeze([
     requiresLogin: false,
     enabled: true,
     refreshMinutes: 60,
+  }),
+  Object.freeze({
+    id: "anthropic-newsroom",
+    name: "Anthropic Newsroom",
+    region: "US",
+    language: "en",
+    category: "ai",
+    sourceType: "official_newsroom",
+    baseUrl: "https://www.anthropic.com/news",
+    feedUrl: null,
+    rightsPolicy: "link_and_summarize_with_attribution",
+    requiresLogin: false,
+    enabled: true,
+    refreshMinutes: 180,
   }),
   Object.freeze({
     id: "us-sec-press-releases",

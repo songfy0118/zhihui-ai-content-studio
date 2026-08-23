@@ -20,11 +20,21 @@ test("wechat remains a disabled manual-review source", () => {
 
 test("catalog summary separates automatic and manual sources", () => {
   const summary = summarizeNewsSourceCatalog();
-  assert.equal(summary.totalSources, 12);
-  assert.equal(summary.enabledSources, 11);
+  assert.equal(summary.totalSources, 13);
+  assert.equal(summary.enabledSources, 12);
   assert.equal(summary.rssSources, 9);
-  assert.equal(summary.officialNewsrooms, 2);
+  assert.equal(summary.officialNewsrooms, 3);
   assert.equal(summary.manualReviewSources, 1);
+});
+
+test("Anthropic is a public newsroom candidate without a claimed RSS feed", () => {
+  const anthropic = NEWS_SOURCE_CATALOG.find((source) => source.id === "anthropic-newsroom");
+  assert.ok(anthropic);
+  assert.equal(anthropic.sourceType, "official_newsroom");
+  assert.equal(anthropic.feedUrl, null);
+  assert.equal(anthropic.requiresLogin, false);
+  assert.equal(anthropic.enabled, true);
+  assert.equal(anthropic.baseUrl, "https://www.anthropic.com/news");
 });
 
 test("expanded feeds are official, attributable and have discovery evidence", () => {
