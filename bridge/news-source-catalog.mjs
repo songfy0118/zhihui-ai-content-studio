@@ -1,4 +1,4 @@
-export const NEWS_SOURCE_CATALOG_VERSION = 6;
+export const NEWS_SOURCE_CATALOG_VERSION = 7;
 
 export const NEWS_SOURCE_CATALOG = Object.freeze([
   Object.freeze({
@@ -227,6 +227,22 @@ export const NEWS_SOURCE_CATALOG = Object.freeze([
     requiresLogin: false,
     enabled: true,
     refreshMinutes: 180,
+  }),
+  Object.freeze({
+    id: "silicon-star-pro-wechat-manual",
+    name: "硅星人Pro · 公众号人工链接",
+    region: "CN",
+    language: "zh-CN",
+    category: "ai_media",
+    sourceType: "manual_import",
+    baseUrl: "https://mp.weixin.qq.com/",
+    feedUrl: null,
+    editorialAliases: Object.freeze(["硅星人Pro", "硅星人"]),
+    rightsPolicy: "user_supplied_links_summary_only",
+    automaticCollectionBlockedReason: "wechat_requires_user_supplied_public_article_url",
+    requiresLogin: true,
+    enabled: false,
+    refreshMinutes: 0,
   }),
   Object.freeze({
     id: "wechat-manual-import",

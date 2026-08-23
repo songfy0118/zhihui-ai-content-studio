@@ -18,13 +18,25 @@ test("wechat remains a disabled manual-review source", () => {
   assert.equal(wechat.rightsPolicy, "user_supplied_links_summary_only");
 });
 
+test("Silicon Star Pro stays on the manual watchlist without automatic collection", () => {
+  const source = NEWS_SOURCE_CATALOG.find((candidate) => candidate.id === "silicon-star-pro-wechat-manual");
+  assert.ok(source);
+  assert.equal(source.enabled, false);
+  assert.equal(source.requiresLogin, true);
+  assert.equal(source.sourceType, "manual_import");
+  assert.equal(source.feedUrl, null);
+  assert.deepEqual(source.editorialAliases, ["硅星人Pro", "硅星人"]);
+  assert.equal(source.rightsPolicy, "user_supplied_links_summary_only");
+  assert.equal(source.automaticCollectionBlockedReason, "wechat_requires_user_supplied_public_article_url");
+});
+
 test("catalog summary separates automatic and manual sources", () => {
   const summary = summarizeNewsSourceCatalog();
-  assert.equal(summary.totalSources, 16);
+  assert.equal(summary.totalSources, 17);
   assert.equal(summary.enabledSources, 15);
   assert.equal(summary.rssSources, 10);
   assert.equal(summary.officialNewsrooms, 5);
-  assert.equal(summary.manualReviewSources, 1);
+  assert.equal(summary.manualReviewSources, 2);
 });
 
 test("TechCrunch feed is metadata-only and keeps article acquisition blocked", () => {
