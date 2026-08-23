@@ -100,6 +100,8 @@ test("wires a guarded review preview without persistence", async () => {
   assert.match(page, /同集团、子品牌或内容合作关系/);
   assert.match(page, /转载、通稿复刻或仅引用原来源/);
   assert.match(page, /fetch\("\/api\/news\/evidence-review-preview"/);
+  assert.match(page, /setEvidenceReviewBusy\(true\);\s*setEvidenceReviewPreview\(null\);\s*clearSourceLockSavePreviews\(\);\s*const requestRevision = evidencePipelineRevision\.current;/);
+  assert.match(page, /const preview = await response\.json\(\) as EvidenceReviewPreview;\s*if \(requestRevision !== evidencePipelineRevision\.current\) return;\s*setEvidenceReviewPreview\(preview\);/);
   assert.match(route, /externalCalls: 0/);
   assert.doesNotMatch(route, /getDb|\.insert\(|\.update\(|\.delete\(/);
 });

@@ -89,6 +89,7 @@ test("wires only a preview action without connecting the source-lock writer", as
 
   assert.match(page, /预览单次保存授权（不授权）/);
   assert.match(page, /fetch\("\/api\/news\/source-lock-save-authorization-preview"/);
+  assert.match(page, /const preview = await response\.json\(\) as SourceLockSaveAuthorizationPreview;\s*if \(requestRevision !== evidencePipelineRevision\.current\) return;\s*setSourceLockSaveAuthorizationPreview\(preview\);/);
   assert.match(page, /const clearSourceLockSavePreviews = \(\) => \{\s*setSourceLockSavePlan\(null\);\s*setSourceLockSaveAuthorizationPreview\(null\);\s*evidencePipelineRevision\.current \+= 1;\s*\};/);
   assert.equal(page.match(/clearSourceLockSavePreviews\(\);/g)?.length, 11);
   assert.match(route, /buildSourceLockSaveAuthorizationPreview/);

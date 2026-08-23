@@ -65,6 +65,8 @@ test("wires a save-plan-only endpoint without a database adapter", async () => {
   ]);
   assert.match(page, /生成来源锁保存计划（不保存）/);
   assert.match(page, /fetch\("\/api\/news\/source-lock-save-plan"/);
+  assert.match(page, /setSourceLockSavePlanBusy\(true\);\s*setSourceLockSavePlan\(null\);\s*setSourceLockSaveAuthorizationPreview\(null\);\s*evidencePipelineRevision\.current \+= 1;/);
+  assert.match(page, /const plan = await response\.json\(\) as SourceLockSavePlan;\s*if \(requestRevision !== evidencePipelineRevision\.current\) return;\s*setSourceLockSavePlan\(plan\);/);
   assert.match(route, /buildManualPublicEvidencePreview/);
   assert.match(route, /manualInputs/);
   assert.match(route, /authorizationGranted: false/);

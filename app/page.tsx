@@ -378,14 +378,18 @@ export default function Home() {
   };
   const previewEvidenceReview = async () => {
     setEvidenceReviewBusy(true);
+    setEvidenceReviewPreview(null);
     clearSourceLockSavePreviews();
+    const requestRevision = evidencePipelineRevision.current;
     try {
       const decisions = Object.entries(evidenceReviewDecisions).map(([leadId,decision])=>({leadId,candidateId:decision.candidateId,checks:decision.checks}));
       const manualInputs = Object.values(evidenceReviewDecisions).some((decision)=>decision.candidateMode==="manual_public_metadata") ? [manualEvidenceDraft] : [];
       const response = await fetch("/api/news/evidence-review-preview", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ selectedIds:evidenceGapShortlist, decisions, manualInputs }) });
-      setEvidenceReviewPreview(await response.json() as EvidenceReviewPreview);
+      const preview = await response.json() as EvidenceReviewPreview;
+      if (requestRevision !== evidencePipelineRevision.current) return;
+      setEvidenceReviewPreview(preview);
     } catch {
-      setMessage("证据审查预览失败；没有保存审查、创建来源锁、写入数据库或生成草稿。");
+      if (requestRevision === evidencePipelineRevision.current) setMessage("证据审查预览失败；没有保存审查、创建来源锁、写入数据库或生成草稿。");
     } finally {
       setEvidenceReviewBusy(false);
     }
@@ -393,14 +397,19 @@ export default function Home() {
   const previewSourceLockSavePlan = async () => {
     if (!evidenceReviewPreview?.reviewFingerprint) return;
     setSourceLockSavePlanBusy(true);
+    setSourceLockSavePlan(null);
     setSourceLockSaveAuthorizationPreview(null);
+    evidencePipelineRevision.current += 1;
+    const requestRevision = evidencePipelineRevision.current;
     try {
       const decisions = Object.entries(evidenceReviewDecisions).map(([leadId,decision])=>({leadId,candidateId:decision.candidateId,checks:decision.checks}));
       const manualInputs = Object.values(evidenceReviewDecisions).some((decision)=>decision.candidateMode==="manual_public_metadata") ? [manualEvidenceDraft] : [];
       const response = await fetch("/api/news/source-lock-save-plan", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ selectedIds:evidenceGapShortlist, decisions, manualInputs, confirmedReviewFingerprint:evidenceReviewPreview.reviewFingerprint }) });
-      setSourceLockSavePlan(await response.json() as SourceLockSavePlan);
+      const plan = await response.json() as SourceLockSavePlan;
+      if (requestRevision !== evidencePipelineRevision.current) return;
+      setSourceLockSavePlan(plan);
     } catch {
-      setMessage("来源锁保存计划生成失败；没有授予授权、写入数据库、创建来源锁或生成草稿。");
+      if (requestRevision === evidencePipelineRevision.current) setMessage("来源锁保存计划生成失败；没有授予授权、写入数据库、创建来源锁或生成草稿。");
     } finally {
       setSourceLockSavePlanBusy(false);
     }
@@ -408,11 +417,16 @@ export default function Home() {
   const previewSourceLockSaveAuthorization = async () => {
     if (!sourceLockSavePlan?.readyForAuthorizationRequest) return;
     setSourceLockSaveAuthorizationPreviewBusy(true);
+    setSourceLockSaveAuthorizationPreview(null);
+    evidencePipelineRevision.current += 1;
+    const requestRevision = evidencePipelineRevision.current;
     try {
       const response = await fetch("/api/news/source-lock-save-authorization-preview", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ savePlan:sourceLockSavePlan }) });
-      setSourceLockSaveAuthorizationPreview(await response.json() as SourceLockSaveAuthorizationPreview);
+      const preview = await response.json() as SourceLockSaveAuthorizationPreview;
+      if (requestRevision !== evidencePipelineRevision.current) return;
+      setSourceLockSaveAuthorizationPreview(preview);
     } catch {
-      setMessage("来源锁保存授权预览失败；没有授予授权、写入数据库、创建来源锁或生成草稿。");
+      if (requestRevision === evidencePipelineRevision.current) setMessage("来源锁保存授权预览失败；没有授予授权、写入数据库、创建来源锁或生成草稿。");
     } finally {
       setSourceLockSaveAuthorizationPreviewBusy(false);
     }
