@@ -93,7 +93,7 @@ npm run pilot:package
 - `npm run bridge:verify:parallel`：在临时端口 3766 启动并回收新版桥接，验证协议 v3 与隔离迁移接口；不改动 3765 旧桥接
 - `npm run news:preview`：对已启用的公开 RSS 各发起一次限时只读请求，输出规范化标题、原文链接、时间与信源健康状态；不抓正文、不写数据库、不发布
 - RSS 失败会区分 TLS/代理、普通网络、超时、限流、访问拒绝、地址失效与大小超限，并用同一轮结果判断“至少一个 Feed 可达”或“全部失败但原因未定”；不会关闭证书校验、把个别失败误报为全局断网或绕过站点限制
-- 当前自动 RSS 仅包括 OpenAI、Microsoft、Google、AWS、Apple、NVIDIA、量子位、TechCrunch 与美国监管机构的公开源；每源最多 5 条、单源上限 1.5 MB、超时 8 秒，只保留标题、原文链接、时间和最多 240 字短摘要
+- 当前自动 RSS 仅包括 OpenAI、Microsoft、Google、AWS、Apple、NVIDIA、量子位、TechCrunch 与美国监管机构的公开源；每源最多 5 条、单源上限 1.5 MB、超时 8 秒，只保留标题、原文链接、时间和最多 240 字短摘要。可为总 Feed 配置栏目路径白名单；Google 当前仅接受 `/innovation-and-ai/`，避免把支付、设备等无关栏目混入 AI 候选
 - TechCrunch 按其 RSS 条款仅返回带归因的原始标题、原文链接和时间，强制省略 Feed 摘要；其权利策略不允许进入自动正文获取计划
 - Anthropic 当前仅登记为无需登录的官方新闻室补证候选；未确认官方 RSS，因此不参与自动 RSS 请求，也不使用第三方镜像冒充官方源
 - `npm run news:clusters`：在一次 RSS 只读预览上按标题词项、七天时间窗和独立来源进行确定性聚类；只输出候选资格，不执行热度预测、事实核验或数据库写入

@@ -1,4 +1,4 @@
-export const NEWS_SOURCE_CATALOG_VERSION = 4;
+export const NEWS_SOURCE_CATALOG_VERSION = 5;
 
 export const NEWS_SOURCE_CATALOG = Object.freeze([
   Object.freeze({
@@ -53,6 +53,7 @@ export const NEWS_SOURCE_CATALOG = Object.freeze([
     baseUrl: "https://blog.google/innovation-and-ai/",
     feedUrl: "https://blog.google/rss/",
     feedEvidenceUrl: "https://blog.google/",
+    includePathPrefixes: Object.freeze(["/innovation-and-ai/"]),
     rightsPolicy: "official_feed_metadata_with_attribution",
     requiresLogin: false,
     enabled: true,
@@ -223,6 +224,10 @@ export function validateNewsSourceCatalog(sources = NEWS_SOURCE_CATALOG) {
     if (!source.rightsPolicy) blockers.push(`missing_rights_policy:${source.id}`);
     if (source.feedEvidenceUrl && !source.feedEvidenceUrl.startsWith("https://")) blockers.push(`insecure_feed_evidence_url:${source.id}`);
     if (source.feedSummaryPolicy && !["include", "omit"].includes(source.feedSummaryPolicy)) blockers.push(`invalid_feed_summary_policy:${source.id}`);
+    if (source.includePathPrefixes !== undefined) {
+      if (!Array.isArray(source.includePathPrefixes) || source.includePathPrefixes.length === 0) blockers.push(`invalid_include_path_prefixes:${source.id}`);
+      else if (source.includePathPrefixes.some((prefix) => typeof prefix !== "string" || !prefix.startsWith("/") || prefix.includes("?") || prefix.includes("#"))) blockers.push(`invalid_include_path_prefix:${source.id}`);
+    }
   }
 
   return Object.freeze({ valid: blockers.length === 0, blockers: Object.freeze(blockers) });

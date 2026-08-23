@@ -82,10 +82,25 @@ test("expanded feeds are official, attributable and have discovery evidence", ()
     assert.match(source.feedEvidenceUrl, /^https:\/\//);
   }
   assert.equal(NEWS_SOURCE_CATALOG.find((source) => source.id === "google-blog")?.category, "company_technology");
+  assert.deepEqual(NEWS_SOURCE_CATALOG.find((source) => source.id === "google-blog")?.includePathPrefixes, ["/innovation-and-ai/"]);
   assert.equal(NEWS_SOURCE_CATALOG.find((source) => source.id === "nvidia-blog")?.category, "company_technology");
   const qbitai = NEWS_SOURCE_CATALOG.find((source) => source.id === "qbitai");
   assert.equal(qbitai?.category, "ai_media");
   assert.equal(qbitai?.language, "zh-CN");
   assert.deepEqual(qbitai?.editorialAliases, ["量子位", "QbitAI"]);
   assert.equal(qbitai?.feedUrl, "https://www.qbitai.com/feed");
+});
+
+test("catalog rejects malformed source path filters", () => {
+  const invalid = NEWS_SOURCE_CATALOG.map((source) => source.id === "google-blog"
+    ? { ...source, includePathPrefixes: ["https://blog.google/innovation-and-ai/"] }
+    : source);
+  const validation = validateNewsSourceCatalog(invalid);
+  assert.equal(validation.valid, false);
+  assert.deepEqual(validation.blockers, ["invalid_include_path_prefix:google-blog"]);
+
+  const nonArray = invalid.map((source) => source.id === "google-blog"
+    ? { ...source, includePathPrefixes: "/innovation-and-ai/" }
+    : source);
+  assert.deepEqual(validateNewsSourceCatalog(nonArray).blockers, ["invalid_include_path_prefixes:google-blog"]);
 });

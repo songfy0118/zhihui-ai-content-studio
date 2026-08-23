@@ -41,6 +41,17 @@ test("omits feed summaries when source terms allow display-only metadata", () =>
   assert.equal(item.summary, "");
 });
 
+test("applies source path filters before the per-source item limit", () => {
+  const filteredSource = { ...source, includePathPrefixes: ["/news/ai/"] };
+  const rss = `<rss><channel>
+    <item><title>Payments update</title><link>https://example.com/products/payments</link></item>
+    <item><title>AI update one</title><link>https://example.com/news/ai/one</link></item>
+    <item><title>AI update two</title><link>https://example.com/news/ai/two</link></item>
+  </channel></rss>`;
+  const items = parseRssItems(rss, filteredSource, 2);
+  assert.deepEqual(items.map((item) => item.title), ["AI update one", "AI update two"]);
+});
+
 test("deduplicates repeated URL or same-source title fingerprints", () => {
   const items = parseRssItems(`<rss><channel><item><title>One</title><link>https://example.com/one</link></item><item><title>One</title><link>https://example.com/two</link></item><item><title>Three</title><link>https://example.com/one</link></item></channel></rss>`, source, 10);
   assert.equal(dedupeRssItems(items).length, 1);

@@ -89,16 +89,26 @@ export function normalizeCanonicalUrl(value, baseUrl) {
   }
 }
 
+function isCanonicalUrlAllowed(canonicalUrl, source) {
+  if (!source.includePathPrefixes?.length) return true;
+  try {
+    const path = new URL(canonicalUrl).pathname;
+    return source.includePathPrefixes.some((prefix) => path.startsWith(prefix));
+  } catch {
+    return false;
+  }
+}
+
 export function parseRssItems(xml, source, maxItems = DEFAULT_MAX_ITEMS) {
   if (typeof xml !== "string" || !source?.id || !source?.baseUrl) return [];
   const rssBlocks = [...xml.matchAll(/<item\b[\s\S]*?<\/item>/gi)].map((match) => match[0]);
   const atomBlocks = rssBlocks.length ? [] : [...xml.matchAll(/<entry\b[\s\S]*?<\/entry>/gi)].map((match) => match[0]);
   const blocks = rssBlocks.length ? rssBlocks : atomBlocks;
 
-  return blocks.slice(0, maxItems).flatMap((block) => {
+  return blocks.flatMap((block) => {
     const title = stripMarkup(readTag(block, ["title"]));
     const canonicalUrl = normalizeCanonicalUrl(readLink(block), source.baseUrl);
-    if (!title || !canonicalUrl) return [];
+    if (!title || !canonicalUrl || !isCanonicalUrlAllowed(canonicalUrl, source)) return [];
     const summary = source.feedSummaryPolicy === "omit"
       ? ""
       : stripMarkup(readTag(block, ["description", "summary", "content:encoded"])).slice(0, 240);
@@ -116,7 +126,7 @@ export function parseRssItems(xml, source, maxItems = DEFAULT_MAX_ITEMS) {
       publishedAt,
       contentHash,
     }];
-  });
+  }).slice(0, maxItems);
 }
 
 export function dedupeRssItems(items = []) {
