@@ -112,6 +112,7 @@ npm run pilot:package
 - 单条人工候选可进入既有六项证据审查，并生成与审查指纹绑定的来源锁保存计划；计划固定为 `authorizationGranted=false`、`writeAllowed=false`、写库 0，仍不会创建来源锁或解锁草稿
 - `buildSourceLockSaveAuthorizationPreview` 可把单条、未保存的来源锁计划绑定成确定性单次授权预览；预览要求精确确认短语，但不授予授权、不接保存路由或数据库写入器
 - 控制台可调用 `/api/news/source-lock-save-authorization-preview` 查看当前计划的授权指纹和确认短语；该接口只验证请求并返回预览，不接受确认、不调用 `source-lock-store`，保存记录仍为 0
+- `assessSourceLockSaveAuthorization` 可在精确确认和指纹匹配后生成 5 分钟单次票据；授权与执行继续分离，票据固定要求后续预检和明确执行请求，并保持 `databaseWriteAllowed=false`、`executionEligible=false`
 - `npm run news:evidence-preview -- <cluster-id...>`：在人工选择后，仅用本轮公开 RSS 的标题、链接、来源和时间寻找可能的第二来源；不读取文章正文，所有结果必须人工判断，不执行事实核验、来源锁、草稿或发布
 - `npm run news:evidence-review`：显示证据审查的失败关闭边界；真实预览必须由人选择当前候选并确认同一事件、来源独立、时间一致和无明显冲突，预览不保存、不创建来源锁
 - `npm run news:source-lock-plan`：显示来源锁保存计划的失败关闭边界；真实计划绑定当前人工审查指纹，但授权、写库、来源锁创建与草稿解锁均保持关闭
