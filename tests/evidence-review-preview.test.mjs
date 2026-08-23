@@ -126,6 +126,7 @@ test("wires a guarded review preview without persistence", async () => {
     readFile(new URL("../app/api/news/evidence-review-preview/route.ts", import.meta.url), "utf8"),
   ]);
   assert.match(page, /预览证据审查（不保存）/);
+  assert.match(page, /人工核验进度：\{Object\.values\(decision\.checks\)\.filter\(Boolean\)\.length\}\/\{evidenceReviewChecklist\.length\}/);
   assert.match(page, /同集团、子品牌或内容合作关系/);
   assert.match(page, /转载、通稿复刻或仅引用原来源/);
   assert.match(page, /fetch\("\/api\/news\/evidence-review-preview"/);
