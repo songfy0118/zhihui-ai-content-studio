@@ -48,6 +48,29 @@ test("Anthropic is a public newsroom candidate without a claimed RSS feed", () =
   assert.equal(anthropic.baseUrl, "https://www.anthropic.com/news");
 });
 
+test("SEC and Federal Reserve feeds retain first-party discovery evidence", () => {
+  const expected = new Map([
+    ["us-sec-press-releases", {
+      feedUrl: "https://www.sec.gov/news/pressreleases.rss",
+      feedEvidenceUrl: "https://www.sec.gov/about/rss-feeds",
+    }],
+    ["us-federal-reserve-press-releases", {
+      feedUrl: "https://www.federalreserve.gov/feeds/press_all.xml",
+      feedEvidenceUrl: "https://www.federalreserve.gov/feeds/feeds.htm",
+    }],
+  ]);
+
+  for (const [id, evidence] of expected) {
+    const source = NEWS_SOURCE_CATALOG.find((candidate) => candidate.id === id);
+    assert.ok(source, `missing ${id}`);
+    assert.equal(source.sourceType, "rss");
+    assert.equal(source.feedUrl, evidence.feedUrl);
+    assert.equal(source.feedEvidenceUrl, evidence.feedEvidenceUrl);
+    assert.equal(source.rightsPolicy, "official_public_record_with_attribution");
+    assert.equal(source.requiresLogin, false);
+  }
+});
+
 test("expanded feeds are official, attributable and have discovery evidence", () => {
   const expandedIds = ["google-blog", "aws-machine-learning-blog", "apple-machine-learning-research", "nvidia-blog", "qbitai"];
   for (const id of expandedIds) {
