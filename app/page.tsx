@@ -799,7 +799,7 @@ export default function Home() {
 
       {view === "ideas" && <>
         <section className="intelBrief">
-          <div><small>TODAY'S INTELLIGENCE</small><h2>热点不是一条新闻，是多个可信来源的交集。</h2><p>已登记 {newsSourceCatalog.summary.totalSources || "—"} 个信源，其中 {newsSourceCatalog.summary.enabledSources || "—"} 个公开来源可进入后续采集；当前只是目录，真实抓取仍为 0。原文时间、事实主张和争议点必须随草稿一起交付。</p></div>
+          <div><small>TODAY&apos;S INTELLIGENCE</small><h2>热点不是一条新闻，是多个可信来源的交集。</h2><p>已登记 {newsSourceCatalog.summary.totalSources || "—"} 个信源，其中 {newsSourceCatalog.summary.enabledSources || "—"} 个公开来源可进入后续采集；当前只是目录，真实抓取仍为 0。原文时间、事实主张和争议点必须随草稿一起交付。</p></div>
           <ol><li><b>01</b><span>公开来源聚合</span><em>RSS · 官方新闻室 · 监管文件</em></li><li><b>02</b><span>聚类与风险检查</span><em>去重 · 交叉来源 · 时效</em></li><li><b>03</b><span>生成平台草稿</span><em>小红书 · 抖音图文 · 人工发送</em></li></ol>
         </section>
         <section className="newsPreview">
