@@ -167,6 +167,7 @@ npm run pilot:package
 - `npm run news:topic-weight-ranking:read-evidence:preview`：把隔离模拟的 schema、查询完成度和收据支持权重整理为确定性人工核对清单；摘要始终标记为非 live 证据，不持久化审核、不启用排序，也不接入路由
 - `npm run news:topic-weight-ranking:read-evidence:review`：要求精确预览指纹、5 项人工检查和逐权重收据核对，记录一次接受或拒绝决定；结果仍不持久化，且无论接受与否都不授予 live D1 读取或生产排序权限
 - `npm run news:topic-weight-ranking:live-read:authorize:preview`：把已接受的隔离证据审核绑定为一次、15 分钟有效的 live D1 只读授权请求，公开 5 条 SELECT/PRAGMA 白名单、参数和零写入保证；预览不授予授权、不读取数据库、不请求凭据，也不启用排序
+- `npm run news:topic-weight-ranking:live-read:authorize:gate`：仅在精确确认授权预览指纹后生成一次性、15 分钟有效的内存执行合同；合同不持久化且仍不连接 D1、不请求凭据、不执行查询、不修改排序或触发平台动作
 - `npm run db:platform-text-metrics-evidence:plan`：只读校验指标强来源证据的 5 个新增字段和 2 个索引迁移；只接受向 `metrics` 增列/建索引的生成 SQL，不应用迁移、不写数据库，也不导入指标或更新学习权重
 - `npm test`：构建并运行最相关测试
 - `npm run vendors:bootstrap`：下载五个开源引擎代码
