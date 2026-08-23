@@ -70,13 +70,13 @@ function ManualEvidenceReviewLinks({ preview, leadId, candidateId }:{ preview:Ma
   const target = preview?.targets?.find((item)=>item.leadId===leadId);
   const candidate = target?.candidates.find((item)=>item.id===candidateId);
   if (!target || !candidate) return null;
-  return <span>{target.originalEvidence&&<a href={target.originalEvidence.canonicalUrl} target="_blank" rel="noreferrer">审查时打开原始来源</a>}<a href={candidate.canonicalUrl} target="_blank" rel="noreferrer">审查时打开候选来源</a></span>;
+  return <span><small>人工公开元数据 · {candidate.sourceName} · {target.originalHost??"原域名未知"} → {candidate.candidateHost} · 时间差 {candidate.publishedDeltaHours>0?"+":""}{candidate.publishedDeltaHours} 小时</small>{target.originalEvidence&&<a href={target.originalEvidence.canonicalUrl} target="_blank" rel="noreferrer">审查时打开原始来源</a>}<a href={candidate.canonicalUrl} target="_blank" rel="noreferrer">审查时打开候选来源</a></span>;
 }
 function MetadataEvidenceReviewLinks({ preview, leadId, candidateId }:{ preview:EvidenceMetadataPreview|null;leadId:string;candidateId:string }) {
   const target = preview?.targets.find((item)=>item.leadId===leadId);
   const candidate = target?.candidates.find((item)=>item.id===candidateId);
   if (!target || !candidate) return null;
-  return <span>{target.originalEvidence&&<a href={target.originalEvidence.canonicalUrl} target="_blank" rel="noreferrer">审查时打开原始来源</a>}<a href={candidate.canonicalUrl} target="_blank" rel="noreferrer">审查时打开RSS候选来源</a></span>;
+  return <span><small>RSS 元数据 · {candidate.sourceName} · {target.originalHost??"原域名未知"} → {candidate.candidateHost??"候选域名未知"} · 时间差 {candidate.publishedDeltaHours>0?"+":""}{candidate.publishedDeltaHours} 小时</small>{target.originalEvidence&&<a href={target.originalEvidence.canonicalUrl} target="_blank" rel="noreferrer">审查时打开原始来源</a>}<a href={candidate.canonicalUrl} target="_blank" rel="noreferrer">审查时打开RSS候选来源</a></span>;
 }
 const runtimeServiceLabels: Record<string,string> = { studio:"知绘操作台", bridge:"本机桥接", local_mini_drama_api:"漫剧后端", local_mini_drama_web:"漫剧前端" };
 const rssOperatorActionLabels: Record<string,string> = { check_tls_or_proxy_and_retry:"检查 TLS/代理后重试", retry_later:"稍后重试", respect_retry_window:"遵守限流窗口", manual_source_review:"转人工检查来源", verify_feed_url:"核对 Feed 地址", review_source_limits:"复核来源大小限制", inspect_source_failure:"检查来源失败" };

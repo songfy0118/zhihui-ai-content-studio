@@ -129,6 +129,7 @@ test("wires a guarded review preview without persistence", async () => {
   assert.match(page, /人工核验进度：\{Object\.values\(decision\.checks\)\.filter\(Boolean\)\.length\}\/\{evidenceReviewChecklist\.length\}/);
   assert.match(page, /待确认：\{evidenceReviewChecklist\.filter\(\(\{id\}\)=>!decision\.checks\[id\]\)\.map\(\(\{label\}\)=>label\)\.join\(" \/ "\)\|\|"无"\}/);
   assert.match(page, /function MetadataEvidenceReviewLinks/);
+  assert.match(page, /RSS 元数据 · \{candidate\.sourceName\} · \{target\.originalHost\?\?"原域名未知"\} → \{candidate\.candidateHost\?\?"候选域名未知"\}/);
   assert.match(page, /审查时打开RSS候选来源/);
   assert.match(page, /decision\.candidateMode==="rss_metadata"&&<MetadataEvidenceReviewLinks preview=\{evidenceMetadataPreview\}/);
   assert.match(page, /同集团、子品牌或内容合作关系/);

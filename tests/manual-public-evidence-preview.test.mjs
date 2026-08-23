@@ -50,6 +50,7 @@ test("wires manual source name suggestions without automatic article collection"
   assert.match(page, /decision\.candidateMode==="manual_public_metadata"&&<span>发布者身份：/);
   assert.match(page, /formatManualEvidencePublisherRole\(manualEvidencePreview\?\.targets\?/);
   assert.match(page, /function ManualEvidenceReviewLinks/);
+  assert.match(page, /人工公开元数据 · \{candidate\.sourceName\} · \{target\.originalHost\?\?"原域名未知"\} → \{candidate\.candidateHost\}/);
   assert.match(page, /审查时打开原始来源/);
   assert.match(page, /审查时打开候选来源/);
   assert.match(page, /<ManualEvidenceReviewLinks preview=\{manualEvidencePreview\} leadId=\{leadId\} candidateId=\{decision\.candidateId\}\/>/);
