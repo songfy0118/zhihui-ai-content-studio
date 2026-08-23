@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Idea = { id:string; title:string; angle:string; category:string; status:string; douyinScore:number; tiktokScore:number; xhsScore:number; selected:boolean };
 type Account = { platform:string; handle:string|null; status:string; publishMode:string };
@@ -210,10 +210,12 @@ export default function Home() {
   const [scriptPreview, setScriptPreview] = useState<ScriptApprovalPreview|null>(null);
   const [scriptApprovalFingerprint, setScriptApprovalFingerprint] = useState<{configKey:string;hash:string}|null>(null);
   const [scriptPreviewBusy, setScriptPreviewBusy] = useState(false);
+  const evidencePipelineRevision = useRef(0);
 
   const clearSourceLockSavePreviews = () => {
     setSourceLockSavePlan(null);
     setSourceLockSaveAuthorizationPreview(null);
+    evidencePipelineRevision.current += 1;
   };
   const updateManualEvidenceDraft = (field:keyof ManualEvidenceDraft, value:string) => {
     setManualEvidenceDraft((current) => ({ ...current, [field]:value }));
@@ -341,11 +343,14 @@ export default function Home() {
     setEvidenceReviewDecisions({});
     setEvidenceReviewPreview(null);
     clearSourceLockSavePreviews();
+    const requestRevision = evidencePipelineRevision.current;
     try {
       const response = await fetch("/api/news/manual-evidence-preview", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ selectedIds:evidenceGapShortlist, inputs:[manualEvidenceDraft] }) });
-      setManualEvidencePreview(await response.json() as ManualEvidencePreview);
+      const preview = await response.json() as ManualEvidencePreview;
+      if (requestRevision !== evidencePipelineRevision.current) return;
+      setManualEvidencePreview(preview);
     } catch {
-      setMessage("人工公开来源预览失败；没有请求候选链接、保存输入、创建来源锁或写入数据库。");
+      if (requestRevision === evidencePipelineRevision.current) setMessage("人工公开来源预览失败；没有请求候选链接、保存输入、创建来源锁或写入数据库。");
     } finally {
       setManualEvidenceBusy(false);
     }
