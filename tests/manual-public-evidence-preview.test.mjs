@@ -36,6 +36,8 @@ test("wires manual source name suggestions without automatic article collection"
   assert.match(page, /list="manualEvidenceSourceOptions"/);
   assert.match(page, /manualSourceNameSuggestions\.map/);
   assert.match(page, /仅提供已登记的名称建议；不会自动抓取公众号/);
+  assert.match(page, /describeManualSourceLinkHost\(manualEvidenceDraft\.sourceName, manualEvidenceDraft\.canonicalUrl, manualSourceNameSuggestions\)/);
+  assert.match(page, /manualSourceLinkHostHint&&<span>\{manualSourceLinkHostHint\}<\/span>/);
 });
 const plan = buildEvidenceSearchPlan([lead], [lead.id], sources);
 

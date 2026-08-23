@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { NEWS_SOURCE_CATALOG, summarizeNewsSourceCatalog, validateNewsSourceCatalog } from "../bridge/news-source-catalog.mjs";
-import { listManualSourceNameSuggestions } from "../app/manual-source-options.ts";
+import { describeManualSourceLinkHost, listManualSourceNameSuggestions } from "../app/manual-source-options.ts";
 
 test("news source catalog allows only public no-login sources for automatic collection", () => {
   const validation = validateNewsSourceCatalog();
@@ -38,8 +38,19 @@ test("manual source suggestions expose labels without enabling collection", () =
     id: "silicon-star-pro-wechat-manual",
     name: "硅星人Pro · 公众号人工链接",
     aliases: ["硅星人Pro", "硅星人"],
+    expectedHost: "mp.weixin.qq.com",
   });
   assert.equal(suggestions.some((source) => source.id === "qbitai"), false);
+});
+
+test("manual source link hints compare hosts without fetching the article", () => {
+  const suggestions = listManualSourceNameSuggestions(NEWS_SOURCE_CATALOG);
+  const sourceName = "硅星人Pro · 公众号人工链接";
+  assert.match(describeManualSourceLinkHost(sourceName, "", suggestions), /请粘贴该来源的公开文章链接/);
+  assert.match(describeManualSourceLinkHost(sourceName, "https://mp.weixin.qq.com/s/example", suggestions), /链接主机与已登记来源一致/);
+  assert.match(describeManualSourceLinkHost(sourceName, "https://example.org/repost", suggestions), /当前链接为 example\.org/);
+  assert.match(describeManualSourceLinkHost(sourceName, "http://mp.weixin.qq.com/s/example", suggestions), /链接必须使用公开 HTTPS/);
+  assert.equal(describeManualSourceLinkHost("其他公开来源", "https://example.org/story", suggestions), null);
 });
 
 test("catalog summary separates automatic and manual sources", () => {
