@@ -25,15 +25,28 @@ export function buildEvidenceQueries(title = "") {
 
 export function selectSourceDiverseLeads(candidates = [], maxLeads = 12, maxLeadsPerSource = 3) {
   const selected = [];
+  const selectedIds = new Set();
   const sourceCounts = new Map();
-  for (const candidate of candidates) {
-    if (selected.length >= maxLeads) break;
+
+  const trySelect = (candidate) => {
+    if (!candidate || selected.length >= maxLeads || selectedIds.has(candidate.id)) return;
     const sourceCount = sourceCounts.get(candidate.sourceId) ?? 0;
-    if (sourceCount >= maxLeadsPerSource) continue;
+    if (sourceCount >= maxLeadsPerSource) return;
     selected.push(candidate);
+    selectedIds.add(candidate.id);
     sourceCounts.set(candidate.sourceId, sourceCount + 1);
+  };
+
+  const languages = [...new Set(candidates.map((candidate) => candidate.queryLanguage).filter((language) => language && language !== "und"))];
+  for (const language of languages) {
+    trySelect(candidates.find((candidate) => candidate.queryLanguage === language));
   }
-  return selected;
+  for (const candidate of candidates) {
+    trySelect(candidate);
+  }
+
+  const order = new Map(candidates.map((candidate, index) => [candidate.id, index]));
+  return selected.sort((left, right) => order.get(left.id) - order.get(right.id));
 }
 
 export function buildEvidenceGapQueue(clustering, { profile = DEFAULT_ACCOUNT_PROFILE, now = new Date(), windowHours = DEFAULT_WINDOW_HOURS, minimumAccountFit = 30, maxLeads = 12, maxLeadsPerSource = 3 } = {}) {
@@ -79,6 +92,7 @@ export function buildEvidenceGapQueue(clustering, { profile = DEFAULT_ACCOUNT_PR
       leadsReturned: leads.length,
       independentSourcesStillRequired: leads.length,
       sourcesRepresented: new Set(leads.map((lead) => lead.sourceId)).size,
+      languagesRepresented: [...new Set(leads.map((lead) => lead.queryLanguage).filter((language) => language && language !== "und"))].sort(),
       maxLeadsPerSource,
       windowHours,
       minimumAccountFit,

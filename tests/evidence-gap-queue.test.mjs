@@ -74,12 +74,33 @@ test("limits each source so one publisher cannot occupy the whole shortlist", ()
   assert.equal(Math.max(...[...new Set(selected.map((candidate) => candidate.sourceId))].map((sourceId) => selected.filter((candidate) => candidate.sourceId === sourceId).length)), 2);
 });
 
+test("keeps a Chinese lead when higher-scoring English leads would fill the shortlist", () => {
+  const candidates = [
+    { id: "en-a", sourceId: "source-a", queryLanguage: "en" },
+    { id: "en-b", sourceId: "source-b", queryLanguage: "en" },
+    { id: "en-c", sourceId: "source-c", queryLanguage: "en" },
+    { id: "zh-a", sourceId: "qbitai", queryLanguage: "zh-CN" },
+  ];
+  const selected = selectSourceDiverseLeads(candidates, 3, 3);
+  assert.deepEqual(selected.map((candidate) => candidate.id), ["en-a", "en-b", "zh-a"]);
+});
+
+test("reports the languages represented by live research leads", () => {
+  const clustering = buildTopicClusters([
+    item("en", "source-a", "OpenAI launches a new enterprise agent", "2026-08-21T10:00:00Z"),
+    item("zh", "source-b", "人工智能机器人进入家庭服务市场", "2026-08-21T11:00:00Z", "ai_media"),
+  ]);
+  const queue = buildEvidenceGapQueue(clustering, { now: "2026-08-21T13:00:00Z", maxLeads: 2 });
+  assert.deepEqual(queue.summary.languagesRepresented, ["en", "zh-CN"]);
+});
+
 test("wires the evidence-gap queue as a read-only console action", async () => {
   const [page, route] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/news/evidence-gaps/route.ts", import.meta.url), "utf8"),
   ]);
   assert.match(page, /生成补证清单（只读）/);
+  assert.match(page, /languagesRepresented/);
   assert.match(page, /fetch\("\/api\/news\/evidence-gaps"/);
   assert.doesNotMatch(route, /getDb|\.insert\(|\.update\(|\.delete\(/);
 });
