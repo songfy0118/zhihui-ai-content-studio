@@ -69,6 +69,7 @@ test("wires an explicit metadata-only endpoint without storage or publication", 
   assert.match(page, /查看原来源/);
   assert.match(page, /较原来源/);
   assert.match(page, /fetch\("\/api\/news\/evidence-metadata-preview"/);
+  assert.match(page, /const preview = await response\.json\(\) as EvidenceMetadataPreview;\s*if \(requestRevision !== evidencePipelineRevision\.current\) return;\s*setEvidenceMetadataPreview\(preview\);/);
   assert.match(route, /body\.selectedIds\.length > 3/);
   assert.doesNotMatch(route, /getDb|\.insert\(|\.update\(|\.delete\(/);
 });

@@ -314,11 +314,14 @@ export default function Home() {
     setEvidenceReviewDecisions({});
     setEvidenceReviewPreview(null);
     clearSourceLockSavePreviews();
+    const requestRevision = evidencePipelineRevision.current;
     try {
       const response = await fetch("/api/news/evidence-search-plan", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ selectedIds:evidenceGapShortlist }) });
-      setEvidenceSearchPlan(await response.json() as EvidenceSearchPlanPreview);
+      const plan = await response.json() as EvidenceSearchPlanPreview;
+      if (requestRevision !== evidencePipelineRevision.current) return;
+      setEvidenceSearchPlan(plan);
     } catch {
-      setMessage("第二来源检索计划生成失败；没有执行搜索、创建来源锁或写入数据库。");
+      if (requestRevision === evidencePipelineRevision.current) setMessage("第二来源检索计划生成失败；没有执行搜索、创建来源锁或写入数据库。");
     } finally {
       setEvidenceSearchPlanBusy(false);
     }
@@ -328,11 +331,14 @@ export default function Home() {
     setEvidenceReviewDecisions({});
     setEvidenceReviewPreview(null);
     clearSourceLockSavePreviews();
+    const requestRevision = evidencePipelineRevision.current;
     try {
       const response = await fetch("/api/news/evidence-metadata-preview", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ selectedIds:evidenceGapShortlist }) });
-      setEvidenceMetadataPreview(await response.json() as EvidenceMetadataPreview);
+      const preview = await response.json() as EvidenceMetadataPreview;
+      if (requestRevision !== evidencePipelineRevision.current) return;
+      setEvidenceMetadataPreview(preview);
     } catch {
-      setMessage("公开 RSS 元数据检索失败；没有读取文章正文、核验事实、创建来源锁或写入数据库。");
+      if (requestRevision === evidencePipelineRevision.current) setMessage("公开 RSS 元数据检索失败；没有读取文章正文、核验事实、创建来源锁或写入数据库。");
     } finally {
       setEvidenceMetadataBusy(false);
     }
