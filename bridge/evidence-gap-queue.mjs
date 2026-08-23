@@ -8,6 +8,21 @@ function publishedAgeHours(cluster, nowMs) {
   return Math.max(0, (nowMs - publishedAt) / 3_600_000);
 }
 
+export function buildEvidenceQueries(title = "") {
+  const normalizedTitle = String(title).normalize("NFKC").replace(/\s+/g, " ").trim();
+  if (!normalizedTitle) return { queryLanguage: "und", queries: [] };
+  const queryLanguage = /\p{Script=Han}/u.test(normalizedTitle) ? "zh-CN" : "en";
+  return {
+    queryLanguage,
+    queries: [
+      `"${normalizedTitle}"`,
+      queryLanguage === "zh-CN"
+        ? `${normalizedTitle} 独立报道 核实`
+        : `${normalizedTitle} independent coverage verification`,
+    ],
+  };
+}
+
 export function selectSourceDiverseLeads(candidates = [], maxLeads = 12, maxLeadsPerSource = 3) {
   const selected = [];
   const sourceCounts = new Map();
@@ -29,6 +44,7 @@ export function buildEvidenceGapQueue(clustering, { profile = DEFAULT_ACCOUNT_PR
     if (ageHours === null || ageHours > windowHours) return [];
     const fit = scoreAccountFit(cluster, profile);
     if (fit.score < minimumAccountFit) return [];
+    const evidenceQueries = buildEvidenceQueries(cluster.title);
     return [{
       id: cluster.id,
       title: cluster.title,
@@ -40,7 +56,8 @@ export function buildEvidenceGapQueue(clustering, { profile = DEFAULT_ACCOUNT_PR
       matchedAccountTopics: fit.matchedTopics,
       status: "needs_independent_source",
       missingIndependentSources: 1,
-      suggestedQueries: [`"${cluster.title}"`, `${cluster.title} independent confirmation`],
+      queryLanguage: evidenceQueries.queryLanguage,
+      suggestedQueries: evidenceQueries.queries,
       shortlistableForEvidenceSearch: true,
       factsVerified: false,
       sourceLockReady: false,

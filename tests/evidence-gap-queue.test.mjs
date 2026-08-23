@@ -3,7 +3,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 
 import { buildTopicClusters } from "../bridge/topic-clustering.mjs";
-import { buildEvidenceGapQueue, selectSourceDiverseLeads } from "../bridge/evidence-gap-queue.mjs";
+import { buildEvidenceGapQueue, buildEvidenceQueries, selectSourceDiverseLeads } from "../bridge/evidence-gap-queue.mjs";
 
 function item(id, sourceId, title, publishedAt, category = "ai") {
   return { id, sourceId, sourceName: sourceId, title, canonicalUrl: `https://${sourceId}.example/${id}`, publishedAt, category };
@@ -19,7 +19,20 @@ test("returns recent account-fit single-source leads for independent-source rese
   assert.equal(queue.leads[0].sourceId, "source-a");
   assert.equal(queue.leads[0].status, "needs_independent_source");
   assert.equal(queue.leads[0].missingIndependentSources, 1);
+  assert.equal(queue.leads[0].queryLanguage, "en");
   assert.match(queue.leads[0].suggestedQueries[0], /OpenAI launches/);
+});
+
+test("builds language-appropriate human research queries", () => {
+  assert.deepEqual(buildEvidenceQueries("量子位发布 AI 产业观察"), {
+    queryLanguage: "zh-CN",
+    queries: ["\"量子位发布 AI 产业观察\"", "量子位发布 AI 产业观察 独立报道 核实"],
+  });
+  assert.deepEqual(buildEvidenceQueries("OpenAI launches an enterprise agent"), {
+    queryLanguage: "en",
+    queries: ["\"OpenAI launches an enterprise agent\"", "OpenAI launches an enterprise agent independent coverage verification"],
+  });
+  assert.deepEqual(buildEvidenceQueries("  "), { queryLanguage: "und", queries: [] });
 });
 
 test("excludes old, undated and already cross-source clusters", () => {
