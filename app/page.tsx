@@ -211,6 +211,11 @@ export default function Home() {
   const [scriptApprovalFingerprint, setScriptApprovalFingerprint] = useState<{configKey:string;hash:string}|null>(null);
   const [scriptPreviewBusy, setScriptPreviewBusy] = useState(false);
 
+  const clearSourceLockSavePreviews = () => {
+    setSourceLockSavePlan(null);
+    setSourceLockSaveAuthorizationPreview(null);
+  };
+
   const load = async () => {
     try {
       const [i,a,j,m] = await Promise.all([fetch("/api/ideas"), fetch("/api/accounts"), fetch("/api/jobs"), fetch("/api/metrics")]);
@@ -258,7 +263,7 @@ export default function Home() {
         setEvidenceMetadataPreview(null);
         setEvidenceReviewDecisions({});
         setEvidenceReviewPreview(null);
-        setSourceLockSavePlan(null);
+        clearSourceLockSavePreviews();
       }
     } catch {
       setMessage("候选评分失败；没有生成播放量预测、写入数据库或解锁草稿。");
@@ -277,7 +282,7 @@ export default function Home() {
       setManualEvidencePreview(null);
       setEvidenceReviewDecisions({});
       setEvidenceReviewPreview(null);
-      setSourceLockSavePlan(null);
+      clearSourceLockSavePreviews();
     } catch {
       setMessage("补证清单生成失败；没有自动搜索、保存选择、写入数据库或解锁草稿。");
     } finally {
@@ -290,7 +295,7 @@ export default function Home() {
     setManualEvidencePreview(null);
     setEvidenceReviewDecisions({});
     setEvidenceReviewPreview(null);
-    setSourceLockSavePlan(null);
+    clearSourceLockSavePreviews();
     setEvidenceGapShortlist((current) => current.includes(id) ? current.filter((candidateId) => candidateId !== id) : current.length < 3 ? [...current, id] : current);
   };
   const previewEvidenceSearchPlan = async () => {
@@ -299,7 +304,7 @@ export default function Home() {
     setManualEvidencePreview(null);
     setEvidenceReviewDecisions({});
     setEvidenceReviewPreview(null);
-    setSourceLockSavePlan(null);
+    clearSourceLockSavePreviews();
     try {
       const response = await fetch("/api/news/evidence-search-plan", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ selectedIds:evidenceGapShortlist }) });
       setEvidenceSearchPlan(await response.json() as EvidenceSearchPlanPreview);
@@ -313,7 +318,7 @@ export default function Home() {
     setEvidenceMetadataBusy(true);
     setEvidenceReviewDecisions({});
     setEvidenceReviewPreview(null);
-    setSourceLockSavePlan(null);
+    clearSourceLockSavePreviews();
     try {
       const response = await fetch("/api/news/evidence-metadata-preview", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ selectedIds:evidenceGapShortlist }) });
       setEvidenceMetadataPreview(await response.json() as EvidenceMetadataPreview);
@@ -328,7 +333,7 @@ export default function Home() {
     setManualEvidencePreview(null);
     setEvidenceReviewDecisions({});
     setEvidenceReviewPreview(null);
-    setSourceLockSavePlan(null);
+    clearSourceLockSavePreviews();
     try {
       const response = await fetch("/api/news/manual-evidence-preview", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ selectedIds:evidenceGapShortlist, inputs:[manualEvidenceDraft] }) });
       setManualEvidencePreview(await response.json() as ManualEvidencePreview);
@@ -340,22 +345,22 @@ export default function Home() {
   };
   const selectEvidenceCandidate = (leadId:string, candidateId:string) => {
     setEvidenceReviewPreview(null);
-    setSourceLockSavePlan(null);
+    clearSourceLockSavePreviews();
     setEvidenceReviewDecisions((current) => ({ ...current, [leadId]: { candidateId, candidateMode:"rss_metadata", checks:Object.fromEntries(evidenceReviewChecklist.map(({id})=>[id,false])) as Record<EvidenceReviewCheckId,boolean> } }));
   };
   const selectManualEvidenceCandidate = (leadId:string, candidateId:string) => {
     setEvidenceReviewPreview(null);
-    setSourceLockSavePlan(null);
+    clearSourceLockSavePreviews();
     setEvidenceReviewDecisions({ [leadId]: { candidateId, candidateMode:"manual_public_metadata", checks:Object.fromEntries(evidenceReviewChecklist.map(({id})=>[id,false])) as Record<EvidenceReviewCheckId,boolean> } });
   };
   const toggleEvidenceReviewCheck = (leadId:string, checkId:EvidenceReviewCheckId) => {
     setEvidenceReviewPreview(null);
-    setSourceLockSavePlan(null);
+    clearSourceLockSavePreviews();
     setEvidenceReviewDecisions((current) => current[leadId] ? ({ ...current, [leadId]: { ...current[leadId], checks:{ ...current[leadId].checks, [checkId]:!current[leadId].checks[checkId] } } }) : current);
   };
   const previewEvidenceReview = async () => {
     setEvidenceReviewBusy(true);
-    setSourceLockSavePlan(null);
+    clearSourceLockSavePreviews();
     try {
       const decisions = Object.entries(evidenceReviewDecisions).map(([leadId,decision])=>({leadId,candidateId:decision.candidateId,checks:decision.checks}));
       const manualInputs = Object.values(evidenceReviewDecisions).some((decision)=>decision.candidateMode==="manual_public_metadata") ? [manualEvidenceDraft] : [];
