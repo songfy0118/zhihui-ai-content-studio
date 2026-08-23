@@ -4,6 +4,19 @@ const DEFAULT_MAX_BYTES = 1_500_000;
 const DEFAULT_MAX_ITEMS = 5;
 const TRACKING_PARAMETERS = /^(?:utm_.+|fbclid|gclid|mc_cid|mc_eid|ref|source)$/i;
 
+export function diagnoseRssFailure(errorCode) {
+  if (!errorCode) return { failureClass: null, retryable: false, operatorAction: null };
+  if (/^network_err_ssl_/.test(errorCode)) return { failureClass: "tls_or_proxy_error", retryable: true, operatorAction: "check_tls_or_proxy_and_retry" };
+  if (errorCode === "timeout") return { failureClass: "timeout", retryable: true, operatorAction: "retry_later" };
+  if (errorCode === "http_429") return { failureClass: "rate_limited", retryable: true, operatorAction: "respect_retry_window" };
+  if (/^http_5\d\d$/.test(errorCode)) return { failureClass: "upstream_error", retryable: true, operatorAction: "retry_later" };
+  if (/^http_(?:401|403)$/.test(errorCode)) return { failureClass: "access_refused", retryable: false, operatorAction: "manual_source_review" };
+  if (errorCode === "http_404") return { failureClass: "feed_not_found", retryable: false, operatorAction: "verify_feed_url" };
+  if (errorCode === "feed_too_large") return { failureClass: "feed_limit_exceeded", retryable: false, operatorAction: "review_source_limits" };
+  if (/^network_/.test(errorCode)) return { failureClass: "network_error", retryable: true, operatorAction: "retry_later" };
+  return { failureClass: "fetch_error", retryable: false, operatorAction: "inspect_source_failure" };
+}
+
 function decodeXml(value = "") {
   return value
     .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
@@ -115,7 +128,7 @@ async function fetchSourcePreview(source, { fetcher, maxBytes, maxItems, timeout
     if (new TextEncoder().encode(xml).byteLength > maxBytes) throw new Error("feed_too_large");
     const items = parseRssItems(xml, source, maxItems);
     return {
-      health: { sourceId: source.id, status: items.length ? "ready" : "empty", httpStatus: response.status, itemsParsed: items.length, durationMs: Date.now() - startedAt, errorCode: null },
+      health: { sourceId: source.id, status: items.length ? "ready" : "empty", httpStatus: response.status, itemsParsed: items.length, durationMs: Date.now() - startedAt, errorCode: null, ...diagnoseRssFailure(null) },
       items,
     };
   } catch (error) {
@@ -123,7 +136,7 @@ async function fetchSourcePreview(source, { fetcher, maxBytes, maxItems, timeout
     const causeCode = typeof error?.cause?.code === "string" ? error.cause.code.toLowerCase().replace(/[^a-z0-9_]/g, "") : "";
     const errorCode = /^http_\d{3}$/.test(message) || message === "feed_too_large" ? message : error?.name === "TimeoutError" ? "timeout" : causeCode ? `network_${causeCode}` : "fetch_failed";
     return {
-      health: { sourceId: source.id, status: "error", httpStatus: errorCode.startsWith("http_") ? Number(errorCode.slice(5)) : null, itemsParsed: 0, durationMs: Date.now() - startedAt, errorCode },
+      health: { sourceId: source.id, status: "error", httpStatus: errorCode.startsWith("http_") ? Number(errorCode.slice(5)) : null, itemsParsed: 0, durationMs: Date.now() - startedAt, errorCode, ...diagnoseRssFailure(errorCode) },
       items: [],
     };
   }

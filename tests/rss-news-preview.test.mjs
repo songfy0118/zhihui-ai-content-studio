@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-import { buildRssNewsPreview, dedupeRssItems, normalizeCanonicalUrl, parseRssItems } from "../bridge/rss-news-preview.mjs";
+import { buildRssNewsPreview, dedupeRssItems, diagnoseRssFailure, normalizeCanonicalUrl, parseRssItems } from "../bridge/rss-news-preview.mjs";
 
 const source = {
   id: "official-ai",
@@ -56,6 +56,8 @@ test("builds a partial live preview with explicit source health and no writes", 
   assert.equal(preview.status, "preview_ready");
   assert.deepEqual(preview.summary, { feedsAttempted: 2, readySources: 1, failedSources: 1, itemsReturned: 1 });
   assert.equal(preview.sourceHealth.find((row) => row.sourceId === "failed").errorCode, "http_403");
+  assert.equal(preview.sourceHealth.find((row) => row.sourceId === "failed").failureClass, "access_refused");
+  assert.equal(preview.sourceHealth.find((row) => row.sourceId === "failed").retryable, false);
   assert.equal(preview.databaseWrites, false);
   assert.equal(preview.publishTriggered, false);
   assert.equal(preview.factsVerified, false);
@@ -69,6 +71,16 @@ test("reports a safe network cause code without swallowing source failures", asy
   };
   const preview = await buildRssNewsPreview({ sources: [source], fetcher });
   assert.equal(preview.sourceHealth[0].errorCode, "network_enotfound");
+  assert.equal(preview.sourceHealth[0].failureClass, "network_error");
+  assert.equal(preview.sourceHealth[0].retryable, true);
+});
+
+test("classifies TLS or proxy failures without weakening transport security", () => {
+  assert.deepEqual(diagnoseRssFailure("network_err_ssl_packet_length_too_long"), {
+    failureClass: "tls_or_proxy_error",
+    retryable: true,
+    operatorAction: "check_tls_or_proxy_and_retry",
+  });
 });
 
 test("wires the preview as an explicit read-only UI action", async () => {
@@ -80,6 +92,7 @@ test("wires the preview as an explicit read-only UI action", async () => {
   assert.match(page, /fetch\("\/api\/news\/preview"/);
   assert.match(page, /数据库写入/);
   assert.match(page, /newsPreview\.sourceHealth\.map/);
+  assert.match(page, /source\.operatorAction/);
   assert.match(route, /buildRssNewsPreview/);
   assert.doesNotMatch(route, /getDb|\.insert\(|\.update\(|\.delete\(/);
 });
