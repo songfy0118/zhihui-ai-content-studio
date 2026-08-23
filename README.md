@@ -110,6 +110,7 @@ npm run pilot:package
 - `buildManualPublicEvidencePreview` 为未来人工粘贴公开第二来源提供纯预览契约：只接受无凭据的公开 HTTPS 元数据，并检查同主机、七天时间窗和标题匹配；当前不抓取链接、不接入页面、不保存或创建来源锁
 - 控制台可调用 `/api/news/manual-evidence-preview` 对人工填写的公开来源元数据做临时预览；非法请求在 0 次外部调用处阻断，合法请求只重读登记 RSS 以确认当前候选，绝不请求用户填写的 URL
 - 单条人工候选可进入既有六项证据审查，并生成与审查指纹绑定的来源锁保存计划；计划固定为 `authorizationGranted=false`、`writeAllowed=false`、写库 0，仍不会创建来源锁或解锁草稿
+- `buildSourceLockSaveAuthorizationPreview` 可把单条、未保存的来源锁计划绑定成确定性单次授权预览；预览要求精确确认短语，但不授予授权、不接保存路由或数据库写入器
 - `npm run news:evidence-preview -- <cluster-id...>`：在人工选择后，仅用本轮公开 RSS 的标题、链接、来源和时间寻找可能的第二来源；不读取文章正文，所有结果必须人工判断，不执行事实核验、来源锁、草稿或发布
 - `npm run news:evidence-review`：显示证据审查的失败关闭边界；真实预览必须由人选择当前候选并确认同一事件、来源独立、时间一致和无明显冲突，预览不保存、不创建来源锁
 - `npm run news:source-lock-plan`：显示来源锁保存计划的失败关闭边界；真实计划绑定当前人工审查指纹，但授权、写库、来源锁创建与草稿解锁均保持关闭
