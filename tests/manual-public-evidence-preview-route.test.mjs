@@ -49,6 +49,7 @@ test("wires preview-only routes and manual review/save-plan actions without URL 
   assert.equal(page.match(/updateManualEvidenceDraft\("(?:leadId|sourceName|title|canonicalUrl|publishedAt)",event\.target\.value\)/g)?.length, 5);
   assert.match(page, /const requestRevision = evidencePipelineRevision\.current;[\s\S]*?const preview = await response\.json\(\) as ManualEvidencePreview;[\s\S]*?if \(requestRevision !== evidencePipelineRevision\.current\) return;\s*setManualEvidencePreview\(preview\);/);
   assert.match(page, /fetch\("\/api\/news\/manual-evidence-preview"/);
+  assert.match(page, /manualEvidencePreview\.blockers\.map\(formatManualEvidenceBlocker\)\.join\(" \/ "\)/);
   assert.match(route, /buildManualPublicEvidencePreview/);
   assert.match(route, /externalCalls: 0/);
   assert.match(page, /进入六项审查预览/);

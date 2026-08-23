@@ -5,6 +5,7 @@ import { buildEvidenceSearchPlan } from "../bridge/evidence-search-plan.mjs";
 import { buildEvidenceReviewPreview, EVIDENCE_REVIEW_CHECKS } from "../bridge/evidence-review-preview.mjs";
 import { buildManualPublicEvidencePreview } from "../bridge/manual-public-evidence-preview.mjs";
 import { buildSourceLockSavePlan } from "../bridge/source-lock-save-plan.mjs";
+import { formatManualEvidenceBlocker } from "../app/manual-evidence-diagnostics.ts";
 
 const lead = {
   id: "cluster:one",
@@ -19,6 +20,14 @@ const sources = [
   { id: "source-a", name: "Original", sourceType: "rss", baseUrl: "https://origin.news/", feedUrl: "https://origin.news/feed", enabled: true, requiresLogin: false },
   { id: "source-b", name: "Catalog source", sourceType: "rss", baseUrl: "https://catalog.news/", feedUrl: "https://catalog.news/feed", enabled: true, requiresLogin: false },
 ];
+
+test("formats manual evidence blockers as actionable Chinese diagnostics", () => {
+  assert.equal(formatManualEvidenceBlocker("invalid_manual_evidence_request"), "请完整填写待补证标题、来源名称、候选标题、公开链接和发布时间");
+  assert.equal(formatManualEvidenceBlocker("manual_candidate_invalid:0:public_https_url_required"), "第 1 条：请填写无需登录的公开 HTTPS 链接");
+  assert.equal(formatManualEvidenceBlocker("manual_candidate_invalid:2:same_exact_host"), "第 3 条：候选链接与原来源属于同一主机");
+  assert.equal(formatManualEvidenceBlocker("manual_candidate_invalid:0:future_reason"), "第 1 条：future_reason");
+  assert.equal(formatManualEvidenceBlocker("future_blocker"), "future_blocker");
+});
 const plan = buildEvidenceSearchPlan([lead], [lead.id], sources);
 
 function input(overrides = {}) {
