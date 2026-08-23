@@ -70,8 +70,8 @@ function exactJson(left, right) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-function buildInjectedD1(plan, executeRead, attempts, completions) {
-  const queries = new Map(plan.queries.map((query) => [query.statement, query]));
+export function buildInjectedTopicWeightReadD1(queryWhitelist, executeRead, attempts, completions) {
+  const queries = new Map(queryWhitelist.map((query) => [query.statement, query]));
   const usedSteps = new Set();
 
   async function run(statement, params) {
@@ -141,7 +141,7 @@ export async function executeTopicWeightRankingIsolatedRead(input = {}, { execut
 
   const attempts = [];
   const completions = [];
-  const d1 = buildInjectedD1(input.plan, executeRead, attempts, completions);
+  const d1 = buildInjectedTopicWeightReadD1(input.plan.queries, executeRead, attempts, completions);
   let storage;
   try {
     storage = await inspectAccountTopicWeightStorage(d1);
