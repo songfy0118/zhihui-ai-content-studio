@@ -20,11 +20,22 @@ test("wechat remains a disabled manual-review source", () => {
 
 test("catalog summary separates automatic and manual sources", () => {
   const summary = summarizeNewsSourceCatalog();
-  assert.equal(summary.totalSources, 13);
-  assert.equal(summary.enabledSources, 12);
-  assert.equal(summary.rssSources, 9);
+  assert.equal(summary.totalSources, 14);
+  assert.equal(summary.enabledSources, 13);
+  assert.equal(summary.rssSources, 10);
   assert.equal(summary.officialNewsrooms, 3);
   assert.equal(summary.manualReviewSources, 1);
+});
+
+test("TechCrunch feed is metadata-only and keeps article acquisition blocked", () => {
+  const techcrunch = NEWS_SOURCE_CATALOG.find((source) => source.id === "techcrunch");
+  assert.ok(techcrunch);
+  assert.equal(techcrunch.sourceType, "rss");
+  assert.equal(techcrunch.feedUrl, "https://techcrunch.com/feed/");
+  assert.equal(techcrunch.feedSummaryPolicy, "omit");
+  assert.equal(techcrunch.rightsPolicy, "official_feed_display_only_with_attribution");
+  assert.equal(techcrunch.requiresLogin, false);
+  assert.equal(techcrunch.feedEvidenceUrl, "https://techcrunch.com/rss-terms-of-use/");
 });
 
 test("Anthropic is a public newsroom candidate without a claimed RSS feed", () => {

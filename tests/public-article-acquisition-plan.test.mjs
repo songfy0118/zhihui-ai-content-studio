@@ -41,6 +41,17 @@ test("blocks catalog policies that authorize metadata only", () => {
   assert.ok(plan.blockers.includes("google-blog:source_body_policy_review_required"));
   assert.equal(plan.readyForExecutionAuthorizationRequest, false);
   assert.equal(plan.networkRequestsPlanned, 0);
+
+  const displayOnly = structuredClone(briefPreview);
+  displayOnly.brief.evidence[0] = {
+    ...displayOnly.brief.evidence[0],
+    sourceId: "techcrunch",
+    canonicalUrl: "https://techcrunch.com/2026/08/23/example/",
+  };
+  const displayOnlyPlan = buildPublicArticleAcquisitionPlan(displayOnly);
+  assert.ok(displayOnlyPlan.blockers.includes("techcrunch:source_body_policy_review_required"));
+  assert.equal(displayOnlyPlan.readyForExecutionAuthorizationRequest, false);
+  assert.equal(displayOnlyPlan.networkRequestsPlanned, 0);
 });
 
 test("blocks unlisted hosts, disabled login sources and invalid target counts", () => {

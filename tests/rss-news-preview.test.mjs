@@ -33,6 +33,14 @@ test("parses RSS and Atom metadata without returning full article bodies", () =>
   assert.equal(atomItem.publishedAt, "2026-08-21T08:00:00.000Z");
 });
 
+test("omits feed summaries when source terms allow display-only metadata", () => {
+  const displayOnlySource = { ...source, id: "display-only", feedSummaryPolicy: "omit" };
+  const [item] = parseRssItems(`<rss><channel><item><title>Startup funding</title><link>https://example.com/funding</link><description>Feed text must not be transformed or reused.</description></item></channel></rss>`, displayOnlySource);
+  assert.equal(item.title, "Startup funding");
+  assert.equal(item.canonicalUrl, "https://example.com/funding");
+  assert.equal(item.summary, "");
+});
+
 test("deduplicates repeated URL or same-source title fingerprints", () => {
   const items = parseRssItems(`<rss><channel><item><title>One</title><link>https://example.com/one</link></item><item><title>One</title><link>https://example.com/two</link></item><item><title>Three</title><link>https://example.com/one</link></item></channel></rss>`, source, 10);
   assert.equal(dedupeRssItems(items).length, 1);

@@ -69,7 +69,9 @@ export function parseRssItems(xml, source, maxItems = DEFAULT_MAX_ITEMS) {
     const title = stripMarkup(readTag(block, ["title"]));
     const canonicalUrl = normalizeCanonicalUrl(readLink(block), source.baseUrl);
     if (!title || !canonicalUrl) return [];
-    const summary = stripMarkup(readTag(block, ["description", "summary", "content:encoded"])).slice(0, 240);
+    const summary = source.feedSummaryPolicy === "omit"
+      ? ""
+      : stripMarkup(readTag(block, ["description", "summary", "content:encoded"])).slice(0, 240);
     const publishedAt = normalizePublishedAt(readTag(block, ["pubDate", "published", "updated", "dc:date"]));
     const contentHash = createHash("sha256").update(`${source.id}\n${title.toLocaleLowerCase("en-US")}`).digest("hex");
     return [{

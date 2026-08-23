@@ -92,7 +92,8 @@ npm run pilot:package
 - `npm run bridge:restart:plan`：只读核验 3765 监听进程、旧桥接健康签名和协议 v3 目标；默认不停止或启动任何进程
 - `npm run bridge:verify:parallel`：在临时端口 3766 启动并回收新版桥接，验证协议 v3 与隔离迁移接口；不改动 3765 旧桥接
 - `npm run news:preview`：对已启用的公开 RSS 各发起一次限时只读请求，输出规范化标题、原文链接、时间与信源健康状态；不抓正文、不写数据库、不发布
-- 当前自动 RSS 仅包括 OpenAI、Microsoft、Google、AWS、Apple、NVIDIA、量子位与美国监管机构的公开源；每源最多 5 条、单源上限 1.5 MB、超时 8 秒，只保留标题、原文链接、时间和最多 240 字短摘要
+- 当前自动 RSS 仅包括 OpenAI、Microsoft、Google、AWS、Apple、NVIDIA、量子位、TechCrunch 与美国监管机构的公开源；每源最多 5 条、单源上限 1.5 MB、超时 8 秒，只保留标题、原文链接、时间和最多 240 字短摘要
+- TechCrunch 按其 RSS 条款仅返回带归因的原始标题、原文链接和时间，强制省略 Feed 摘要；其权利策略不允许进入自动正文获取计划
 - Anthropic 当前仅登记为无需登录的官方新闻室补证候选；未确认官方 RSS，因此不参与自动 RSS 请求，也不使用第三方镜像冒充官方源
 - `npm run news:clusters`：在一次 RSS 只读预览上按标题词项、七天时间窗和独立来源进行确定性聚类；只输出候选资格，不执行热度预测、事实核验或数据库写入
 - `npm run news:rank`：只对合格的跨来源簇计算来源多样性、报道数量、时效、聚类一致性和默认账号主题匹配的相对优先级；不生成播放量或爆款概率，事实核验前不可进入草稿

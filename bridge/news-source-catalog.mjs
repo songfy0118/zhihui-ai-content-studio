@@ -1,4 +1,4 @@
-export const NEWS_SOURCE_CATALOG_VERSION = 3;
+export const NEWS_SOURCE_CATALOG_VERSION = 4;
 
 export const NEWS_SOURCE_CATALOG = Object.freeze([
   Object.freeze({
@@ -134,6 +134,22 @@ export const NEWS_SOURCE_CATALOG = Object.freeze([
     refreshMinutes: 180,
   }),
   Object.freeze({
+    id: "techcrunch",
+    name: "TechCrunch",
+    region: "US",
+    language: "en",
+    category: "tech_media",
+    sourceType: "rss",
+    baseUrl: "https://techcrunch.com/",
+    feedUrl: "https://techcrunch.com/feed/",
+    feedEvidenceUrl: "https://techcrunch.com/rss-terms-of-use/",
+    feedSummaryPolicy: "omit",
+    rightsPolicy: "official_feed_display_only_with_attribution",
+    requiresLogin: false,
+    enabled: true,
+    refreshMinutes: 60,
+  }),
+  Object.freeze({
     id: "us-sec-press-releases",
     name: "U.S. SEC Press Releases",
     region: "US",
@@ -204,6 +220,7 @@ export function validateNewsSourceCatalog(sources = NEWS_SOURCE_CATALOG) {
     if (source.enabled && source.refreshMinutes < 15) blockers.push(`refresh_too_frequent:${source.id}`);
     if (!source.rightsPolicy) blockers.push(`missing_rights_policy:${source.id}`);
     if (source.feedEvidenceUrl && !source.feedEvidenceUrl.startsWith("https://")) blockers.push(`insecure_feed_evidence_url:${source.id}`);
+    if (source.feedSummaryPolicy && !["include", "omit"].includes(source.feedSummaryPolicy)) blockers.push(`invalid_feed_summary_policy:${source.id}`);
   }
 
   return Object.freeze({ valid: blockers.length === 0, blockers: Object.freeze(blockers) });
