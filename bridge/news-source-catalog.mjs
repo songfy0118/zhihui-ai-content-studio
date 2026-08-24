@@ -1,4 +1,4 @@
-export const NEWS_SOURCE_CATALOG_VERSION = 1;
+export const NEWS_SOURCE_CATALOG_VERSION = 2;
 
 export const NEWS_SOURCE_CATALOG = Object.freeze([
   Object.freeze({
@@ -98,6 +98,22 @@ export const NEWS_SOURCE_CATALOG = Object.freeze([
     baseUrl: "https://blogs.nvidia.com/",
     feedUrl: "https://blogs.nvidia.com/feed/",
     feedEvidenceUrl: "https://blogs.nvidia.com/",
+    rightsPolicy: "official_feed_metadata_with_attribution",
+    requiresLogin: false,
+    enabled: true,
+    refreshMinutes: 60,
+  }),
+  Object.freeze({
+    id: "qbitai",
+    name: "量子位 · QbitAI",
+    region: "CN",
+    language: "zh-CN",
+    category: "ai_media",
+    sourceType: "rss",
+    baseUrl: "https://www.qbitai.com/",
+    feedUrl: "https://www.qbitai.com/feed",
+    feedEvidenceUrl: "https://www.qbitai.com/",
+    editorialAliases: Object.freeze(["量子位", "QbitAI"]),
     rightsPolicy: "official_feed_metadata_with_attribution",
     requiresLogin: false,
     enabled: true,

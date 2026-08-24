@@ -20,15 +20,15 @@ test("wechat remains a disabled manual-review source", () => {
 
 test("catalog summary separates automatic and manual sources", () => {
   const summary = summarizeNewsSourceCatalog();
-  assert.equal(summary.totalSources, 11);
-  assert.equal(summary.enabledSources, 10);
-  assert.equal(summary.rssSources, 8);
+  assert.equal(summary.totalSources, 12);
+  assert.equal(summary.enabledSources, 11);
+  assert.equal(summary.rssSources, 9);
   assert.equal(summary.officialNewsrooms, 2);
   assert.equal(summary.manualReviewSources, 1);
 });
 
 test("expanded feeds are official, attributable and have discovery evidence", () => {
-  const expandedIds = ["google-blog", "aws-machine-learning-blog", "apple-machine-learning-research", "nvidia-blog"];
+  const expandedIds = ["google-blog", "aws-machine-learning-blog", "apple-machine-learning-research", "nvidia-blog", "qbitai"];
   for (const id of expandedIds) {
     const source = NEWS_SOURCE_CATALOG.find((candidate) => candidate.id === id);
     assert.ok(source, `missing ${id}`);
@@ -39,4 +39,9 @@ test("expanded feeds are official, attributable and have discovery evidence", ()
   }
   assert.equal(NEWS_SOURCE_CATALOG.find((source) => source.id === "google-blog")?.category, "company_technology");
   assert.equal(NEWS_SOURCE_CATALOG.find((source) => source.id === "nvidia-blog")?.category, "company_technology");
+  const qbitai = NEWS_SOURCE_CATALOG.find((source) => source.id === "qbitai");
+  assert.equal(qbitai?.category, "ai_media");
+  assert.equal(qbitai?.language, "zh-CN");
+  assert.deepEqual(qbitai?.editorialAliases, ["量子位", "QbitAI"]);
+  assert.equal(qbitai?.feedUrl, "https://www.qbitai.com/feed");
 });
