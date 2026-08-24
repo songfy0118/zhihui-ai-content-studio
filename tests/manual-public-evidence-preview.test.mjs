@@ -89,7 +89,7 @@ test("hands empty RSS candidates to an explicit no-write manual evidence form", 
   assert.match(page, /describeManualEvidencePreviewReadiness\(manualEvidenceFormReadiness\.ready,manualSourceLinkHostAssessment\.blocksPreview\)/);
   assert.match(page, /if \(!manualEvidenceFormReadiness\.ready \|\| evidenceGapShortlist\.length !== 1\)/);
   assert.match(page, /if \(manualSourceLinkHostAssessment\.blocksPreview\)[\s\S]*?未发送预览请求/);
-  assert.match(page, /disabled=\{manualEvidenceBusy\|\|manualSourceLinkHostAssessment\.blocksPreview\|\|/);
+  assert.match(page, /disabled=\{manualEvidenceBusy\|\|!manualEvidenceFormReadiness\.ready\|\|manualSourceLinkHostAssessment\.blocksPreview\|\|/);
 });
 
 const plan = buildEvidenceSearchPlan([lead], [lead.id], sources);
