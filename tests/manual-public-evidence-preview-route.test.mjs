@@ -21,6 +21,7 @@ test("rejects malformed manual evidence before any external call", async () => {
   assert.deepEqual(body.validationPolicy, {
     publicHttpsOnly: true,
     exactHostDifferentRequired: true,
+    registeredSourceHostBound: true,
     windowHours: 168,
     minimumSimilarity: 0.12,
     minimumSharedTerms: 2,
@@ -54,10 +55,11 @@ test("wires preview-only routes and manual review/save-plan actions without URL 
   assert.match(page, /fetch\("\/api\/news\/manual-evidence-preview"/);
   assert.match(page, /manualEvidencePreview\.blockers\.map\(formatManualEvidenceBlocker\)\.join\(" \/ "\)/);
   assert.match(route, /buildManualPublicEvidencePreview/);
+  assert.match(route, /buildManualPublicEvidencePreview\(plan, body\.inputs, \{ registeredSources: NEWS_SOURCE_CATALOG \}\)/);
   assert.match(route, /externalCalls: 0/);
   assert.match(page, /进入六项审查预览/);
-  assert.match(reviewRoute, /buildManualPublicEvidencePreview/);
-  assert.match(savePlanRoute, /buildManualPublicEvidencePreview/);
+  assert.match(reviewRoute, /buildManualPublicEvidencePreview\(plan, manualInputs, \{ registeredSources: NEWS_SOURCE_CATALOG \}\)/);
+  assert.match(savePlanRoute, /buildManualPublicEvidencePreview\(plan, manualInputs, \{ registeredSources: NEWS_SOURCE_CATALOG \}\)/);
   assert.match(savePlanRoute, /manualInputs/);
   assert.match(savePlanRoute, /candidateUrlFetched: false/);
   assert.match(savePlanRoute, /manualInputPersisted: false/);

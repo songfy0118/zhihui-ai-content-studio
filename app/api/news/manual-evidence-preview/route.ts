@@ -37,7 +37,7 @@ export async function POST(request: Request) {
   const clustering = buildTopicClusters(feedPreview.items, { requireMetadataQuality: true });
   const queue = buildEvidenceGapQueue(clustering);
   const plan = buildEvidenceSearchPlan(queue.leads, body.selectedIds, NEWS_SOURCE_CATALOG);
-  const preview = buildManualPublicEvidencePreview(plan, body.inputs);
+  const preview = buildManualPublicEvidencePreview(plan, body.inputs, { registeredSources: NEWS_SOURCE_CATALOG });
   return Response.json({
     ...preview,
     fetchedAt: feedPreview.fetchedAt,

@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   const queue = buildEvidenceGapQueue(clustering);
   const plan = buildEvidenceSearchPlan(queue.leads, selectedIds, NEWS_SOURCE_CATALOG);
   const metadataPreview = manualEvidenceUsed
-    ? buildManualPublicEvidencePreview(plan, manualInputs)
+    ? buildManualPublicEvidencePreview(plan, manualInputs, { registeredSources: NEWS_SOURCE_CATALOG })
     : buildEvidenceMetadataPreview(plan, feedPreview.items, { requireQualityLineage: true });
   const reviewPreview = buildEvidenceReviewPreview(plan, metadataPreview, body.decisions);
   return Response.json({ ...reviewPreview, manualEvidenceUsed, fetchedAt: feedPreview.fetchedAt, externalCalls: feedPreview.externalCalls }, { status: reviewPreview.humanEvidenceReviewComplete ? 200 : 409 });

@@ -59,10 +59,28 @@ function sharedTerms(leftTitle, rightTitle) {
   return [...left].filter((term) => right.has(term)).sort();
 }
 
+function normalizedSourceLabel(value) {
+  return typeof value === "string" ? value.normalize("NFKC").trim().toLocaleLowerCase("en-US") : "";
+}
+
+function registeredSourceForName(sourceName, registeredSources) {
+  const normalizedName = normalizedSourceLabel(sourceName);
+  if (!normalizedName) return null;
+  return registeredSources.find((source) => [source?.name, ...(source?.editorialAliases ?? [])]
+    .some((label) => normalizedSourceLabel(label) === normalizedName)) ?? null;
+}
+
+function registeredSourceHosts(source) {
+  return new Set([source?.baseUrl, source?.feedEvidenceUrl, source?.feedUrl]
+    .map(normalizedHost)
+    .filter(Boolean));
+}
+
 export function buildManualPublicEvidencePreview(plan, inputs = [], {
   windowHours = DEFAULT_WINDOW_HOURS,
   minimumSimilarity = DEFAULT_MINIMUM_SIMILARITY,
   minimumSharedTerms = DEFAULT_MINIMUM_SHARED_TERMS,
+  registeredSources = [],
 } = {}) {
   const blockers = [];
   if (!plan?.readyForHumanResearchReview || !plan.planFingerprint) blockers.push("search_plan_not_ready");
@@ -80,6 +98,8 @@ export function buildManualPublicEvidencePreview(plan, inputs = [], {
     const title = typeof input?.title === "string" ? input.title.normalize("NFKC").replace(/\s+/g, " ").trim() : "";
     const publisherRole = typeof input?.publisherRole === "string" ? input.publisherRole : "";
     const parsedUrl = parsePublicHttpsUrl(input?.canonicalUrl);
+    const registeredSource = registeredSourceForName(sourceName, registeredSources);
+    const allowedRegisteredHosts = registeredSourceHosts(registeredSource);
     const publishedAtMs = timestamp(input?.publishedAt);
     const targetTimeMs = timestamp(target?.sourcePublishedAt);
     const inputBlockers = [];
@@ -89,6 +109,7 @@ export function buildManualPublicEvidencePreview(plan, inputs = [], {
     if (title.length < 8 || title.length > 300) inputBlockers.push(`${prefix}:title_invalid`);
     if (!PUBLISHER_ROLES.has(publisherRole)) inputBlockers.push(`${prefix}:publisher_role_invalid`);
     if (!parsedUrl) inputBlockers.push(`${prefix}:public_https_url_required`);
+    if (parsedUrl && registeredSource && !allowedRegisteredHosts.has(parsedUrl.host)) inputBlockers.push(`${prefix}:registered_source_host_mismatch`);
     if (publishedAtMs === null || targetTimeMs === null) inputBlockers.push(`${prefix}:published_at_invalid`);
     if (publishedAtMs !== null && targetTimeMs !== null && Math.abs(publishedAtMs - targetTimeMs) > windowHours * 3_600_000) inputBlockers.push(`${prefix}:outside_time_window`);
     const originalHosts = new Set(target?.independenceDiagnostics?.originalHosts ?? []);
@@ -143,7 +164,7 @@ export function buildManualPublicEvidencePreview(plan, inputs = [], {
     planFingerprint: plan?.planFingerprint ?? null,
     summary: { inputsReceived: Array.isArray(inputs) ? inputs.length : 0, candidatesAccepted: accepted.length, maximum: MAX_INPUTS },
     targets,
-    validationPolicy: { publicHttpsOnly: true, exactHostDifferentRequired: true, windowHours, minimumSimilarity, minimumSharedTerms },
+    validationPolicy: { publicHttpsOnly: true, exactHostDifferentRequired: true, registeredSourceHostBound: true, windowHours, minimumSimilarity, minimumSharedTerms },
     candidateUrlFetched: false,
     articleBodiesFetched: false,
     manualInputPersisted: false,

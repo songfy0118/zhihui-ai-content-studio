@@ -9,6 +9,7 @@ const manualEvidenceBlockerLabels: Record<string, string> = {
   title_invalid: "候选标题需为 8–300 个字符",
   publisher_role_invalid: "请选择原始发布者或转载页",
   public_https_url_required: "请填写无需登录的公开 HTTPS 链接",
+  registered_source_host_mismatch: "已登记来源名称与公开链接主机不一致；请核对来源或改用实际来源名称",
   published_at_invalid: "发布时间必须是有效的 ISO 8601 时间",
   outside_time_window: "发布时间与原来源相差超过 7 天",
   same_exact_host: "候选链接与原来源属于同一主机",

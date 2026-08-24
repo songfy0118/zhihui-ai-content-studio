@@ -5,6 +5,7 @@ import test from "node:test";
 import { buildEvidenceSearchPlan } from "../bridge/evidence-search-plan.mjs";
 import { buildEvidenceReviewPreview, EVIDENCE_REVIEW_CHECKS } from "../bridge/evidence-review-preview.mjs";
 import { buildManualPublicEvidencePreview } from "../bridge/manual-public-evidence-preview.mjs";
+import { NEWS_SOURCE_CATALOG } from "../bridge/news-source-catalog.mjs";
 import { buildSourceLockSavePlan } from "../bridge/source-lock-save-plan.mjs";
 import { formatManualEvidenceBlocker, formatManualEvidencePublisherRole } from "../app/manual-evidence-diagnostics.ts";
 import { buildManualEvidenceFormReadiness } from "../app/manual-evidence-form-readiness.ts";
@@ -20,13 +21,14 @@ const lead = {
 };
 const sources = [
   { id: "source-a", name: "Original", sourceType: "rss", baseUrl: "https://origin.news/", feedUrl: "https://origin.news/feed", enabled: true, requiresLogin: false },
-  { id: "source-b", name: "Catalog source", sourceType: "rss", baseUrl: "https://catalog.news/", feedUrl: "https://catalog.news/feed", enabled: true, requiresLogin: false },
+  { id: "source-b", name: "Catalog source", editorialAliases: ["Catalog alias"], sourceType: "rss", baseUrl: "https://catalog.news/", feedUrl: "https://feeds.catalog.news/feed", feedEvidenceUrl: "https://evidence.catalog.news/", enabled: true, requiresLogin: false },
 ];
 
 test("formats manual evidence blockers as actionable Chinese diagnostics", () => {
   assert.equal(formatManualEvidenceBlocker("invalid_manual_evidence_request"), "请完整填写待补证标题、来源名称、发布者身份、候选标题、公开链接和发布时间");
   assert.equal(formatManualEvidenceBlocker("manual_candidate_invalid:0:public_https_url_required"), "第 1 条：请填写无需登录的公开 HTTPS 链接");
   assert.equal(formatManualEvidenceBlocker("manual_candidate_invalid:0:publisher_role_invalid"), "第 1 条：请选择原始发布者或转载页");
+  assert.equal(formatManualEvidenceBlocker("manual_candidate_invalid:0:registered_source_host_mismatch"), "第 1 条：已登记来源名称与公开链接主机不一致；请核对来源或改用实际来源名称");
   assert.equal(formatManualEvidenceBlocker("manual_candidate_invalid:2:same_exact_host"), "第 3 条：候选链接与原来源属于同一主机");
   assert.equal(formatManualEvidenceBlocker("manual_candidate_invalid:0:future_reason"), "第 1 条：future_reason");
   assert.equal(formatManualEvidenceBlocker("future_blocker"), "future_blocker");
@@ -129,6 +131,42 @@ test("blocks unsafe, same-host, stale and unrelated manual candidates", () => {
     assert.equal(preview.status, "manual_evidence_preview_blocked");
     assert.ok(preview.blockers.some((value) => value.endsWith(blocker)), blocker);
   }
+});
+
+test("binds registered source names and aliases to catalog hosts while allowing custom sources", () => {
+  for (const candidate of [
+    input({ sourceName: "Catalog source", canonicalUrl: "https://catalog.news/report" }),
+    input({ sourceName: "Catalog alias", canonicalUrl: "https://evidence.catalog.news/report" }),
+    input({ sourceName: "Catalog source", canonicalUrl: "https://feeds.catalog.news/report" }),
+    input({ sourceName: "Independent News", canonicalUrl: "https://independent.news/report" }),
+  ]) {
+    const preview = buildManualPublicEvidencePreview(plan, [candidate], { registeredSources: sources });
+    assert.equal(preview.status, "manual_evidence_preview_ready");
+    assert.equal(preview.validationPolicy.registeredSourceHostBound, true);
+  }
+
+  const mismatch = buildManualPublicEvidencePreview(plan, [input({
+    sourceName: "Catalog alias",
+    canonicalUrl: "https://independent.news/report",
+  })], { registeredSources: sources });
+  assert.equal(mismatch.status, "manual_evidence_preview_blocked");
+  assert.ok(mismatch.blockers.includes("manual_candidate_invalid:0:registered_source_host_mismatch"));
+});
+
+test("binds QbitAI and Silicon Star Pro handoff names to their registered public hosts", () => {
+  for (const candidate of [
+    input({ sourceName: "量子位", canonicalUrl: "https://www.qbitai.com/2026/08/report" }),
+    input({ sourceName: "硅星人Pro", canonicalUrl: "https://mp.weixin.qq.com/s/public-article" }),
+  ]) {
+    const preview = buildManualPublicEvidencePreview(plan, [candidate], { registeredSources: NEWS_SOURCE_CATALOG });
+    assert.equal(preview.status, "manual_evidence_preview_ready");
+  }
+
+  const mismatch = buildManualPublicEvidencePreview(plan, [input({
+    sourceName: "量子位 · QbitAI",
+    canonicalUrl: "https://mp.weixin.qq.com/s/not-qbitai",
+  })], { registeredSources: NEWS_SOURCE_CATALOG });
+  assert.ok(mismatch.blockers.includes("manual_candidate_invalid:0:registered_source_host_mismatch"));
 });
 
 test("blocks missing plans, empty input and duplicate lead candidates", () => {

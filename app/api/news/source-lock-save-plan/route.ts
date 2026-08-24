@@ -54,7 +54,7 @@ export async function POST(request: Request) {
   const queue = buildEvidenceGapQueue(clustering);
   const plan = buildEvidenceSearchPlan(queue.leads, selectedIds, NEWS_SOURCE_CATALOG);
   const metadataPreview = manualEvidenceUsed
-    ? buildManualPublicEvidencePreview(plan, manualInputs)
+    ? buildManualPublicEvidencePreview(plan, manualInputs, { registeredSources: NEWS_SOURCE_CATALOG })
     : buildEvidenceMetadataPreview(plan, feedPreview.items);
   const reviewPreview = buildEvidenceReviewPreview(plan, metadataPreview, body.decisions);
   const savePlan = buildSourceLockSavePlan(reviewPreview, { confirmedReviewFingerprint: body.confirmedReviewFingerprint });
