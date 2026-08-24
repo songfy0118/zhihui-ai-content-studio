@@ -8,7 +8,7 @@ import { buildManualPublicEvidencePreview } from "../bridge/manual-public-eviden
 import { NEWS_SOURCE_CATALOG } from "../bridge/news-source-catalog.mjs";
 import { buildSourceLockSavePlan } from "../bridge/source-lock-save-plan.mjs";
 import { formatManualEvidenceBlocker, formatManualEvidencePublisherRole } from "../app/manual-evidence-diagnostics.ts";
-import { buildManualEvidenceFormReadiness } from "../app/manual-evidence-form-readiness.ts";
+import { buildManualEvidenceFormReadiness, describeManualEvidencePreviewReadiness } from "../app/manual-evidence-form-readiness.ts";
 
 const lead = {
   id: "cluster:one",
@@ -50,6 +50,12 @@ test("reports manual evidence field completion without validating or fetching th
   assert.equal(complete.ready, true);
 });
 
+test("keeps the progress copy aligned with the local link gate", () => {
+  assert.equal(describeManualEvidencePreviewReadiness(false, false), "缺少字段时不会发送预览请求");
+  assert.equal(describeManualEvidencePreviewReadiness(true, true), "字段已填齐，但本地链接校验已阻断；修正红色提示后才能预览");
+  assert.match(describeManualEvidencePreviewReadiness(true, false), /字段已填齐且本地链接校验通过/);
+});
+
 test("wires manual source name suggestions without automatic article collection", async () => {
   const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   assert.match(page, /listManualSourceNameSuggestions\(newsSourceCatalog\.sources\)/);
@@ -80,10 +86,10 @@ test("hands empty RSS candidates to an explicit no-write manual evidence form", 
   assert.match(page, /已预选当前唯一线索/);
   assert.match(page, /不会自动打开、抓取或保存 · 正文读取 0 · 事实核验 0 · 来源锁 0/);
   assert.match(page, /人工补证必填进度 \{manualEvidenceFormReadiness\.completed\}\/\{manualEvidenceFormReadiness\.total\}/);
+  assert.match(page, /describeManualEvidencePreviewReadiness\(manualEvidenceFormReadiness\.ready,manualSourceLinkHostAssessment\.blocksPreview\)/);
   assert.match(page, /if \(!manualEvidenceFormReadiness\.ready \|\| evidenceGapShortlist\.length !== 1\)/);
   assert.match(page, /if \(manualSourceLinkHostAssessment\.blocksPreview\)[\s\S]*?未发送预览请求/);
   assert.match(page, /disabled=\{manualEvidenceBusy\|\|manualSourceLinkHostAssessment\.blocksPreview\|\|/);
-  assert.match(page, /缺少字段时不会发送预览请求/);
 });
 
 const plan = buildEvidenceSearchPlan([lead], [lead.id], sources);
