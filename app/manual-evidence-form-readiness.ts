@@ -7,6 +7,9 @@ type ManualEvidenceFormInput = {
   publishedAt: string;
 };
 
+const ISO_8601_WITH_TIMEZONE = /^(\d{4})-(\d{2})-(\d{2})T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,3})?(?:Z|[+-](?:0\d|1[0-4]):[0-5]\d)$/;
+const FUTURE_CLOCK_SKEW_MS = 5 * 60 * 1000;
+
 const REQUIRED_FIELDS = [
   ["leadId", "待补证标题"],
   ["sourceName", "来源名称"],
@@ -28,8 +31,26 @@ export function buildManualEvidenceFormReadiness(input: ManualEvidenceFormInput)
   };
 }
 
-export function describeManualEvidencePreviewReadiness(fieldsComplete: boolean, linkBlocked: boolean) {
+export function assessManualEvidencePublishedAt(publishedAt: string, nowMs = Date.now()) {
+  const value = publishedAt.trim();
+  if (!value) return { status:"awaiting_time" as const, message:null, blocksPreview:false };
+  const match = ISO_8601_WITH_TIMEZONE.exec(value);
+  const parsedMs = Date.parse(value);
+  const year = Number(match?.[1]);
+  const month = Number(match?.[2]);
+  const day = Number(match?.[3]);
+  const maximumDay = month >= 1 && month <= 12 ? new Date(Date.UTC(year, month, 0)).getUTCDate() : 0;
+  if (!match || !Number.isFinite(parsedMs) || day < 1 || day > maximumDay) {
+    return { status:"invalid_time" as const, message:"发布时间必须是带时区的 ISO 8601，例如 2026-08-23T08:00:00Z；不会发送当前预览请求", blocksPreview:true };
+  }
+  if (parsedMs > nowMs + FUTURE_CLOCK_SKEW_MS) {
+    return { status:"future_time" as const, message:"发布时间晚于当前时间；请核对时区或日期，不会发送当前预览请求", blocksPreview:true };
+  }
+  return { status:"valid" as const, message:"发布时间格式已通过本地校验；服务器仍会核对与原来源的 7 天时间窗", blocksPreview:false };
+}
+
+export function describeManualEvidencePreviewReadiness(fieldsComplete: boolean, localValidationBlocked: boolean) {
   if (!fieldsComplete) return "缺少字段时不会发送预览请求";
-  if (linkBlocked) return "字段已填齐，但本地链接校验已阻断；修正红色提示后才能预览";
-  return "字段已填齐且本地链接校验通过；服务器仍会校验公开 HTTPS、同源、时间窗和标题关联";
+  if (localValidationBlocked) return "字段已填齐，但本地校验已阻断；修正红色提示后才能预览";
+  return "字段已填齐且本地校验通过；服务器仍会校验公开 HTTPS、同源、时间窗和标题关联";
 }

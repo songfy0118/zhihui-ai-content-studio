@@ -8,7 +8,7 @@ import { buildManualPublicEvidencePreview } from "../bridge/manual-public-eviden
 import { NEWS_SOURCE_CATALOG } from "../bridge/news-source-catalog.mjs";
 import { buildSourceLockSavePlan } from "../bridge/source-lock-save-plan.mjs";
 import { formatManualEvidenceBlocker, formatManualEvidencePublisherRole } from "../app/manual-evidence-diagnostics.ts";
-import { buildManualEvidenceFormReadiness, describeManualEvidencePreviewReadiness } from "../app/manual-evidence-form-readiness.ts";
+import { assessManualEvidencePublishedAt, buildManualEvidenceFormReadiness, describeManualEvidencePreviewReadiness } from "../app/manual-evidence-form-readiness.ts";
 
 const lead = {
   id: "cluster:one",
@@ -52,8 +52,24 @@ test("reports manual evidence field completion without validating or fetching th
 
 test("keeps the progress copy aligned with the local link gate", () => {
   assert.equal(describeManualEvidencePreviewReadiness(false, false), "缺少字段时不会发送预览请求");
-  assert.equal(describeManualEvidencePreviewReadiness(true, true), "字段已填齐，但本地链接校验已阻断；修正红色提示后才能预览");
-  assert.match(describeManualEvidencePreviewReadiness(true, false), /字段已填齐且本地链接校验通过/);
+  assert.equal(describeManualEvidencePreviewReadiness(true, true), "字段已填齐，但本地校验已阻断；修正红色提示后才能预览");
+  assert.match(describeManualEvidencePreviewReadiness(true, false), /字段已填齐且本地校验通过/);
+});
+
+test("blocks invalid, timezone-free and future publication times locally", () => {
+  const now = Date.parse("2026-08-24T16:00:00Z");
+  assert.equal(assessManualEvidencePublishedAt("", now).status, "awaiting_time");
+  for (const value of ["not-a-time", "2026-08-23T08:00:00", "2026-02-30T08:00:00Z"]) {
+    const assessment = assessManualEvidencePublishedAt(value, now);
+    assert.equal(assessment.status, "invalid_time");
+    assert.equal(assessment.blocksPreview, true);
+  }
+  const future = assessManualEvidencePublishedAt("2026-08-24T16:06:00Z", now);
+  assert.equal(future.status, "future_time");
+  assert.equal(future.blocksPreview, true);
+  const valid = assessManualEvidencePublishedAt("2026-08-23T08:00:00+08:00", now);
+  assert.equal(valid.status, "valid");
+  assert.equal(valid.blocksPreview, false);
 });
 
 test("wires manual source name suggestions without automatic article collection", async () => {
@@ -86,10 +102,11 @@ test("hands empty RSS candidates to an explicit no-write manual evidence form", 
   assert.match(page, /已预选当前唯一线索/);
   assert.match(page, /不会自动打开、抓取或保存 · 正文读取 0 · 事实核验 0 · 来源锁 0/);
   assert.match(page, /人工补证必填进度 \{manualEvidenceFormReadiness\.completed\}\/\{manualEvidenceFormReadiness\.total\}/);
-  assert.match(page, /describeManualEvidencePreviewReadiness\(manualEvidenceFormReadiness\.ready,manualSourceLinkHostAssessment\.blocksPreview\)/);
+  assert.match(page, /describeManualEvidencePreviewReadiness\(manualEvidenceFormReadiness\.ready,manualSourceLinkHostAssessment\.blocksPreview\|\|manualEvidencePublishedAtAssessment\.blocksPreview\)/);
   assert.match(page, /if \(!manualEvidenceFormReadiness\.ready \|\| evidenceGapShortlist\.length !== 1\)/);
   assert.match(page, /if \(manualSourceLinkHostAssessment\.blocksPreview\)[\s\S]*?未发送预览请求/);
-  assert.match(page, /disabled=\{manualEvidenceBusy\|\|!manualEvidenceFormReadiness\.ready\|\|manualSourceLinkHostAssessment\.blocksPreview\|\|/);
+  assert.match(page, /if \(manualEvidencePublishedAtAssessment\.blocksPreview\)[\s\S]*?未发送预览请求/);
+  assert.match(page, /disabled=\{manualEvidenceBusy\|\|!manualEvidenceFormReadiness\.ready\|\|manualSourceLinkHostAssessment\.blocksPreview\|\|manualEvidencePublishedAtAssessment\.blocksPreview\|\|/);
 });
 
 const plan = buildEvidenceSearchPlan([lead], [lead.id], sources);
