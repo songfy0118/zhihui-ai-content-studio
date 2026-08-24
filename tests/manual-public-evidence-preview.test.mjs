@@ -7,6 +7,7 @@ import { buildEvidenceReviewPreview, EVIDENCE_REVIEW_CHECKS } from "../bridge/ev
 import { buildManualPublicEvidencePreview } from "../bridge/manual-public-evidence-preview.mjs";
 import { buildSourceLockSavePlan } from "../bridge/source-lock-save-plan.mjs";
 import { formatManualEvidenceBlocker, formatManualEvidencePublisherRole } from "../app/manual-evidence-diagnostics.ts";
+import { buildManualEvidenceFormReadiness } from "../app/manual-evidence-form-readiness.ts";
 
 const lead = {
   id: "cluster:one",
@@ -37,6 +38,16 @@ test("formats declared publisher roles for the human review card", () => {
   assert.equal(formatManualEvidencePublisherRole(null), "发布者身份未声明");
 });
 
+test("reports manual evidence field completion without validating or fetching the link", () => {
+  const partial = buildManualEvidenceFormReadiness({ leadId:lead.id, sourceName:"量子位 · QbitAI", publisherRole:"", title:"", canonicalUrl:"", publishedAt:"" });
+  assert.equal(partial.completed, 2);
+  assert.equal(partial.total, 6);
+  assert.equal(partial.ready, false);
+  assert.deepEqual(partial.missingLabels, ["发布者身份", "候选标题", "公开 HTTPS 链接", "发布时间"]);
+  const complete = buildManualEvidenceFormReadiness({ leadId:lead.id, sourceName:"Independent", publisherRole:"original_publisher", title:"Report", canonicalUrl:"not-yet-validated", publishedAt:"not-yet-validated" });
+  assert.equal(complete.ready, true);
+});
+
 test("wires manual source name suggestions without automatic article collection", async () => {
   const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   assert.match(page, /listManualSourceNameSuggestions\(newsSourceCatalog\.sources\)/);
@@ -65,6 +76,9 @@ test("hands empty RSS candidates to an explicit no-write manual evidence form", 
   assert.match(page, /onClick=\{\(\)=>updateManualEvidenceDraft\("sourceName",source\.name\)\}>使用/);
   assert.match(page, /已预选当前唯一线索/);
   assert.match(page, /不会自动打开、抓取或保存 · 正文读取 0 · 事实核验 0 · 来源锁 0/);
+  assert.match(page, /人工补证必填进度 \{manualEvidenceFormReadiness\.completed\}\/\{manualEvidenceFormReadiness\.total\}/);
+  assert.match(page, /if \(!manualEvidenceFormReadiness\.ready \|\| evidenceGapShortlist\.length !== 1\)/);
+  assert.match(page, /缺少字段时不会发送预览请求/);
 });
 
 const plan = buildEvidenceSearchPlan([lead], [lead.id], sources);
