@@ -1123,6 +1123,11 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(page, /fetch\("\/api\/news\/platform-text-review-migration-local-target-diagnostic"/);
   assert.match(page, /诊断本机 D1 目标（只读）/);
   assert.match(page, /数据库文件打开 0 · 数据库读取 0 · 数据库写入 0 · 命令准备 0 · 授权 0/);
+  assert.match(page, /fetch\("\/api\/news\/platform-text-review-migration-single-use-authorization-request"/);
+  assert.match(page, /生成单次授权请求（仍不授权）/);
+  assert.match(page, /单次授权请求已锁定，等待本人精确确认/);
+  assert.match(page, /未来票据 单次 · 接受后 5 分钟 · 失败回滚 · 应用后只读复核/);
+  assert.match(page, /确认收到 0 · 票据签发 0 · 执行契约 0 · 命令准备 0 · 数据库写入 0/);
   assert.match(layout, /知绘工厂/);
   assert.match(css, /\.localProjects/);
   assert.match(css, /\.adapterPlan/);
@@ -1135,6 +1140,7 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(css, /\.reviewMigrationIsolatedRehearsal/);
   assert.match(css, /\.reviewMigrationExecutionPreflight/);
   assert.match(css, /\.reviewMigrationLocalTargetDiagnostic/);
+  assert.match(css, /\.reviewMigrationSingleUseAuthorizationRequest/);
   await assert.rejects(access(new URL("app/_sites-preview", projectRoot)));
 });
 
