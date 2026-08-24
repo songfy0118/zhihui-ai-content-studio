@@ -54,6 +54,36 @@ function buildCandidateQualityBoundary(item) {
   };
 }
 
+function emptyCandidateAudit() {
+  return {
+    targetItemEvaluations: 0,
+    excludedBySourceScope: 0,
+    excludedByQualityGate: 0,
+    qualityExclusionReasons: {},
+    excludedByTimeWindow: 0,
+    excludedByTitleMatch: 0,
+    matchedBeforeLimit: 0,
+    omittedByPerTargetLimit: 0,
+    candidatesReturned: 0,
+  };
+}
+
+function mergeCandidateAudits(targets) {
+  return targets.reduce((total, target) => {
+    const current = target.candidateAudit;
+    total.targetItemEvaluations += current.targetItemEvaluations;
+    total.excludedBySourceScope += current.excludedBySourceScope;
+    total.excludedByQualityGate += current.excludedByQualityGate;
+    total.excludedByTimeWindow += current.excludedByTimeWindow;
+    total.excludedByTitleMatch += current.excludedByTitleMatch;
+    total.matchedBeforeLimit += current.matchedBeforeLimit;
+    total.omittedByPerTargetLimit += current.omittedByPerTargetLimit;
+    total.candidatesReturned += current.candidatesReturned;
+    for (const [reason, count] of Object.entries(current.qualityExclusionReasons)) total.qualityExclusionReasons[reason] = (total.qualityExclusionReasons[reason] ?? 0) + count;
+    return total;
+  }, emptyCandidateAudit());
+}
+
 export function buildEvidenceMetadataPreview(plan, items = [], {
   minimumSimilarity = DEFAULT_MINIMUM_SIMILARITY,
   minimumSharedTerms = DEFAULT_MINIMUM_SHARED_TERMS,
@@ -67,6 +97,7 @@ export function buildEvidenceMetadataPreview(plan, items = [], {
       blockers: ["search_plan_not_ready"],
       planFingerprint: plan?.planFingerprint ?? null,
       summary: { targetsReviewed: 0, itemsConsidered: 0, candidatesReturned: 0, candidatesWithQualityEvidence: 0 },
+      candidateAudit: emptyCandidateAudit(),
       targets: [],
       searchScope: "public_rss_metadata_only",
       feedMetadataMatched: false,
@@ -96,6 +127,7 @@ export function buildEvidenceMetadataPreview(plan, items = [], {
       blockers: unboundTargets.map((target) => `source_quality_lineage_not_bound:${target.leadId}`),
       planFingerprint: plan.planFingerprint,
       summary: { targetsReviewed: 0, itemsConsidered: 0, candidatesReturned: 0, candidatesWithQualityEvidence: 0 },
+      candidateAudit: emptyCandidateAudit(),
       targets: [],
       searchScope: "public_rss_metadata_only",
       feedMetadataMatched: false,
@@ -122,15 +154,32 @@ export function buildEvidenceMetadataPreview(plan, items = [], {
   const targets = plan.targets.map((target) => {
     const allowedSourceIds = new Set(target.allowedSources.filter((source) => source.sourceType === "rss" && source.feedUrl).map((source) => source.id));
     const targetTime = timestamp(target.sourcePublishedAt);
-    const candidates = items.flatMap((item) => {
-      if (!allowedSourceIds.has(item.sourceId) || item.sourceId === target.originalSourceId) return [];
+    const candidateAudit = emptyCandidateAudit();
+    const matchedCandidates = items.flatMap((item) => {
+      candidateAudit.targetItemEvaluations += 1;
+      if (!allowedSourceIds.has(item.sourceId) || item.sourceId === target.originalSourceId) {
+        candidateAudit.excludedBySourceScope += 1;
+        return [];
+      }
       const qualityBoundary = buildCandidateQualityBoundary(item);
-      if (requireQualityLineage && !qualityBoundary.qualityBound) return [];
+      if (requireQualityLineage && !qualityBoundary.qualityBound) {
+        candidateAudit.excludedByQualityGate += 1;
+        const reason = qualityBoundary.blocker ?? "quality_evidence_invalid";
+        candidateAudit.qualityExclusionReasons[reason] = (candidateAudit.qualityExclusionReasons[reason] ?? 0) + 1;
+        return [];
+      }
       const itemTime = timestamp(item.publishedAt);
-      if (targetTime === null || itemTime === null || Math.abs(targetTime - itemTime) > windowMs) return [];
+      if (targetTime === null || itemTime === null || Math.abs(targetTime - itemTime) > windowMs) {
+        candidateAudit.excludedByTimeWindow += 1;
+        return [];
+      }
       const terms = sharedTerms(target.title, item.title);
       const similarity = titleSimilarity(target.title, item.title);
-      if (terms.length < minimumSharedTerms || similarity < minimumSimilarity) return [];
+      if (terms.length < minimumSharedTerms || similarity < minimumSimilarity) {
+        candidateAudit.excludedByTitleMatch += 1;
+        return [];
+      }
+      candidateAudit.matchedBeforeLimit += 1;
       return [{
         id: item.id,
         sourceId: item.sourceId,
@@ -146,7 +195,10 @@ export function buildEvidenceMetadataPreview(plan, items = [], {
         qualityBoundary,
         candidateQualityEvidenceFingerprint: qualityBoundary.qualityEvidenceFingerprint,
       }];
-    }).sort((left, right) => right.titleSimilarity - left.titleSimilarity || String(right.publishedAt).localeCompare(String(left.publishedAt)) || left.id.localeCompare(right.id)).slice(0, maxCandidatesPerTarget);
+    });
+    const candidates = matchedCandidates.sort((left, right) => right.titleSimilarity - left.titleSimilarity || String(right.publishedAt).localeCompare(String(left.publishedAt)) || left.id.localeCompare(right.id)).slice(0, maxCandidatesPerTarget);
+    candidateAudit.omittedByPerTargetLimit = matchedCandidates.length - candidates.length;
+    candidateAudit.candidatesReturned = candidates.length;
 
     return {
       leadId: target.leadId,
@@ -157,11 +209,13 @@ export function buildEvidenceMetadataPreview(plan, items = [], {
       originalHost: normalizedHost(target.originalEvidence?.[0]?.canonicalUrl),
       candidates,
       candidateCount: candidates.length,
+      candidateAudit,
       sourceLockReady: false,
       factsVerified: false,
     };
   });
   const candidateCount = targets.reduce((sum, target) => sum + target.candidateCount, 0);
+  const candidateAudit = mergeCandidateAudits(targets);
   const candidatesWithQualityEvidence = targets.reduce((sum, target) => sum + target.candidates.filter((candidate) => candidate.qualityBoundary.qualityBound).length, 0);
   const allReturnedCandidatesQualityBound = candidateCount > 0 && candidatesWithQualityEvidence === candidateCount;
   const previewQualityFingerprint = allReturnedCandidatesQualityBound
@@ -180,6 +234,7 @@ export function buildEvidenceMetadataPreview(plan, items = [], {
     blockers: [],
     planFingerprint: plan.planFingerprint,
     summary: { targetsReviewed: targets.length, itemsConsidered: items.length, candidatesReturned: candidateCount, candidatesWithQualityEvidence },
+    candidateAudit,
     targets,
     searchScope: "public_rss_metadata_only",
     thresholds: { minimumSimilarity, minimumSharedTerms, windowHours, maxCandidatesPerTarget },

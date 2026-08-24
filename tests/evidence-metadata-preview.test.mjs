@@ -43,7 +43,37 @@ test("returns only bounded independent RSS metadata candidates for human review"
   assert.match(preview.qualityBoundary.previewQualityFingerprint, /^[a-f0-9]{64}$/);
   assert.match(preview.targets[0].candidates[0].candidateQualityEvidenceFingerprint, /^[a-f0-9]{64}$/);
   assert.equal(preview.targets[0].candidates[0].qualityBoundary.collectionScope, "rss_metadata_only");
+  assert.equal(preview.candidateAudit.targetItemEvaluations, 4);
+  assert.equal(preview.candidateAudit.excludedBySourceScope, 1);
+  assert.equal(preview.candidateAudit.excludedByQualityGate, 2);
+  assert.equal(preview.candidateAudit.matchedBeforeLimit, 1);
+  assert.equal(preview.candidateAudit.candidatesReturned, 1);
   assert.equal("summary" in preview.targets[0].candidates[0], false);
+});
+
+test("accounts for every target-item evaluation with one explicit exclusion stage", () => {
+  const plan = buildEvidenceSearchPlan(leads, ["cluster:one"], sources);
+  const qualityReady = { metadataProvenanceReady: true, sourceEvidenceUrl: "https://b.example/feed-evidence", rightsPolicy: "official_feed_metadata_with_attribution", collectionScope: "rss_metadata_only", articleBodyFetched: false, freshnessStatus: "within_72_hours", ageHours: 48 };
+  const diagnosticItems = [
+    { ...items[0], ...qualityReady },
+    { ...items[1], metadataProvenanceReady: false },
+    { ...items[1], ...qualityReady, id: "b-time", publishedAt: "2026-08-18T12:00:00.000Z" },
+    { ...items[1], ...qualityReady, id: "b-title", title: "Cloud database pricing changes", publishedAt: "2026-08-20T13:00:00.000Z" },
+  ];
+  const preview = buildEvidenceMetadataPreview(plan, diagnosticItems, { requireQualityLineage: true, windowHours: 24 });
+
+  assert.equal(preview.status, "no_metadata_candidates");
+  assert.deepEqual(preview.candidateAudit, {
+    targetItemEvaluations: 4,
+    excludedBySourceScope: 1,
+    excludedByQualityGate: 1,
+    qualityExclusionReasons: { provenance_not_ready: 1 },
+    excludedByTimeWindow: 1,
+    excludedByTitleMatch: 1,
+    matchedBeforeLimit: 0,
+    omittedByPerTargetLimit: 0,
+    candidatesReturned: 0,
+  });
 });
 
 test("excludes a matching second-source item without current RSS metadata quality evidence", () => {
@@ -92,6 +122,7 @@ test("wires an explicit metadata-only endpoint without storage or publication", 
   assert.match(page, /查看原来源/);
   assert.match(page, /较原来源/);
   assert.match(page, /候选质量证据已绑定/);
+  assert.match(page, /候选排除诊断/);
   assert.match(page, /fetch\("\/api\/news\/evidence-metadata-preview"/);
   assert.match(page, /const preview = await response\.json\(\) as EvidenceMetadataPreview;\s*if \(requestRevision !== evidencePipelineRevision\.current\) return;\s*setEvidenceMetadataPreview\(preview\);/);
   assert.match(route, /body\.selectedIds\.length > 3/);
