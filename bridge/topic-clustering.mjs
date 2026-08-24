@@ -109,7 +109,7 @@ function summarizeCluster(cluster, windowMs) {
     crossSourceConfirmed,
     timeWindowVerified,
     eligibleForHotspotScoring,
-    evidence: cluster.items.map(({ id, sourceId, sourceName, title, canonicalUrl, publishedAt }) => ({ id, sourceId, sourceName, title, canonicalUrl, publishedAt })),
+    evidence: cluster.items.map(({ id, sourceId, sourceName, title, canonicalUrl, publishedAt, metadataProvenanceReady, sourceEvidenceUrl, rightsPolicy, collectionScope, articleBodyFetched, freshnessStatus, ageHours }) => ({ id, sourceId, sourceName, title, canonicalUrl, publishedAt, metadataProvenanceReady, sourceEvidenceUrl, rightsPolicy, collectionScope, articleBodyFetched, freshnessStatus, ageHours })),
   };
 }
 

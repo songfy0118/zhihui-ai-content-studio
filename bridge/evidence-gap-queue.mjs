@@ -1,6 +1,9 @@
+import { createHash } from "node:crypto";
+
 import { DEFAULT_ACCOUNT_PROFILE, scoreAccountFit } from "./topic-ranking.mjs";
 
 const DEFAULT_WINDOW_HOURS = 24 * 7;
+const QUALITY_FRESHNESS_STATUSES = new Set(["within_24_hours", "within_72_hours", "within_7_days"]);
 
 function publishedAgeHours(cluster, nowMs) {
   const publishedAt = Date.parse(cluster.lastSeenAt ?? "");
@@ -49,8 +52,43 @@ export function selectSourceDiverseLeads(candidates = [], maxLeads = 12, maxLead
   return selected.sort((left, right) => order.get(left.id) - order.get(right.id));
 }
 
+function buildLeadQualityBoundary(cluster, qualityGateRequired) {
+  const evidence = cluster.evidence ?? [];
+  const qualityBound = qualityGateRequired === true
+    && evidence.length > 0
+    && evidence.every((item) => item.metadataProvenanceReady === true)
+    && evidence.every((item) => item.collectionScope === "rss_metadata_only")
+    && evidence.every((item) => item.articleBodyFetched === false)
+    && evidence.every((item) => QUALITY_FRESHNESS_STATUSES.has(item.freshnessStatus))
+    && evidence.every((item) => Number.isFinite(item.ageHours) && item.ageHours >= 0 && item.ageHours <= 168);
+  const qualityEvidenceFingerprint = qualityBound
+    ? createHash("sha256").update(evidence.map((item) => [
+      item.id,
+      item.sourceId,
+      item.canonicalUrl,
+      item.publishedAt,
+      item.sourceEvidenceUrl,
+      item.rightsPolicy,
+      item.collectionScope,
+      item.freshnessStatus,
+      item.ageHours,
+    ].join("\n")).sort().join("\n---\n")).digest("hex")
+    : null;
+  return {
+    inheritedFromRequiredClusteringGate: qualityGateRequired === true,
+    qualityBound,
+    evidenceItems: evidence.length,
+    metadataProvenanceReady: evidence.length > 0 && evidence.every((item) => item.metadataProvenanceReady === true),
+    collectionScope: evidence.length > 0 && evidence.every((item) => item.collectionScope === "rss_metadata_only") ? "rss_metadata_only" : null,
+    articleBodiesFetched: evidence.some((item) => item.articleBodyFetched === true),
+    sourceEvidenceUrls: [...new Set(evidence.map((item) => item.sourceEvidenceUrl).filter(Boolean))].sort(),
+    qualityEvidenceFingerprint,
+  };
+}
+
 export function buildEvidenceGapQueue(clustering, { profile = DEFAULT_ACCOUNT_PROFILE, now = new Date(), windowHours = DEFAULT_WINDOW_HOURS, minimumAccountFit = 30, maxLeads = 12, maxLeadsPerSource = 3 } = {}) {
   const nowMs = new Date(now).getTime();
+  const qualityGateRequired = clustering?.inputQualityGate?.required === true;
   const candidates = (clustering?.clusters ?? []).flatMap((cluster) => {
     if (cluster.sourceCount !== 1 || cluster.eligibleForHotspotScoring) return [];
     const ageHours = publishedAgeHours(cluster, nowMs);
@@ -58,6 +96,8 @@ export function buildEvidenceGapQueue(clustering, { profile = DEFAULT_ACCOUNT_PR
     const fit = scoreAccountFit(cluster, profile);
     if (fit.score < minimumAccountFit) return [];
     const evidenceQueries = buildEvidenceQueries(cluster.title);
+    const qualityBoundary = buildLeadQualityBoundary(cluster, qualityGateRequired);
+    if (qualityGateRequired && !qualityBoundary.qualityBound) return [];
     return [{
       id: cluster.id,
       title: cluster.title,
@@ -76,12 +116,18 @@ export function buildEvidenceGapQueue(clustering, { profile = DEFAULT_ACCOUNT_PR
       sourceLockReady: false,
       selectableForDraft: false,
       evidence: cluster.evidence,
+      qualityBoundary,
+      qualityEvidenceFingerprint: qualityBoundary.qualityEvidenceFingerprint,
     }];
   });
 
   const orderedCandidates = candidates
     .sort((left, right) => right.accountFitScore - left.accountFitScore || left.ageHours - right.ageHours || left.id.localeCompare(right.id));
   const leads = selectSourceDiverseLeads(orderedCandidates, maxLeads, maxLeadsPerSource);
+  const allReturnedLeadsQualityBound = leads.length > 0 && leads.every((lead) => lead.qualityBoundary.qualityBound);
+  const shortlistQualityFingerprint = allReturnedLeadsQualityBound
+    ? createHash("sha256").update(leads.map((lead) => lead.qualityEvidenceFingerprint).sort().join("\n")).digest("hex")
+    : null;
 
   return {
     status: leads.length ? "evidence_gaps_ready" : "no_recent_account_fit_leads",
@@ -96,6 +142,19 @@ export function buildEvidenceGapQueue(clustering, { profile = DEFAULT_ACCOUNT_PR
       maxLeadsPerSource,
       windowHours,
       minimumAccountFit,
+      leadsWithQualityEvidence: leads.filter((lead) => lead.qualityBoundary.qualityBound).length,
+    },
+    qualityBoundary: {
+      clusteringQualityGateRequired: qualityGateRequired,
+      clusteringItemsReceived: clustering?.inputQualityGate?.itemsReceived ?? null,
+      clusteringItemsAccepted: clustering?.inputQualityGate?.itemsAccepted ?? null,
+      clusteringItemsExcluded: clustering?.inputQualityGate?.itemsExcluded ?? null,
+      allReturnedLeadsQualityBound,
+      shortlistQualityFingerprint,
+      articleBodiesFetched: false,
+      factsVerified: false,
+      databaseWrites: false,
+      publishTriggered: false,
     },
     leads,
     humanShortlistPersisted: false,

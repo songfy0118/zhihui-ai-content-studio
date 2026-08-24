@@ -23,6 +23,33 @@ test("returns recent account-fit single-source leads for independent-source rese
   assert.match(queue.leads[0].suggestedQueries[0], /OpenAI launches/);
 });
 
+test("binds live shortlist leads to the required clustering quality evidence", () => {
+  const qualityItem = {
+    ...item("quality", "source-a", "OpenAI launches a new enterprise agent", "2026-08-21T10:00:00Z"),
+    metadataProvenanceReady: true,
+    sourceEvidenceUrl: "https://source-a.example/feed-evidence",
+    rightsPolicy: "official_feed_metadata_with_attribution",
+    collectionScope: "rss_metadata_only",
+    articleBodyFetched: false,
+    freshnessStatus: "within_24_hours",
+    ageHours: 3,
+  };
+  const clustering = buildTopicClusters([qualityItem], { requireMetadataQuality: true });
+  const queue = buildEvidenceGapQueue(clustering, { now: "2026-08-21T13:00:00Z" });
+
+  assert.equal(queue.summary.leadsReturned, 1);
+  assert.equal(queue.summary.leadsWithQualityEvidence, 1);
+  assert.equal(queue.qualityBoundary.clusteringQualityGateRequired, true);
+  assert.equal(queue.qualityBoundary.allReturnedLeadsQualityBound, true);
+  assert.match(queue.qualityBoundary.shortlistQualityFingerprint, /^[a-f0-9]{64}$/);
+  assert.equal(queue.leads[0].qualityBoundary.metadataProvenanceReady, true);
+  assert.equal(queue.leads[0].qualityBoundary.collectionScope, "rss_metadata_only");
+  assert.equal(queue.leads[0].qualityBoundary.articleBodiesFetched, false);
+  assert.deepEqual(queue.leads[0].qualityBoundary.sourceEvidenceUrls, ["https://source-a.example/feed-evidence"]);
+  assert.match(queue.leads[0].qualityEvidenceFingerprint, /^[a-f0-9]{64}$/);
+  assert.equal(queue.factsVerified, false);
+});
+
 test("builds language-appropriate human research queries", () => {
   assert.deepEqual(buildEvidenceQueries("量子位发布 AI 产业观察"), {
     queryLanguage: "zh-CN",
@@ -101,6 +128,8 @@ test("wires the evidence-gap queue as a read-only console action", async () => {
   ]);
   assert.match(page, /生成补证清单（只读）/);
   assert.match(page, /languagesRepresented/);
+  assert.match(page, /质量证据已绑定/);
+  assert.match(page, /shortlistQualityFingerprint/);
   assert.match(page, /fetch\("\/api\/news\/evidence-gaps"/);
   assert.doesNotMatch(route, /getDb|\.insert\(|\.update\(|\.delete\(/);
 });

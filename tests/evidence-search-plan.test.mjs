@@ -12,6 +12,7 @@ const leads = [{
   missingIndependentSources: 1,
   queryLanguage: "en",
   suggestedQueries: ["\"OpenAI launches a new enterprise agent\"", "OpenAI launches a new enterprise agent independent coverage verification"],
+  qualityEvidenceFingerprint: "a".repeat(64),
 }];
 const sources = [
   { id: "source-a", name: "Original", sourceType: "rss", baseUrl: "https://a.example/", feedUrl: "https://a.example/feed", enabled: true, requiresLogin: false },
@@ -25,6 +26,9 @@ test("builds a fingerprinted plan using only independent public sources", () => 
   assert.equal(plan.status, "search_plan_ready");
   assert.equal(plan.selection.accepted, 1);
   assert.match(plan.planFingerprint, /^[a-f0-9]{64}$/);
+  assert.equal(plan.qualityBoundTargets, 1);
+  assert.equal(plan.targets[0].qualityLineageBound, true);
+  assert.equal(plan.targets[0].sourceQualityEvidenceFingerprint, "a".repeat(64));
   assert.deepEqual(plan.targets[0].allowedSources.map((source) => source.id), ["source-b"]);
   assert.deepEqual(plan.targets[0].allowedSources.map(({ id, collectionMode, automaticCollectionBlockedReason }) => ({ id, collectionMode, automaticCollectionBlockedReason })), [{
     id: "source-b",

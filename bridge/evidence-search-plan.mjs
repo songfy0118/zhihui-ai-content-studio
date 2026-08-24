@@ -65,6 +65,8 @@ export function buildEvidenceSearchPlan(leads = [], selectedIds = [], sources = 
       title: lead.title,
       originalSourceId: lead.sourceId,
       sourcePublishedAt: lead.publishedAt,
+      sourceQualityEvidenceFingerprint: lead.qualityEvidenceFingerprint ?? null,
+      qualityLineageBound: Boolean(lead.qualityEvidenceFingerprint),
       originalEvidence,
       status: "planned_not_executed",
       queries: lead.suggestedQueries.slice(0, 2),
@@ -86,7 +88,7 @@ export function buildEvidenceSearchPlan(leads = [], selectedIds = [], sources = 
   });
   const ready = blockers.length === 0 && targets.length > 0;
   const fingerprint = ready
-    ? createHash("sha256").update(targets.map((target) => `${target.leadId}\n${target.title}\n${target.allowedSources.map((source) => `${source.id}:${source.collectionMode}`).join(",")}`).join("\n---\n")).digest("hex")
+    ? createHash("sha256").update(targets.map((target) => `${target.leadId}\n${target.title}\n${target.sourceQualityEvidenceFingerprint??"quality_lineage_unavailable"}\n${target.allowedSources.map((source) => `${source.id}:${source.collectionMode}`).join(",")}`).join("\n---\n")).digest("hex")
     : null;
 
   return {
@@ -96,6 +98,7 @@ export function buildEvidenceSearchPlan(leads = [], selectedIds = [], sources = 
     selection: { requested: selection.length, accepted: targets.length, maximum: MAX_SELECTIONS },
     targets,
     planFingerprint: fingerprint,
+    qualityBoundTargets: targets.filter((target) => target.qualityLineageBound).length,
     allowedMethods: ["public_rss_metadata", "official_newsroom_public_page"],
     prohibitedMethods: ["login_bypass", "paywall_bypass", "captcha_bypass", "rate_limit_bypass"],
     automaticSearchAllowed: false,
