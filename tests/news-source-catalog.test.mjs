@@ -75,6 +75,24 @@ test("manual source host assessment blocks registered name or alias mismatches l
   assert.equal(match.blocksPreview, false);
 });
 
+test("manual source host assessment blocks malformed and non-HTTPS links for custom sources", () => {
+  const suggestions = listEvidenceHandoffSourceSuggestions(NEWS_SOURCE_CATALOG);
+  for (const [canonicalUrl, message] of [
+    ["not-a-url", /链接格式无效/],
+    ["http://independent.news/story", /必须使用公开 HTTPS/],
+  ]) {
+    const assessment = assessManualSourceLinkHost("Independent News", canonicalUrl, suggestions);
+    assert.equal(assessment.status, "invalid_link");
+    assert.equal(assessment.blocksPreview, true);
+    assert.match(assessment.message, message);
+  }
+
+  const validCustom = assessManualSourceLinkHost("Independent News", "https://independent.news/story", suggestions);
+  assert.equal(validCustom.status, "unregistered");
+  assert.equal(validCustom.blocksPreview, false);
+  assert.equal(validCustom.message, null);
+});
+
 test("catalog summary separates automatic and manual sources", () => {
   const summary = summarizeNewsSourceCatalog();
   assert.equal(summary.totalSources, 17);

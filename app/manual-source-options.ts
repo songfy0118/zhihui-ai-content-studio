@@ -75,19 +75,23 @@ export function assessManualSourceLinkHost(sourceName: string, canonicalUrl: str
   const normalizedName = normalizedSourceLabel(sourceName);
   const selected = suggestions.find((source) => [source.name, ...source.aliases]
     .some((label) => normalizedSourceLabel(label) === normalizedName));
-  if (!selected) return { status: "unregistered", message: null, blocksPreview: false };
-  if (!canonicalUrl.trim()) return { status: "awaiting_link", message: `已选择“${selected.name}”；请粘贴该来源的公开文章链接`, blocksPreview: false };
+  if (!canonicalUrl.trim()) {
+    return selected
+      ? { status: "awaiting_link", message: `已选择“${selected.name}”；请粘贴该来源的公开文章链接`, blocksPreview: false }
+      : { status: "unregistered", message: null, blocksPreview: false };
+  }
 
   let parsed: URL;
   try {
     parsed = new URL(canonicalUrl);
   } catch {
-    return { status: "invalid_link", message: "链接格式尚不完整；服务器预览会继续执行公开 HTTPS 校验", blocksPreview: false };
+    return { status: "invalid_link", message: "链接格式无效；请填写完整的公开 HTTPS 链接", blocksPreview: true };
   }
   const currentHost = normalizedHost(parsed.href);
   if (parsed.protocol !== "https:" || !currentHost) {
-    return { status: "invalid_link", message: "链接必须使用公开 HTTPS；服务器预览不会请求不安全地址", blocksPreview: false };
+    return { status: "invalid_link", message: "链接必须使用公开 HTTPS；不会发送当前预览请求", blocksPreview: true };
   }
+  if (!selected) return { status: "unregistered", message: null, blocksPreview: false };
   if (selected.expectedHosts.length && !selected.expectedHosts.includes(currentHost)) {
     return {
       status: "mismatch",
