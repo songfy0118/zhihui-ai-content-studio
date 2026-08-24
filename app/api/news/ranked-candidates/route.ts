@@ -5,7 +5,7 @@ import { buildTopicWorkflowPreview } from "../../../../bridge/topic-workflow-pre
 
 export async function GET() {
   const preview = await buildRssNewsPreview({ sources: NEWS_SOURCE_CATALOG });
-  const clustering = buildTopicClusters(preview.items);
+  const clustering = buildTopicClusters(preview.items, { requireMetadataQuality: true });
   const ranking = buildTopicWorkflowPreview(clustering);
   return Response.json({
     ...ranking,

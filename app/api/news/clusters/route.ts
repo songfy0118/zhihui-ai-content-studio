@@ -4,7 +4,7 @@ import { buildTopicClusters } from "../../../../bridge/topic-clustering.mjs";
 
 export async function GET() {
   const preview = await buildRssNewsPreview({ sources: NEWS_SOURCE_CATALOG });
-  const clustering = buildTopicClusters(preview.items);
+  const clustering = buildTopicClusters(preview.items, { requireMetadataQuality: true });
   return Response.json({
     ...clustering,
     fetchedAt: preview.fetchedAt,

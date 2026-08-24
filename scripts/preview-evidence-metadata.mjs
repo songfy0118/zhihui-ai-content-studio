@@ -11,7 +11,7 @@ if (!selectedIds.length) {
   console.log(JSON.stringify({ ...buildEvidenceMetadataPreview(plan, []), externalCalls: 0 }, null, 2));
 } else {
   const feedPreview = await buildRssNewsPreview({ sources: NEWS_SOURCE_CATALOG });
-  const clustering = buildTopicClusters(feedPreview.items);
+  const clustering = buildTopicClusters(feedPreview.items, { requireMetadataQuality: true });
   const queue = buildEvidenceGapQueue(clustering);
   const plan = buildEvidenceSearchPlan(queue.leads, selectedIds, NEWS_SOURCE_CATALOG);
   console.log(JSON.stringify({ ...buildEvidenceMetadataPreview(plan, feedPreview.items), externalCalls: feedPreview.externalCalls }, null, 2));

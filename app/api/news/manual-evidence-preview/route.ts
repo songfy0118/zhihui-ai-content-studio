@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     }, { status: 400 });
   }
   const feedPreview = await buildRssNewsPreview({ sources: NEWS_SOURCE_CATALOG });
-  const clustering = buildTopicClusters(feedPreview.items);
+  const clustering = buildTopicClusters(feedPreview.items, { requireMetadataQuality: true });
   const queue = buildEvidenceGapQueue(clustering);
   const plan = buildEvidenceSearchPlan(queue.leads, body.selectedIds, NEWS_SOURCE_CATALOG);
   const preview = buildManualPublicEvidencePreview(plan, body.inputs);

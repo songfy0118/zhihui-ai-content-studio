@@ -4,7 +4,7 @@ import { buildTopicClusters } from "../bridge/topic-clustering.mjs";
 import { buildTopicWorkflowPreview } from "../bridge/topic-workflow-preview.mjs";
 
 const preview = await buildRssNewsPreview({ sources: NEWS_SOURCE_CATALOG });
-const clustering = buildTopicClusters(preview.items);
+const clustering = buildTopicClusters(preview.items, { requireMetadataQuality: true });
 const ranking = buildTopicWorkflowPreview(clustering);
 const evidenceGapFallback = ranking.evidenceGapFallback
   ? { ...ranking.evidenceGapFallback, leads: ranking.evidenceGapFallback.leads.map(({ evidence, ...lead }) => ({ ...lead, evidenceCount: evidence.length })) }

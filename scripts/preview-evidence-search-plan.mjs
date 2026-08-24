@@ -9,7 +9,7 @@ if (!selectedIds.length) {
   console.log(JSON.stringify({ ...buildEvidenceSearchPlan([], [], NEWS_SOURCE_CATALOG), externalCalls: 0 }, null, 2));
 } else {
   const preview = await buildRssNewsPreview({ sources: NEWS_SOURCE_CATALOG });
-  const clustering = buildTopicClusters(preview.items);
+  const clustering = buildTopicClusters(preview.items, { requireMetadataQuality: true });
   const queue = buildEvidenceGapQueue(clustering);
   console.log(JSON.stringify({ ...buildEvidenceSearchPlan(queue.leads, selectedIds, NEWS_SOURCE_CATALOG), externalCalls: preview.externalCalls }, null, 2));
 }

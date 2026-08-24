@@ -5,7 +5,7 @@ import { buildEvidenceGapQueue } from "../../../../bridge/evidence-gap-queue.mjs
 
 export async function GET() {
   const preview = await buildRssNewsPreview({ sources: NEWS_SOURCE_CATALOG });
-  const clustering = buildTopicClusters(preview.items);
+  const clustering = buildTopicClusters(preview.items, { requireMetadataQuality: true });
   const queue = buildEvidenceGapQueue(clustering);
   return Response.json({
     ...queue,

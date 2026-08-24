@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 const DEFAULT_SIMILARITY_THRESHOLD = 0.38;
 const DEFAULT_WINDOW_HOURS = 24 * 7;
 const STOP_WORDS = new Set(["a", "an", "and", "are", "as", "at", "by", "for", "from", "in", "is", "it", "new", "of", "on", "the", "to", "with", "ai"]);
+const CLUSTERING_FRESHNESS_STATUSES = new Set(["within_24_hours", "within_72_hours", "within_7_days"]);
 
 function normalizedText(value = "") {
   return String(value).normalize("NFKC").toLocaleLowerCase("en-US").replace(/[’']/g, "").replace(/[^\p{Letter}\p{Number}\p{Script=Han}]+/gu, " ").replace(/\s+/g, " ").trim();
@@ -48,6 +49,39 @@ function mostCommon(values) {
   return [...counts].sort((left, right) => right[1] - left[1] || String(left[0]).localeCompare(String(right[0])))[0]?.[0] ?? "uncategorized";
 }
 
+function metadataQualityBlocker(item) {
+  if (item?.metadataProvenanceReady !== true) return "provenance_not_ready";
+  if (item?.collectionScope !== "rss_metadata_only") return "collection_scope_invalid";
+  if (item?.articleBodyFetched !== false) return "article_body_boundary_invalid";
+  if (item?.freshnessStatus === "timestamp_missing_or_invalid") return "timestamp_missing_or_invalid";
+  if (item?.freshnessStatus === "future_timestamp_requires_review") return "future_timestamp_requires_review";
+  if (item?.freshnessStatus === "older_than_7_days") return "older_than_7_days";
+  if (!CLUSTERING_FRESHNESS_STATUSES.has(item?.freshnessStatus) || !Number.isFinite(item?.ageHours) || item.ageHours < 0 || item.ageHours > 168) return "freshness_metadata_invalid";
+  return null;
+}
+
+export function gateTopicClusteringInput(items = [], { required = false } = {}) {
+  const reasons = {};
+  const acceptedItems = [];
+  for (const item of items) {
+    const blocker = required ? metadataQualityBlocker(item) : null;
+    if (!blocker) acceptedItems.push(item);
+    else reasons[blocker] = (reasons[blocker] ?? 0) + 1;
+  }
+  return {
+    required,
+    itemsReceived: items.length,
+    itemsAccepted: acceptedItems.length,
+    itemsExcluded: items.length - acceptedItems.length,
+    exclusionReasons: reasons,
+    acceptedItems,
+    articleBodiesFetched: false,
+    factsVerified: false,
+    databaseWrites: false,
+    publishTriggered: false,
+  };
+}
+
 function summarizeCluster(cluster, windowMs) {
   const sourceIds = [...new Set(cluster.items.map((item) => item.sourceId))].sort();
   const datedItems = cluster.items.map((item) => timestamp(item.publishedAt)).filter((value) => value !== null);
@@ -79,9 +113,10 @@ function summarizeCluster(cluster, windowMs) {
   };
 }
 
-export function buildTopicClusters(items = [], { similarityThreshold = DEFAULT_SIMILARITY_THRESHOLD, windowHours = DEFAULT_WINDOW_HOURS } = {}) {
+export function buildTopicClusters(items = [], { similarityThreshold = DEFAULT_SIMILARITY_THRESHOLD, windowHours = DEFAULT_WINDOW_HOURS, requireMetadataQuality = false } = {}) {
+  const inputQualityGate = gateTopicClusteringInput(items, { required: requireMetadataQuality });
   const windowMs = windowHours * 60 * 60 * 1000;
-  const orderedItems = [...items].sort((left, right) => String(right.publishedAt ?? "").localeCompare(String(left.publishedAt ?? "")) || String(left.id).localeCompare(String(right.id)));
+  const orderedItems = [...inputQualityGate.acceptedItems].sort((left, right) => String(right.publishedAt ?? "").localeCompare(String(left.publishedAt ?? "")) || String(left.id).localeCompare(String(right.id)));
   const workingClusters = [];
 
   for (const item of orderedItems) {
@@ -104,14 +139,25 @@ export function buildTopicClusters(items = [], { similarityThreshold = DEFAULT_S
     .sort((left, right) => Number(right.eligibleForHotspotScoring) - Number(left.eligibleForHotspotScoring) || String(right.lastSeenAt ?? "").localeCompare(String(left.lastSeenAt ?? "")));
 
   return {
-    status: items.length ? "clusters_ready" : "no_items",
+    status: orderedItems.length ? "clusters_ready" : "no_items",
     summary: {
-      itemsConsidered: items.length,
+      itemsConsidered: orderedItems.length,
       clusterCount: clusters.length,
       crossSourceClusters: clusters.filter((cluster) => cluster.crossSourceConfirmed).length,
       eligibleCandidates: clusters.filter((cluster) => cluster.eligibleForHotspotScoring).length,
       similarityThreshold,
       windowHours,
+    },
+    inputQualityGate: {
+      required: inputQualityGate.required,
+      itemsReceived: inputQualityGate.itemsReceived,
+      itemsAccepted: inputQualityGate.itemsAccepted,
+      itemsExcluded: inputQualityGate.itemsExcluded,
+      exclusionReasons: inputQualityGate.exclusionReasons,
+      articleBodiesFetched: inputQualityGate.articleBodiesFetched,
+      factsVerified: inputQualityGate.factsVerified,
+      databaseWrites: inputQualityGate.databaseWrites,
+      publishTriggered: inputQualityGate.publishTriggered,
     },
     clusters,
     factsVerified: false,

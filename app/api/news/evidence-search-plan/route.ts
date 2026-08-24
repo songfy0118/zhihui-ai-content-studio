@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     return Response.json({ ...plan, externalCalls: 0 }, { status: 400 });
   }
   const preview = await buildRssNewsPreview({ sources: NEWS_SOURCE_CATALOG });
-  const clustering = buildTopicClusters(preview.items);
+  const clustering = buildTopicClusters(preview.items, { requireMetadataQuality: true });
   const queue = buildEvidenceGapQueue(clustering);
   const plan = buildEvidenceSearchPlan(queue.leads, body.selectedIds, NEWS_SOURCE_CATALOG);
   return Response.json({

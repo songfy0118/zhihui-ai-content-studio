@@ -4,7 +4,7 @@ import { buildTopicClusters } from "../bridge/topic-clustering.mjs";
 import { buildEvidenceGapQueue } from "../bridge/evidence-gap-queue.mjs";
 
 const preview = await buildRssNewsPreview({ sources: NEWS_SOURCE_CATALOG });
-const clustering = buildTopicClusters(preview.items);
+const clustering = buildTopicClusters(preview.items, { requireMetadataQuality: true });
 const queue = buildEvidenceGapQueue(clustering);
 
 console.log(JSON.stringify({
