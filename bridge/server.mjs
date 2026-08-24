@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
@@ -16,6 +16,7 @@ import { buildLumenXPilotPlan, summarizeLumenXPilotPlan } from "./lumenx-pilot-a
 import { buildXiaohongshuDraftPackagePlan } from "./xiaohongshu-draft-package.mjs";
 import { verifyMigrationChainInMemory } from "../db/isolated-migration-verifier.mjs";
 import { runPlatformTextReviewMigrationIsolatedRehearsal } from "./platform-text-review-migration-isolated-rehearsal.mjs";
+import { inspectPlatformTextReviewMigrationLocalEnvironment } from "./platform-text-review-migration-local-target-diagnostic.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "..");
@@ -62,6 +63,22 @@ const server = createServer(async (request, response) => {
       return json(response, result.successPathVerified && result.failurePathVerified ? 200 : 409, result);
     } catch {
       return json(response, 503, { status: "platform_text_review_migration_isolated_rehearsal_blocked", blockers: ["platform_text_review_migration_isolated_rehearsal_failed"], mode: "isolated_in_memory_sqlite", appliedTags: [], tableCount: 0, indexCount: 0, schemaVerified: false, successPathVerified: false, rollbackScenarios: [], rollbackScenarioCount: 0, rollbackVerifiedCount: 0, failurePathVerified: false, intentionalFailureProbes: 0, ephemeralDatabaseWrites: false, liveDatabaseAccessed: false, liveDatabaseWrites: false, liveApplyPerformed: false, filesystemMutations: false, externalCalls: false, publishTriggered: false, businessResult: false });
+    }
+  }
+  if (request.method === "GET" && requestUrl.pathname === "/d1/review-migrations/local-target") {
+    try {
+      const localStateDirectory = join(root, ".wrangler", "state", "v3", "d1", "miniflare-D1DatabaseObject");
+      const [hosting, deployConfig, runtimeConfig, journal, localStateEntries] = await Promise.all([
+        readFile(join(root, ".openai", "hosting.json"), "utf8").then(JSON.parse),
+        readFile(join(root, ".wrangler", "deploy", "config.json"), "utf8").then(JSON.parse),
+        readFile(join(root, "dist", "server", "wrangler.json"), "utf8").then(JSON.parse),
+        readFile(join(root, "drizzle", "meta", "_journal.json"), "utf8").then(JSON.parse),
+        readdir(localStateDirectory, { withFileTypes:true }),
+      ]);
+      const result = inspectPlatformTextReviewMigrationLocalEnvironment({ hosting, deployConfig, runtimeConfig, journalEntries:journal.entries ?? [], localStateFiles:localStateEntries.filter((entry) => entry.isFile()).map((entry) => entry.name) });
+      return json(response, result.localTargetProven ? 200 : 409, result);
+    } catch {
+      return json(response, 503, { status:"platform_text_review_migration_local_target_diagnostic_blocked", blockers:["review_migration_local_environment_unavailable"], migrationTags:["0009_chunky_praxagora", "0010_tranquil_donald_blake"], localTargetProven:false, readyForExplicitAuthorizationRequest:false, confirmationReceived:false, authorizationGranted:false, authorizationConsumed:false, commandPrepared:false, executorConnected:false, databaseFileOpened:false, databaseReadAttempted:false, databaseReads:0, databaseWrites:false, filesystemWrites:false, externalCalls:false, publishTriggered:false, businessResult:false });
     }
   }
   if (request.method === "GET" && requestUrl.pathname === "/readiness") {
