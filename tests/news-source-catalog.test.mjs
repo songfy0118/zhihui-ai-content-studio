@@ -93,6 +93,28 @@ test("manual source host assessment blocks malformed and non-HTTPS links for cus
   assert.equal(validCustom.message, null);
 });
 
+test("manual source host assessment blocks credentials, local and reserved hosts", () => {
+  const suggestions = listEvidenceHandoffSourceSuggestions(NEWS_SOURCE_CATALOG);
+  const cases = [
+    ["https://user:secret@independent.news/story", /不能包含账号或密码/],
+    ["https://localhost/story", /主机 localhost 不是可公开访问/],
+    ["https://127.0.0.1/story", /主机 127\.0\.0\.1 不是可公开访问/],
+    ["https://192.168.1.20/story", /主机 192\.168\.1\.20 不是可公开访问/],
+    ["https://news.internal/story", /主机 news\.internal 不是可公开访问/],
+    ["https://[::1]/story", /主机 ::1 不是可公开访问/],
+  ];
+  for (const [canonicalUrl, message] of cases) {
+    const assessment = assessManualSourceLinkHost("Independent News", canonicalUrl, suggestions);
+    assert.equal(assessment.status, "unsafe_link");
+    assert.equal(assessment.blocksPreview, true);
+    assert.match(assessment.message, message);
+  }
+
+  const publicIp = assessManualSourceLinkHost("Independent News", "https://8.8.8.8/story", suggestions);
+  assert.equal(publicIp.status, "unregistered");
+  assert.equal(publicIp.blocksPreview, false);
+});
+
 test("catalog summary separates automatic and manual sources", () => {
   const summary = summarizeNewsSourceCatalog();
   assert.equal(summary.totalSources, 17);

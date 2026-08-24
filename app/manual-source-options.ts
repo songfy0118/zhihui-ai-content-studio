@@ -19,17 +19,40 @@ type ManualSourceNameSuggestion = {
 };
 
 type ManualSourceLinkHostAssessment = {
-  status: "unregistered" | "awaiting_link" | "invalid_link" | "mismatch" | "match";
+  status: "unregistered" | "awaiting_link" | "invalid_link" | "unsafe_link" | "mismatch" | "match";
   message: string | null;
   blocksPreview: boolean;
 };
 
 function normalizedHost(value: string) {
   try {
-    return new URL(value).hostname.toLocaleLowerCase("en-US").replace(/^www\./, "");
+    return new URL(value).hostname.toLocaleLowerCase("en-US").replace(/^www\./, "").replace(/^\[|\]$/g, "");
   } catch {
     return null;
   }
+}
+
+function ipv4Octets(hostname: string) {
+  const parts = hostname.split(".");
+  if (parts.length !== 4 || parts.some((part) => !/^\d+$/.test(part))) return null;
+  const octets = parts.map(Number);
+  return octets.every((octet) => octet >= 0 && octet <= 255) ? octets : null;
+}
+
+function isPublicLookingHost(hostname: string | null) {
+  if (!hostname || hostname === "localhost") return false;
+  if (hostname.includes(":")) return !/^(::|::1|fc|fd|fe8|fe9|fea|feb|2001:db8)/i.test(hostname);
+  if (!hostname.includes(".")) return false;
+  if ([".localhost", ".local", ".internal", ".lan", ".home", ".test", ".example", ".invalid"].some((suffix) => hostname.endsWith(suffix))) return false;
+  const octets = ipv4Octets(hostname);
+  if (!octets) return true;
+  const [a, b] = octets;
+  return !(a === 0 || a === 10 || a === 127 || a >= 224
+    || (a === 100 && b >= 64 && b <= 127)
+    || (a === 169 && b === 254)
+    || (a === 172 && b >= 16 && b <= 31)
+    || (a === 192 && b === 168)
+    || (a === 198 && (b === 18 || b === 19)));
 }
 
 function normalizedSourceLabel(value: string) {
@@ -90,6 +113,12 @@ export function assessManualSourceLinkHost(sourceName: string, canonicalUrl: str
   const currentHost = normalizedHost(parsed.href);
   if (parsed.protocol !== "https:" || !currentHost) {
     return { status: "invalid_link", message: "链接必须使用公开 HTTPS；不会发送当前预览请求", blocksPreview: true };
+  }
+  if (parsed.username || parsed.password) {
+    return { status: "unsafe_link", message: "公开链接不能包含账号或密码；不会发送当前预览请求", blocksPreview: true };
+  }
+  if (!isPublicLookingHost(currentHost)) {
+    return { status: "unsafe_link", message: `链接主机 ${currentHost} 不是可公开访问的互联网主机；不会发送当前预览请求`, blocksPreview: true };
   }
   if (!selected) return { status: "unregistered", message: null, blocksPreview: false };
   if (selected.expectedHosts.length && !selected.expectedHosts.includes(currentHost)) {
