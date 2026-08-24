@@ -1133,6 +1133,13 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(page, /应用后核验合同已锁定，尚未执行/);
   assert.match(page, /回滚证据：仅在未来授权事务失败时生成；当前不存在/);
   assert.match(page, /授权 0 · SQL 执行 0 · 数据库读取 0 · 数据库写入 0 · 回滚执行 0/);
+  assert.match(page, /fetch\("\/api\/news\/source-acquisition-eligibility"/);
+  assert.match(page, /审计信源采集资格（不联网）/);
+  assert.match(page, /个信源已分流，自动采集边界已锁定/);
+  assert.match(page, /RSS 元数据/);
+  assert.match(page, /人工公开页/);
+  assert.match(page, /用户提供链接/);
+  assert.match(page, /正文抓取 0 · 登录 0 · 验证码绕过 0 · 事实核验 0 · 来源锁 0 · 数据库写入 0 · 发布 0/);
   assert.match(layout, /知绘工厂/);
   assert.match(css, /\.localProjects/);
   assert.match(css, /\.adapterPlan/);
@@ -1147,6 +1154,7 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(css, /\.reviewMigrationLocalTargetDiagnostic/);
   assert.match(css, /\.reviewMigrationSingleUseAuthorizationRequest/);
   assert.match(css, /\.reviewMigrationPostApplyVerificationPlan/);
+  assert.match(css, /\.sourceAcquisitionEligibility/);
   await assert.rejects(access(new URL("app/_sites-preview", projectRoot)));
 });
 

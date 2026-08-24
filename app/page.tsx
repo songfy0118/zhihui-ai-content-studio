@@ -14,6 +14,7 @@ type Job = { id:string; ideaId:string; stage:string; progress:number; status:str
 type ReviewAudit = { id:string; jobId:string; action:string; checks:Record<string,boolean>|null; publishTriggered:boolean; createdAt:string; malformed?:boolean };
 type Metric = { platform:string; views:number; likes:number; comments:number; shares:number; saves:number; completionRate:number };
 type NewsSourceCatalogStatus = { status:"loading"|"catalog_ready"|"catalog_blocked"|"unavailable";summary:{totalSources:number;enabledSources:number;rssSources:number;officialNewsrooms:number;manualReviewSources:number};sources:Array<{id:string;name:string;baseUrl:string;sourceType:string;enabled:boolean;requiresLogin:boolean;editorialAliases?:string[]}>;contentFetched:boolean;externalCalls:boolean;databaseWrites:boolean };
+type NewsSourceAcquisitionEligibility = { status:"source_acquisition_eligibility_ready"|"source_acquisition_eligibility_blocked";blockers:string[];catalogVersion:number;auditFingerprint:string|null;summary:{totalSources:number;automaticRssMetadata:number;manualPublicPageMetadata:number;userSuppliedPublicLinkOnly:number;unclassified:number};automaticCollectionScope:"rss_metadata_only";manualPublicPageRequiresHuman:true;userSuppliedLinksRequireHuman:true;articleBodiesFetched:false;loginTriggered:false;captchaBypassed:false;paywallBypassed:false;externalCalls:0;factsVerified:false;sourceLocksCreated:0;databaseWrites:false;publishTriggered:false };
 type NewsPreviewStatus = { status:"preview_ready"|"no_live_items";fetchedAt:string;summary:{feedsAttempted:number;readySources:number;failedSources:number;itemsReturned:number};sourceHealth:Array<{sourceId:string;status:"ready"|"empty"|"error";itemsParsed:number;errorCode:string|null;failureClass:string|null;retryable:boolean;operatorAction:string|null}>;transportAssessment:{status:"not_assessed"|"all_feeds_reachable"|"mixed_reachability"|"all_feeds_failed_inconclusive";reachableSources:number;failedSources:number;tlsOrProxyFailures:number;runtimeOutboundReachable:boolean;globalOutageProven:false;operatorAction:string|null};items:Array<{id:string;sourceName:string;title:string;summary:string;canonicalUrl:string;publishedAt:string|null}>;contentFetched:boolean;factsVerified:boolean;humanReviewRequired:boolean;externalCalls:number;databaseWrites:boolean;publishTriggered:boolean };
 type TopicClusterPreview = { status:"clusters_ready"|"no_items";summary:{itemsConsidered:number;clusterCount:number;crossSourceClusters:number;eligibleCandidates:number;similarityThreshold:number;windowHours:number};clusters:Array<{id:string;title:string;status:string;itemCount:number;sourceCount:number;sourceIds:string[];firstSeenAt:string|null;lastSeenAt:string|null;meanSimilarity:number|null;crossSourceConfirmed:boolean;timeWindowVerified:boolean;eligibleForHotspotScoring:boolean}>;factsVerified:boolean;heatScored:boolean;externalCalls:number;databaseWrites:boolean;publishTriggered:boolean };
 type TopicRankingPreview = { status:"ranked_candidates_ready"|"no_eligible_candidates";profile:{id:string;label:string;calibration:string;categoryCoverage:{categoriesPresent:number;mappedCategories:number;unmappedCategories:string[];complete:boolean}};summary:{clustersConsidered:number;eligibleClusters:number;rankedCandidates:number;blockedBeforeScoring:number};candidates:Array<{id:string;title:string;sourceCount:number;itemCount:number;trendEvidenceScore:number;accountFitScore:number;relativePriorityScore:number;matchedAccountTopics:string[];predictedViews:null;viralProbability:null;factsVerified:false;selectableForDraft:false}>;nextGate:"human_source_and_fact_review"|"human_evidence_gap_shortlist"|"wait_for_more_sources";evidenceGapFallback:EvidenceGapPreview|null;scoreKind:string;heatScored:boolean;factsVerified:boolean;predictedViewsGenerated:boolean;viralProbabilityGenerated:boolean;accountMetricsUsed:boolean;humanSelectionUnlocked:boolean;externalCalls:number;databaseWrites:boolean;publishTriggered:boolean };
@@ -180,6 +181,8 @@ export default function Home() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [newsSourceCatalog, setNewsSourceCatalog] = useState<NewsSourceCatalogStatus>({ status:"loading", summary:{totalSources:0,enabledSources:0,rssSources:0,officialNewsrooms:0,manualReviewSources:0}, sources:[], contentFetched:false, externalCalls:false, databaseWrites:false });
+  const [newsSourceAcquisitionEligibility, setNewsSourceAcquisitionEligibility] = useState<NewsSourceAcquisitionEligibility|null>(null);
+  const [newsSourceAcquisitionEligibilityBusy, setNewsSourceAcquisitionEligibilityBusy] = useState(false);
   const [newsPreview, setNewsPreview] = useState<NewsPreviewStatus|null>(null);
   const [newsPreviewBusy, setNewsPreviewBusy] = useState(false);
   const [topicClusters, setTopicClusters] = useState<TopicClusterPreview|null>(null);
@@ -316,6 +319,20 @@ export default function Home() {
       setMessage("公开 RSS 预览失败；没有写入数据库，也没有生成新闻结论。");
     } finally {
       setNewsPreviewBusy(false);
+    }
+  };
+
+  const auditNewsSourceAcquisitionEligibility = async () => {
+    setNewsSourceAcquisitionEligibilityBusy(true);
+    try {
+      const response = await fetch("/api/news/source-acquisition-eligibility", { cache:"no-store" });
+      const payload = await response.json() as NewsSourceAcquisitionEligibility;
+      setNewsSourceAcquisitionEligibility(payload);
+      if (!response.ok) setMessage("信源采集资格审计被阻断；未联网、未抓正文、未写库。");
+    } catch {
+      setMessage("信源采集资格审计不可用；未联网、未抓正文、未写库。");
+    } finally {
+      setNewsSourceAcquisitionEligibilityBusy(false);
     }
   };
 
@@ -1129,6 +1146,12 @@ export default function Home() {
 
       {view === "accounts" && <section className="panel">
         <div className="panelTitle"><div><small>05 / CONNECTIONS</small><h2>账号与生成引擎</h2></div></div>
+        <section className={newsSourceAcquisitionEligibility?.status==="source_acquisition_eligibility_ready"?"sourceAcquisitionEligibility ready":"sourceAcquisitionEligibility blocked"}>
+          <header><div><small>SOURCE ACQUISITION · 本地规则审计</small><b>{newsSourceAcquisitionEligibility?.status==="source_acquisition_eligibility_ready"?`${newsSourceAcquisitionEligibility.summary.totalSources} 个信源已分流，自动采集边界已锁定`:newsSourceAcquisitionEligibility?"信源采集资格审计被阻断":"先锁定每类来源允许怎样进入工作流"}</b><span>只审查已登记目录；本操作不联网、不读取文章正文</span></div><button type="button" disabled={newsSourceAcquisitionEligibilityBusy} onClick={auditNewsSourceAcquisitionEligibility}>{newsSourceAcquisitionEligibilityBusy?"审计中…":"审计信源采集资格（不联网）"}</button></header>
+          {newsSourceAcquisitionEligibility&&<div className="sourceAcquisitionEligibilityResult"><span>RSS 元数据 <b>{newsSourceAcquisitionEligibility.summary.automaticRssMetadata}</b></span><span>人工公开页 <b>{newsSourceAcquisitionEligibility.summary.manualPublicPageMetadata}</b></span><span>用户提供链接 <b>{newsSourceAcquisitionEligibility.summary.userSuppliedPublicLinkOnly}</b></span><span>未分类 <b>{newsSourceAcquisitionEligibility.summary.unclassified}</b></span></div>}
+          {newsSourceAcquisitionEligibility?.auditFingerprint&&<code>审计指纹 {newsSourceAcquisitionEligibility.auditFingerprint}</code>}
+          <footer><span>{newsSourceAcquisitionEligibility?.status==="source_acquisition_eligibility_ready"?"自动只读 Feed 元数据；公开新闻室与公众号链接必须人工提供或复核":newsSourceAcquisitionEligibility?.blockers.join(" · ")||"尚未执行本地目录审计"}</span><em>正文抓取 0 · 登录 0 · 验证码绕过 0 · 事实核验 0 · 来源锁 0 · 数据库写入 0 · 发布 0</em></footer>
+        </section>
         <section className="connectionGate">
           <div className="connectionGateHead"><div><small>LUMENX / DASHSCOPE</small><h3>LumenX 连接授权检查</h3></div><div className="connectionGateActions"><strong>{lumenXCredentialDetected?"已检测到配置 · 未调用":"等待你的账号操作"}</strong><button type="button" disabled={connectionRefreshBusy} onClick={refreshConnectionStatus}>{connectionRefreshBusy?"刷新中…":"刷新本机状态"}</button></div></div>
           <ol>
