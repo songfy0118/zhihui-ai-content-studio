@@ -49,6 +49,27 @@ export function assessManualEvidencePublishedAt(publishedAt: string, nowMs = Dat
   return { status:"valid" as const, message:"发布时间格式已通过本地校验；服务器仍会核对与原来源的 7 天时间窗", blocksPreview:false };
 }
 
+function assessBoundedText(value: string, minimum: number, maximum: number, label: string, collapseWhitespace = false) {
+  const normalized = collapseWhitespace
+    ? value.normalize("NFKC").replace(/\s+/g, " ").trim()
+    : value.normalize("NFKC").trim();
+  if (!normalized) return { status:"awaiting_text" as const, message:null, blocksPreview:false };
+  if (normalized.length < minimum || normalized.length > maximum) {
+    return { status:"invalid_text" as const, message:`${label}需为 ${minimum}–${maximum} 个字符；不会发送当前预览请求`, blocksPreview:true };
+  }
+  return { status:"valid" as const, message:null, blocksPreview:false };
+}
+
+export function assessManualEvidenceTextFields(sourceName: string, title: string) {
+  const sourceNameAssessment = assessBoundedText(sourceName, 2, 80, "来源名称");
+  const titleAssessment = assessBoundedText(title, 8, 300, "候选标题", true);
+  return {
+    sourceName:sourceNameAssessment,
+    title:titleAssessment,
+    blocksPreview:sourceNameAssessment.blocksPreview || titleAssessment.blocksPreview,
+  };
+}
+
 export function describeManualEvidencePreviewReadiness(fieldsComplete: boolean, localValidationBlocked: boolean) {
   if (!fieldsComplete) return "缺少字段时不会发送预览请求";
   if (localValidationBlocked) return "字段已填齐，但本地校验已阻断；修正红色提示后才能预览";

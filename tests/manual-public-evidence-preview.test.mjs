@@ -8,7 +8,7 @@ import { buildManualPublicEvidencePreview } from "../bridge/manual-public-eviden
 import { NEWS_SOURCE_CATALOG } from "../bridge/news-source-catalog.mjs";
 import { buildSourceLockSavePlan } from "../bridge/source-lock-save-plan.mjs";
 import { formatManualEvidenceBlocker, formatManualEvidencePublisherRole } from "../app/manual-evidence-diagnostics.ts";
-import { assessManualEvidencePublishedAt, buildManualEvidenceFormReadiness, describeManualEvidencePreviewReadiness } from "../app/manual-evidence-form-readiness.ts";
+import { assessManualEvidencePublishedAt, assessManualEvidenceTextFields, buildManualEvidenceFormReadiness, describeManualEvidencePreviewReadiness } from "../app/manual-evidence-form-readiness.ts";
 
 const lead = {
   id: "cluster:one",
@@ -72,6 +72,21 @@ test("blocks invalid, timezone-free and future publication times locally", () =>
   assert.equal(valid.blocksPreview, false);
 });
 
+test("blocks source names and titles outside the server length bounds locally", () => {
+  const shortSource = assessManualEvidenceTextFields("A", "A complete candidate title");
+  assert.equal(shortSource.sourceName.status, "invalid_text");
+  assert.equal(shortSource.blocksPreview, true);
+  assert.match(shortSource.sourceName.message, /来源名称需为 2–80 个字符/);
+  const shortTitle = assessManualEvidenceTextFields("Independent", "short");
+  assert.equal(shortTitle.title.status, "invalid_text");
+  assert.equal(shortTitle.blocksPreview, true);
+  assert.match(shortTitle.title.message, /候选标题需为 8–300 个字符/);
+  assert.equal(assessManualEvidenceTextFields("S".repeat(81), "A complete candidate title").sourceName.status, "invalid_text");
+  assert.equal(assessManualEvidenceTextFields("Independent", "T".repeat(301)).title.status, "invalid_text");
+  const valid = assessManualEvidenceTextFields("Independent", "A complete candidate title");
+  assert.equal(valid.blocksPreview, false);
+});
+
 test("wires manual source name suggestions without automatic article collection", async () => {
   const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   assert.match(page, /listManualSourceNameSuggestions\(newsSourceCatalog\.sources\)/);
@@ -102,11 +117,12 @@ test("hands empty RSS candidates to an explicit no-write manual evidence form", 
   assert.match(page, /已预选当前唯一线索/);
   assert.match(page, /不会自动打开、抓取或保存 · 正文读取 0 · 事实核验 0 · 来源锁 0/);
   assert.match(page, /人工补证必填进度 \{manualEvidenceFormReadiness\.completed\}\/\{manualEvidenceFormReadiness\.total\}/);
-  assert.match(page, /describeManualEvidencePreviewReadiness\(manualEvidenceFormReadiness\.ready,manualSourceLinkHostAssessment\.blocksPreview\|\|manualEvidencePublishedAtAssessment\.blocksPreview\)/);
+  assert.match(page, /describeManualEvidencePreviewReadiness\(manualEvidenceFormReadiness\.ready,manualEvidenceTextAssessment\.blocksPreview\|\|manualSourceLinkHostAssessment\.blocksPreview\|\|manualEvidencePublishedAtAssessment\.blocksPreview\)/);
   assert.match(page, /if \(!manualEvidenceFormReadiness\.ready \|\| evidenceGapShortlist\.length !== 1\)/);
   assert.match(page, /if \(manualSourceLinkHostAssessment\.blocksPreview\)[\s\S]*?未发送预览请求/);
+  assert.match(page, /if \(manualEvidenceTextAssessment\.blocksPreview\)[\s\S]*?未发送预览请求/);
   assert.match(page, /if \(manualEvidencePublishedAtAssessment\.blocksPreview\)[\s\S]*?未发送预览请求/);
-  assert.match(page, /disabled=\{manualEvidenceBusy\|\|!manualEvidenceFormReadiness\.ready\|\|manualSourceLinkHostAssessment\.blocksPreview\|\|manualEvidencePublishedAtAssessment\.blocksPreview\|\|/);
+  assert.match(page, /disabled=\{manualEvidenceBusy\|\|!manualEvidenceFormReadiness\.ready\|\|manualEvidenceTextAssessment\.blocksPreview\|\|manualSourceLinkHostAssessment\.blocksPreview\|\|manualEvidencePublishedAtAssessment\.blocksPreview\|\|/);
 });
 
 const plan = buildEvidenceSearchPlan([lead], [lead.id], sources);
