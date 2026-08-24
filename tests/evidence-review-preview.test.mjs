@@ -15,26 +15,29 @@ const lead = {
   publishedAt: "2026-08-20T12:00:00.000Z",
   missingIndependentSources: 1,
   suggestedQueries: ["OpenAI enterprise agent platform"],
+  qualityEvidenceFingerprint: "a".repeat(64),
   evidence: [{ id: "a-one", sourceId: "source-a", sourceName: "Original", title: "OpenAI launches enterprise agent platform", canonicalUrl: "https://a.example/story", publishedAt: "2026-08-20T12:00:00.000Z" }],
 };
 const sources = [
   { id: "source-a", name: "Original", sourceType: "rss", baseUrl: "https://a.example/", feedUrl: "https://a.example/feed", enabled: true, requiresLogin: false },
   { id: "source-b", name: "Independent", sourceType: "rss", baseUrl: "https://b.example/", feedUrl: "https://b.example/feed", enabled: true, requiresLogin: false },
 ];
-const candidateItems = [{ id: "b-match", sourceId: "source-b", sourceName: "Independent", title: "Enterprise agent platform launched by OpenAI", canonicalUrl: "https://b.example/story", publishedAt: "2026-08-20T14:00:00.000Z" }];
+const candidateItems = [{ id: "b-match", sourceId: "source-b", sourceName: "Independent", title: "Enterprise agent platform launched by OpenAI", canonicalUrl: "https://b.example/story", publishedAt: "2026-08-20T14:00:00.000Z", metadataProvenanceReady: true, sourceEvidenceUrl: "https://b.example/feed-evidence", rightsPolicy: "official_feed_metadata_with_attribution", collectionScope: "rss_metadata_only", articleBodyFetched: false, freshnessStatus: "within_24_hours", ageHours: 2 }];
 const completeChecks = Object.fromEntries(EVIDENCE_REVIEW_CHECKS.map((check) => [check, true]));
 
 test("formats evidence review blockers as actionable Chinese diagnostics", () => {
   assert.equal(formatEvidenceReviewBlocker("search_plan_not_ready"), "当前补证计划已失效，请重新生成");
   assert.equal(formatEvidenceReviewBlocker("cluster:one:human_check_missing:dates_consistent"), "线索 cluster:one：尚未确认发布时间与事件时间一致");
   assert.equal(formatEvidenceReviewBlocker("cluster:one:candidate_not_current"), "线索 cluster:one：所选第二来源候选已失效，请重新选择");
+  assert.equal(formatEvidenceReviewBlocker("metadata_quality_lineage_not_current"), "第二来源候选的质量证据链已失效，请重新预览");
+  assert.equal(formatEvidenceReviewBlocker("cluster:one:candidate_quality_lineage_not_bound"), "线索 cluster:one：第二来源候选质量证据链缺失，请重新预览");
   assert.equal(formatEvidenceReviewBlocker("review_decision_invalid:cluster:one"), "审查选择无效：cluster:one");
   assert.equal(formatEvidenceReviewBlocker("future_blocker"), "future_blocker");
 });
 
 function fixtures(items = candidateItems) {
   const plan = buildEvidenceSearchPlan([lead], [lead.id], sources);
-  return { plan, metadata: buildEvidenceMetadataPreview(plan, items) };
+  return { plan, metadata: buildEvidenceMetadataPreview(plan, items, { requireQualityLineage: true }) };
 }
 
 test("requires a current candidate and every explicit human evidence check", () => {
@@ -43,7 +46,12 @@ test("requires a current candidate and every explicit human evidence check", () 
   assert.equal(preview.status, "evidence_review_preview_ready");
   assert.match(preview.reviewFingerprint, /^[a-f0-9]{64}$/);
   assert.equal(preview.summary.targetsEligible, 1);
+  assert.equal(preview.summary.targetsWithQualityLineage, 1);
   assert.equal(preview.readyForAuthorizedSourceLockSave, true);
+  assert.equal(preview.reviewedTargets[0].qualityLineage.qualityLineageBound, true);
+  assert.equal(preview.reviewedTargets[0].qualityLineage.sourceQualityEvidenceFingerprint, "a".repeat(64));
+  assert.match(preview.reviewedTargets[0].qualityLineage.candidateQualityEvidenceFingerprint, /^[a-f0-9]{64}$/);
+  assert.match(preview.reviewedTargets[0].qualityLineage.metadataPreviewQualityFingerprint, /^[a-f0-9]{64}$/);
   assert.deepEqual(EVIDENCE_REVIEW_CHECKS, [
     "same_event_confirmed",
     "source_independence_confirmed",
@@ -73,7 +81,11 @@ test("blocks incomplete checks, stale candidates and same-host evidence", () => 
   assert.ok(syndicationUnchecked.blockers.some((blocker) => blocker.includes("human_check_missing:syndication_or_citation_chain_checked")));
   const stale = buildEvidenceReviewPreview(plan, metadata, [{ leadId: lead.id, candidateId: "missing", checks: completeChecks }]);
   assert.ok(stale.blockers.some((blocker) => blocker.includes("candidate_not_current")));
-  const sameHostMetadata = buildEvidenceMetadataPreview(plan, [{ ...candidateItems[0], canonicalUrl: "https://a.example/other" }]);
+  const qualityTampered = structuredClone(metadata);
+  qualityTampered.targets[0].candidates[0].candidateQualityEvidenceFingerprint = null;
+  const missingCandidateQuality = buildEvidenceReviewPreview(plan, qualityTampered, [{ leadId: lead.id, candidateId: "b-match", checks: completeChecks }]);
+  assert.ok(missingCandidateQuality.blockers.some((blocker) => blocker.includes("candidate_quality_lineage_not_bound")));
+  const sameHostMetadata = buildEvidenceMetadataPreview(plan, [{ ...candidateItems[0], canonicalUrl: "https://a.example/other" }], { requireQualityLineage: true });
   const sameHost = buildEvidenceReviewPreview(plan, sameHostMetadata, [{ leadId: lead.id, candidateId: "b-match", checks: completeChecks }]);
   assert.ok(sameHost.blockers.some((blocker) => blocker.includes("independent_host_not_confirmed")));
 });
@@ -114,7 +126,7 @@ test("returns a complete blocked review contract for malformed requests", async 
   assert.equal(body.status, "evidence_review_preview_blocked");
   assert.deepEqual(body.blockers, ["invalid_review_request"]);
   assert.deepEqual(body.downstreamBlockers, []);
-  assert.deepEqual(body.summary, { targetsRequired: 0, targetsReviewed: 0, targetsEligible: 0 });
+  assert.deepEqual(body.summary, { targetsRequired: 0, targetsReviewed: 0, targetsEligible: 0, targetsWithQualityLineage: 0 });
   assert.equal(body.reviewFingerprint, null);
   assert.equal(body.readyForAuthorizedSourceLockSave, false);
   assert.equal(body.externalCalls, 0);

@@ -12,6 +12,7 @@ const leads = [{
   publishedAt: "2026-08-20T12:00:00.000Z",
   missingIndependentSources: 1,
   suggestedQueries: ["OpenAI enterprise agent platform"],
+  qualityEvidenceFingerprint: "a".repeat(64),
   evidence: [{ id: "a-original", sourceId: "source-a", sourceName: "Original", title: "OpenAI launches enterprise agent platform", canonicalUrl: "https://www.a.example/story", publishedAt: "2026-08-20T12:00:00.000Z" }],
 }];
 const sources = [
@@ -21,14 +22,14 @@ const sources = [
 ];
 const items = [
   { id: "a-original", sourceId: "source-a", sourceName: "Original", title: leads[0].title, canonicalUrl: "https://a.example/story", publishedAt: "2026-08-20T12:00:00.000Z" },
-  { id: "b-match", sourceId: "source-b", sourceName: "Independent", title: "Enterprise agent platform launched by OpenAI", canonicalUrl: "https://b.example/story", publishedAt: "2026-08-20T14:00:00.000Z", summary: "Body-like feed summary must not be returned" },
+  { id: "b-match", sourceId: "source-b", sourceName: "Independent", title: "Enterprise agent platform launched by OpenAI", canonicalUrl: "https://b.example/story", publishedAt: "2026-08-20T14:00:00.000Z", summary: "Body-like feed summary must not be returned", metadataProvenanceReady: true, sourceEvidenceUrl: "https://b.example/feed-evidence", rightsPolicy: "official_feed_metadata_with_attribution", collectionScope: "rss_metadata_only", articleBodyFetched: false, freshnessStatus: "within_24_hours", ageHours: 2 },
   { id: "b-unrelated", sourceId: "source-b", sourceName: "Independent", title: "Cloud database pricing changes", canonicalUrl: "https://b.example/other", publishedAt: "2026-08-20T15:00:00.000Z" },
   { id: "b-old", sourceId: "source-b", sourceName: "Independent", title: "OpenAI launches enterprise agent platform", canonicalUrl: "https://b.example/old", publishedAt: "2026-07-20T14:00:00.000Z" },
 ];
 
 test("returns only bounded independent RSS metadata candidates for human review", () => {
   const plan = buildEvidenceSearchPlan(leads, ["cluster:one"], sources);
-  const preview = buildEvidenceMetadataPreview(plan, items);
+  const preview = buildEvidenceMetadataPreview(plan, items, { requireQualityLineage: true });
   assert.equal(preview.status, "metadata_candidates_found");
   assert.equal(preview.summary.candidatesReturned, 1);
   assert.equal(preview.targets[0].candidates[0].id, "b-match");
@@ -37,7 +38,21 @@ test("returns only bounded independent RSS metadata candidates for human review"
   assert.equal(preview.targets[0].candidates[0].candidateHost, "b.example");
   assert.equal(preview.targets[0].candidates[0].publishedDeltaHours, 2);
   assert.equal(preview.targets[0].candidates[0].reviewStatus, "human_review_required");
+  assert.equal(preview.summary.candidatesWithQualityEvidence, 1);
+  assert.equal(preview.qualityBoundary.allReturnedCandidatesQualityBound, true);
+  assert.match(preview.qualityBoundary.previewQualityFingerprint, /^[a-f0-9]{64}$/);
+  assert.match(preview.targets[0].candidates[0].candidateQualityEvidenceFingerprint, /^[a-f0-9]{64}$/);
+  assert.equal(preview.targets[0].candidates[0].qualityBoundary.collectionScope, "rss_metadata_only");
   assert.equal("summary" in preview.targets[0].candidates[0], false);
+});
+
+test("excludes a matching second-source item without current RSS metadata quality evidence", () => {
+  const plan = buildEvidenceSearchPlan(leads, ["cluster:one"], sources);
+  const preview = buildEvidenceMetadataPreview(plan, [{ ...items[1], metadataProvenanceReady: false }], { requireQualityLineage: true });
+  assert.equal(preview.status, "no_metadata_candidates");
+  assert.equal(preview.summary.candidatesReturned, 0);
+  assert.equal(preview.summary.candidatesWithQualityEvidence, 0);
+  assert.equal(preview.qualityBoundary.previewQualityFingerprint, null);
 });
 
 test("blocks a missing plan and never advances factual or publishing state", () => {
@@ -52,9 +67,17 @@ test("blocks a missing plan and never advances factual or publishing state", () 
   assert.equal(blocked.publishTriggered, false);
 });
 
+test("blocks metadata preview when the selected lead has no source quality lineage", () => {
+  const plan = buildEvidenceSearchPlan([{ ...leads[0], qualityEvidenceFingerprint: null }], ["cluster:one"], sources);
+  const blocked = buildEvidenceMetadataPreview(plan, items, { requireQualityLineage: true });
+  assert.deepEqual(blocked.blockers, ["source_quality_lineage_not_bound:cluster:one"]);
+  assert.equal(blocked.summary.itemsConsidered, 0);
+  assert.equal(blocked.qualityBoundary.sourceTargetsQualityBound, false);
+});
+
 test("reports an honest empty result when metadata does not cross the threshold", () => {
   const plan = buildEvidenceSearchPlan(leads, ["cluster:one"], sources);
-  const preview = buildEvidenceMetadataPreview(plan, [items[2]]);
+  const preview = buildEvidenceMetadataPreview(plan, [items[2]], { requireQualityLineage: true });
   assert.equal(preview.status, "no_metadata_candidates");
   assert.equal(preview.summary.candidatesReturned, 0);
   assert.equal(preview.humanReviewRequired, true);
@@ -68,8 +91,10 @@ test("wires an explicit metadata-only endpoint without storage or publication", 
   assert.match(page, /检索公开 RSS 元数据/);
   assert.match(page, /查看原来源/);
   assert.match(page, /较原来源/);
+  assert.match(page, /候选质量证据已绑定/);
   assert.match(page, /fetch\("\/api\/news\/evidence-metadata-preview"/);
   assert.match(page, /const preview = await response\.json\(\) as EvidenceMetadataPreview;\s*if \(requestRevision !== evidencePipelineRevision\.current\) return;\s*setEvidenceMetadataPreview\(preview\);/);
   assert.match(route, /body\.selectedIds\.length > 3/);
+  assert.match(route, /requireQualityLineage: true/);
   assert.doesNotMatch(route, /getDb|\.insert\(|\.update\(|\.delete\(/);
 });

@@ -1,9 +1,12 @@
 const evidenceReviewBlockerLabels: Record<string, string> = {
   search_plan_not_ready: "当前补证计划已失效，请重新生成",
   metadata_preview_not_current: "第二来源候选已失效，请重新预览",
+  metadata_quality_lineage_not_current: "第二来源候选的质量证据链已失效，请重新预览",
   review_decisions_empty: "请先选择候选来源并完成六项判断",
   decision_missing: "尚未选择当前第二来源候选",
   candidate_not_current: "所选第二来源候选已失效，请重新选择",
+  source_quality_lineage_not_bound: "原始来源质量证据链缺失，请重新生成补证清单",
+  candidate_quality_lineage_not_bound: "第二来源候选质量证据链缺失，请重新预览",
   original_evidence_missing: "原始来源缺少可核对的公开链接",
   independent_host_not_confirmed: "两条来源的主机未能自动区分，需更换候选",
   same_event_confirmed: "尚未确认两条来源报道同一事件",
@@ -21,7 +24,7 @@ export function formatEvidenceReviewBlocker(blocker: string) {
     return `线索 ${leadId}：${evidenceReviewBlockerLabels[checkId] ?? checkId}`;
   }
 
-  const targetBlocker = blocker.match(/^(.+):(decision_missing|candidate_not_current|original_evidence_missing|independent_host_not_confirmed)$/);
+  const targetBlocker = blocker.match(/^(.+):(decision_missing|candidate_not_current|source_quality_lineage_not_bound|candidate_quality_lineage_not_bound|original_evidence_missing|independent_host_not_confirmed)$/);
   if (targetBlocker) {
     const [, leadId, reason] = targetBlocker;
     return `线索 ${leadId}：${evidenceReviewBlockerLabels[reason]}`;

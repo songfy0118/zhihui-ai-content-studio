@@ -21,6 +21,9 @@ export function buildEvidenceReviewPreview(plan, metadataPreview, decisions = []
   const blockers = [];
   if (!plan?.readyForHumanResearchReview || !plan.planFingerprint) blockers.push("search_plan_not_ready");
   if (!metadataPreview || metadataPreview.planFingerprint !== plan?.planFingerprint) blockers.push("metadata_preview_not_current");
+  const rssMetadataReview = metadataPreview?.searchScope === "public_rss_metadata_only";
+  const qualityLineageRequired = metadataPreview?.qualityBoundary?.required === true;
+  if (rssMetadataReview && qualityLineageRequired && (!metadataPreview?.qualityBoundary?.previewQualityFingerprint || metadataPreview?.qualityBoundary?.allReturnedCandidatesQualityBound !== true)) blockers.push("metadata_quality_lineage_not_current");
   if (!Array.isArray(decisions) || !decisions.length) blockers.push("review_decisions_empty");
   const decisionMap = new Map();
   for (const decision of Array.isArray(decisions) ? decisions : []) {
@@ -38,6 +41,8 @@ export function buildEvidenceReviewPreview(plan, metadataPreview, decisions = []
     const targetBlockers = [];
     if (!decision) targetBlockers.push("decision_missing");
     if (decision && !candidate) targetBlockers.push("candidate_not_current");
+    if (qualityLineageRequired && (target.qualityLineageBound !== true || !target.sourceQualityEvidenceFingerprint)) targetBlockers.push("source_quality_lineage_not_bound");
+    if (rssMetadataReview && qualityLineageRequired && candidate && !candidate.candidateQualityEvidenceFingerprint) targetBlockers.push("candidate_quality_lineage_not_bound");
     const originalEvidence = target.originalEvidence?.[0] ?? null;
     if (!originalEvidence?.canonicalUrl) targetBlockers.push("original_evidence_missing");
     const originalHost = host(originalEvidence?.canonicalUrl);
@@ -62,6 +67,13 @@ export function buildEvidenceReviewPreview(plan, metadataPreview, decisions = []
         syndicationOrCitationChainChecked: checks.syndication_or_citation_chain_checked,
         candidatePublisherRole: candidate?.publisherRole ?? "catalog_metadata",
       },
+      qualityLineage: {
+        sourceQualityEvidenceFingerprint: target.sourceQualityEvidenceFingerprint ?? null,
+        candidateQualityEvidenceFingerprint: candidate?.candidateQualityEvidenceFingerprint ?? null,
+        metadataPreviewQualityFingerprint: rssMetadataReview ? metadataPreview?.qualityBoundary?.previewQualityFingerprint ?? null : null,
+        candidateEvidenceMode: rssMetadataReview ? "rss_metadata_quality" : candidate?.inputMode ?? "manual_public_metadata",
+        qualityLineageBound: Boolean(target.sourceQualityEvidenceFingerprint && candidate && (!rssMetadataReview || candidate.candidateQualityEvidenceFingerprint)),
+      },
       blockers: targetBlockers,
       eligibleForSourceLockProposal: targetBlockers.length === 0,
     };
@@ -82,6 +94,7 @@ export function buildEvidenceReviewPreview(plan, metadataPreview, decisions = []
         publisherRole: target.candidate.publisherRole ?? "catalog_metadata",
       },
       checks: target.checks,
+      qualityLineage: target.qualityLineage,
     })),
   })).digest("hex") : null;
 
@@ -97,6 +110,7 @@ export function buildEvidenceReviewPreview(plan, metadataPreview, decisions = []
       targetsRequired: plan?.targets?.length ?? 0,
       targetsReviewed: reviewedTargets.filter((target) => target.candidate).length,
       targetsEligible: reviewedTargets.filter((target) => target.eligibleForSourceLockProposal).length,
+      targetsWithQualityLineage: reviewedTargets.filter((target) => target.qualityLineage.qualityLineageBound).length,
     },
     reviewedTargets,
     semanticReview: reviewComplete ? "human_confirmed_in_preview" : "incomplete",

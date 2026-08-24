@@ -9,13 +9,13 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({})) as { selectedIds?: unknown };
   if (!Array.isArray(body.selectedIds) || body.selectedIds.length === 0 || body.selectedIds.length > 3 || body.selectedIds.some((id) => typeof id !== "string" || id.length > 80)) {
     const plan = buildEvidenceSearchPlan([], Array.isArray(body.selectedIds) ? body.selectedIds : [], NEWS_SOURCE_CATALOG);
-    return Response.json({ ...buildEvidenceMetadataPreview(plan, []), externalCalls: 0 }, { status: 400 });
+    return Response.json({ ...buildEvidenceMetadataPreview(plan, [], { requireQualityLineage: true }), externalCalls: 0 }, { status: 400 });
   }
   const feedPreview = await buildRssNewsPreview({ sources: NEWS_SOURCE_CATALOG });
   const clustering = buildTopicClusters(feedPreview.items, { requireMetadataQuality: true });
   const queue = buildEvidenceGapQueue(clustering);
   const plan = buildEvidenceSearchPlan(queue.leads, body.selectedIds, NEWS_SOURCE_CATALOG);
-  const metadataPreview = buildEvidenceMetadataPreview(plan, feedPreview.items);
+  const metadataPreview = buildEvidenceMetadataPreview(plan, feedPreview.items, { requireQualityLineage: true });
   return Response.json({
     ...metadataPreview,
     fetchedAt: feedPreview.fetchedAt,
