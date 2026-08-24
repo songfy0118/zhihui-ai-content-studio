@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
 
-import { assessRssTransport, buildRssNewsPreview, dedupeRssItems, diagnoseRssFailure, normalizeCanonicalUrl, parseRssItems } from "../bridge/rss-news-preview.mjs";
+import { assessRssTransport, auditRssMetadataQuality, buildRssNewsPreview, dedupeRssItems, diagnoseRssFailure, normalizeCanonicalUrl, parseRssItems } from "../bridge/rss-news-preview.mjs";
 
 const source = {
   id: "official-ai",
@@ -14,6 +14,8 @@ const source = {
   feedUrl: "https://example.com/news/feed.xml",
   enabled: true,
   requiresLogin: false,
+  rightsPolicy: "official_feed_metadata_with_attribution",
+  feedEvidenceUrl: "https://example.com/news/",
 };
 
 test("normalizes canonical URLs without tracking parameters", () => {
@@ -57,6 +59,45 @@ test("deduplicates repeated URL or same-source title fingerprints", () => {
   assert.equal(dedupeRssItems(items).length, 1);
 });
 
+test("audits RSS metadata freshness and registered provenance without fetching article bodies", () => {
+  const items = [
+    ...parseRssItems(`<rss><channel><item><title>Fresh</title><link>https://example.com/fresh</link><pubDate>Fri, 21 Aug 2026 12:00:00 GMT</pubDate></item></channel></rss>`, source),
+    ...parseRssItems(`<rss><channel><item><title>Recent</title><link>https://example.com/recent</link><pubDate>Wed, 19 Aug 2026 12:00:00 GMT</pubDate></item></channel></rss>`, source),
+    ...parseRssItems(`<rss><channel><item><title>No date</title><link>https://example.com/no-date</link></item></channel></rss>`, source),
+  ];
+  const audit = auditRssMetadataQuality(items, [source], { asOf: new Date("2026-08-21T13:00:00Z") });
+
+  assert.deepEqual(audit.summary, {
+    itemsAudited: 3,
+    provenanceReadyItems: 3,
+    usableTimestampItems: 2,
+    within24Hours: 1,
+    within72Hours: 2,
+    within7Days: 2,
+    olderThan7Days: 0,
+    missingOrInvalidTimestamps: 1,
+    futureTimestampsRequiringReview: 0,
+    metadataQualityReadyItems: 2,
+  });
+  assert.equal(audit.items[0].freshnessStatus, "within_24_hours");
+  assert.equal(audit.items[0].metadataProvenanceReady, true);
+  assert.equal(audit.items[0].sourceEvidenceUrl, "https://example.com/news/");
+  assert.equal(audit.items.every((item) => item.articleBodyFetched === false), true);
+  assert.equal(audit.articleBodiesFetched, false);
+  assert.equal(audit.factsVerified, false);
+});
+
+test("flags future timestamps and unregistered sources for human review", () => {
+  const [item] = parseRssItems(`<rss><channel><item><title>Future</title><link>https://example.com/future</link><pubDate>Sat, 22 Aug 2026 13:00:00 GMT</pubDate></item></channel></rss>`, source);
+  const audit = auditRssMetadataQuality([{ ...item, sourceId: "unknown" }], [source], { asOf: new Date("2026-08-21T13:00:00Z") });
+
+  assert.equal(audit.items[0].freshnessStatus, "future_timestamp_requires_review");
+  assert.equal(audit.items[0].metadataProvenanceReady, false);
+  assert.equal(audit.summary.futureTimestampsRequiringReview, 1);
+  assert.equal(audit.summary.provenanceReadyItems, 0);
+  assert.equal(audit.summary.metadataQualityReadyItems, 0);
+});
+
 test("builds a partial live preview with explicit source health and no writes", async () => {
   const failedSource = { ...source, id: "failed", name: "Failed", feedUrl: "https://failed.example/feed.xml" };
   const fetcher = async (url) => {
@@ -81,6 +122,10 @@ test("builds a partial live preview with explicit source health and no writes", 
   assert.equal(preview.databaseWrites, false);
   assert.equal(preview.publishTriggered, false);
   assert.equal(preview.factsVerified, false);
+  assert.equal(preview.metadataQuality.itemsAudited, 1);
+  assert.equal(preview.metadataQuality.provenanceReadyItems, 1);
+  assert.equal(preview.metadataQuality.within24Hours, 1);
+  assert.equal(preview.metadataQuality.articleBodiesFetched, false);
 });
 
 test("reports a safe network cause code without swallowing source failures", async () => {
@@ -133,6 +178,9 @@ test("wires the preview as an explicit read-only UI action", async () => {
   assert.match(page, /数据库写入/);
   assert.match(page, /newsPreview\.sourceHealth\.map/);
   assert.match(page, /source\.operatorAction/);
+  assert.match(page, /RSS 元数据质量审计/);
+  assert.match(page, /metadataQuality\.provenanceReadyItems/);
+  assert.match(page, /文章正文读取 0 · 事实核验 0 · 数据库写入 0 · 发布 0/);
   assert.match(route, /buildRssNewsPreview/);
   assert.doesNotMatch(route, /getDb|\.insert\(|\.update\(|\.delete\(/);
 });

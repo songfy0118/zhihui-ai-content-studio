@@ -140,6 +140,68 @@ export function dedupeRssItems(items = []) {
   });
 }
 
+function assessPublishedAt(publishedAt, asOfMs) {
+  const publishedMs = Date.parse(publishedAt ?? "");
+  if (!Number.isFinite(publishedMs)) return { ageHours: null, freshnessStatus: "timestamp_missing_or_invalid" };
+  const ageHours = (asOfMs - publishedMs) / (60 * 60 * 1000);
+  if (ageHours < 0) return { ageHours: Number(ageHours.toFixed(1)), freshnessStatus: "future_timestamp_requires_review" };
+  if (ageHours <= 24) return { ageHours: Number(ageHours.toFixed(1)), freshnessStatus: "within_24_hours" };
+  if (ageHours <= 72) return { ageHours: Number(ageHours.toFixed(1)), freshnessStatus: "within_72_hours" };
+  if (ageHours <= 168) return { ageHours: Number(ageHours.toFixed(1)), freshnessStatus: "within_7_days" };
+  return { ageHours: Number(ageHours.toFixed(1)), freshnessStatus: "older_than_7_days" };
+}
+
+export function auditRssMetadataQuality(items = [], sources = [], { asOf = new Date() } = {}) {
+  const asOfDate = asOf instanceof Date ? asOf : new Date(asOf);
+  const asOfMs = asOfDate.getTime();
+  if (!Number.isFinite(asOfMs)) throw new TypeError("asOf must be a valid date");
+  const sourceById = new Map(sources.map((source) => [source.id, source]));
+  const auditedItems = items.map((item) => {
+    const source = sourceById.get(item.sourceId);
+    const freshness = assessPublishedAt(item.publishedAt, asOfMs);
+    const metadataProvenanceReady = Boolean(
+      source
+      && source.enabled
+      && !source.requiresLogin
+      && source.sourceType === "rss"
+      && source.feedUrl?.startsWith("https://")
+      && source.rightsPolicy
+      && item.canonicalUrl?.startsWith("https://"),
+    );
+    return {
+      ...item,
+      ...freshness,
+      metadataProvenanceReady,
+      sourceEvidenceUrl: source?.feedEvidenceUrl ?? source?.baseUrl ?? null,
+      rightsPolicy: source?.rightsPolicy ?? null,
+      collectionScope: "rss_metadata_only",
+      articleBodyFetched: false,
+    };
+  });
+  const usableTimestamp = (item) => item.ageHours !== null && item.ageHours >= 0;
+
+  return {
+    asOf: asOfDate.toISOString(),
+    items: auditedItems,
+    summary: {
+      itemsAudited: auditedItems.length,
+      provenanceReadyItems: auditedItems.filter((item) => item.metadataProvenanceReady).length,
+      usableTimestampItems: auditedItems.filter(usableTimestamp).length,
+      within24Hours: auditedItems.filter((item) => usableTimestamp(item) && item.ageHours <= 24).length,
+      within72Hours: auditedItems.filter((item) => usableTimestamp(item) && item.ageHours <= 72).length,
+      within7Days: auditedItems.filter((item) => usableTimestamp(item) && item.ageHours <= 168).length,
+      olderThan7Days: auditedItems.filter((item) => usableTimestamp(item) && item.ageHours > 168).length,
+      missingOrInvalidTimestamps: auditedItems.filter((item) => item.freshnessStatus === "timestamp_missing_or_invalid").length,
+      futureTimestampsRequiringReview: auditedItems.filter((item) => item.freshnessStatus === "future_timestamp_requires_review").length,
+      metadataQualityReadyItems: auditedItems.filter((item) => item.metadataProvenanceReady && usableTimestamp(item)).length,
+    },
+    articleBodiesFetched: false,
+    factsVerified: false,
+    databaseWrites: false,
+    publishTriggered: false,
+  };
+}
+
 async function fetchSourcePreview(source, { fetcher, maxBytes, maxItems, timeoutMs }) {
   const startedAt = Date.now();
   try {
@@ -172,14 +234,17 @@ async function fetchSourcePreview(source, { fetcher, maxBytes, maxItems, timeout
 export async function buildRssNewsPreview({ sources = [], fetcher = fetch, maxBytes = DEFAULT_MAX_BYTES, maxItemsPerSource = DEFAULT_MAX_ITEMS, timeoutMs = 8_000, now = () => new Date() } = {}) {
   const rssSources = sources.filter((source) => source.enabled && !source.requiresLogin && source.sourceType === "rss" && source.feedUrl);
   const results = await Promise.all(rssSources.map((source) => fetchSourcePreview(source, { fetcher, maxBytes, maxItems: maxItemsPerSource, timeoutMs })));
-  const items = dedupeRssItems(results.flatMap((result) => result.items))
+  const rawItems = dedupeRssItems(results.flatMap((result) => result.items))
     .sort((left, right) => String(right.publishedAt ?? "").localeCompare(String(left.publishedAt ?? "")));
+  const fetchedAt = now();
+  const metadataQuality = auditRssMetadataQuality(rawItems, rssSources, { asOf: fetchedAt });
+  const items = metadataQuality.items;
   const sourceHealth = results.map((result) => result.health);
   const readySources = sourceHealth.filter((source) => source.status === "ready").length;
 
   return {
     status: items.length ? "preview_ready" : "no_live_items",
-    fetchedAt: now().toISOString(),
+    fetchedAt: fetchedAt.toISOString(),
     summary: {
       feedsAttempted: rssSources.length,
       readySources,
@@ -188,6 +253,14 @@ export async function buildRssNewsPreview({ sources = [], fetcher = fetch, maxBy
     },
     sourceHealth,
     transportAssessment: assessRssTransport(sourceHealth),
+    metadataQuality: {
+      asOf: metadataQuality.asOf,
+      ...metadataQuality.summary,
+      articleBodiesFetched: metadataQuality.articleBodiesFetched,
+      factsVerified: metadataQuality.factsVerified,
+      databaseWrites: metadataQuality.databaseWrites,
+      publishTriggered: metadataQuality.publishTriggered,
+    },
     items,
     contentFetched: items.length > 0,
     factsVerified: false,
