@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { NEWS_SOURCE_CATALOG, summarizeNewsSourceCatalog, validateNewsSourceCatalog } from "../bridge/news-source-catalog.mjs";
-import { describeManualSourceLinkHost, listManualSourceNameSuggestions } from "../app/manual-source-options.ts";
+import { describeManualSourceLinkHost, listEvidenceHandoffSourceSuggestions, listManualSourceNameSuggestions } from "../app/manual-source-options.ts";
 
 test("news source catalog allows only public no-login sources for automatic collection", () => {
   const validation = validateNewsSourceCatalog();
@@ -41,6 +41,15 @@ test("manual source suggestions expose labels without enabling collection", () =
     expectedHost: "mp.weixin.qq.com",
   });
   assert.equal(suggestions.some((source) => source.id === "qbitai"), false);
+});
+
+test("manual evidence handoff suggests registered editorial sources without changing collection policy", () => {
+  const suggestions = listEvidenceHandoffSourceSuggestions(NEWS_SOURCE_CATALOG);
+  assert.equal(suggestions.some((source) => source.id === "qbitai" && source.aliases.includes("量子位")), true);
+  assert.equal(suggestions.some((source) => source.id === "silicon-star-pro-wechat-manual" && source.aliases.includes("硅星人Pro")), true);
+  const siliconStar = NEWS_SOURCE_CATALOG.find((source) => source.id === "silicon-star-pro-wechat-manual");
+  assert.equal(siliconStar?.enabled, false);
+  assert.equal(siliconStar?.requiresLogin, true);
 });
 
 test("manual source link hints compare hosts without fetching the article", () => {

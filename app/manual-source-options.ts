@@ -35,6 +35,21 @@ export function listManualSourceNameSuggestions(sources: NewsSourceOptionInput[]
     .sort((left, right) => left.name.localeCompare(right.name, "zh-CN"));
 }
 
+export function listEvidenceHandoffSourceSuggestions(sources: NewsSourceOptionInput[]) {
+  return sources
+    .filter((source) => source.editorialAliases?.length && (
+      (source.enabled && !source.requiresLogin)
+      || (source.sourceType === "manual_import" && !source.enabled && source.requiresLogin)
+    ))
+    .map((source) => ({
+      id: source.id,
+      name: source.name,
+      aliases: [...(source.editorialAliases ?? [])],
+      expectedHost: normalizedHost(source.baseUrl),
+    }))
+    .sort((left, right) => left.name.localeCompare(right.name, "zh-CN"));
+}
+
 export function describeManualSourceLinkHost(sourceName: string, canonicalUrl: string, suggestions: ManualSourceNameSuggestion[]) {
   const selected = suggestions.find((source) => source.name === sourceName);
   if (!selected) return null;

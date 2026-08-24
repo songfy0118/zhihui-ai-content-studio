@@ -40,10 +40,11 @@ test("formats declared publisher roles for the human review card", () => {
 test("wires manual source name suggestions without automatic article collection", async () => {
   const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   assert.match(page, /listManualSourceNameSuggestions\(newsSourceCatalog\.sources\)/);
+  assert.match(page, /listEvidenceHandoffSourceSuggestions\(newsSourceCatalog\.sources\)/);
   assert.match(page, /list="manualEvidenceSourceOptions"/);
   assert.match(page, /manualSourceNameSuggestions\.map/);
   assert.match(page, /仅提供已登记的名称建议；不会自动抓取公众号/);
-  assert.match(page, /describeManualSourceLinkHost\(manualEvidenceDraft\.sourceName, manualEvidenceDraft\.canonicalUrl, manualSourceNameSuggestions\)/);
+  assert.match(page, /describeManualSourceLinkHost\(manualEvidenceDraft\.sourceName, manualEvidenceDraft\.canonicalUrl, manualHandoffSourceSuggestions\)/);
   assert.match(page, /manualSourceLinkHostHint&&<span>\{manualSourceLinkHostHint\}<\/span>/);
   assert.match(page, /target\.originalEvidence&&<a href=\{target\.originalEvidence\.canonicalUrl\} target="_blank" rel="noreferrer">人工打开原始来源<\/a>/);
   assert.match(page, /<a href=\{candidate\.canonicalUrl\} target="_blank" rel="noreferrer">人工打开候选来源<\/a>/);
@@ -55,6 +56,17 @@ test("wires manual source name suggestions without automatic article collection"
   assert.match(page, /审查时打开候选来源/);
   assert.match(page, /<ManualEvidenceReviewLinks preview=\{manualEvidencePreview\} leadId=\{leadId\} candidateId=\{decision\.candidateId\}\/>/);
 });
+
+test("hands empty RSS candidates to an explicit no-write manual evidence form", async () => {
+  const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /evidenceMetadataPreview\?\.status==="no_metadata_candidates"&&evidenceGapShortlist\.length===1&&evidenceSearchPlan\?\.readyForHumanResearchReview/);
+  assert.match(page, /RSS 暂无合格第二来源，转人工公开页补证/);
+  assert.match(page, /setManualEvidenceDraft\(\(current\) => syncManualEvidenceDraftToShortlist\(current, nextShortlist\)\)/);
+  assert.match(page, /onClick=\{\(\)=>updateManualEvidenceDraft\("sourceName",source\.name\)\}>使用/);
+  assert.match(page, /已预选当前唯一线索/);
+  assert.match(page, /不会自动打开、抓取或保存 · 正文读取 0 · 事实核验 0 · 来源锁 0/);
+});
+
 const plan = buildEvidenceSearchPlan([lead], [lead.id], sources);
 
 function input(overrides = {}) {
