@@ -57,8 +57,9 @@ test("wires manual source name suggestions without automatic article collection"
   assert.match(page, /list="manualEvidenceSourceOptions"/);
   assert.match(page, /manualSourceNameSuggestions\.map/);
   assert.match(page, /仅提供已登记的名称建议；不会自动抓取公众号/);
-  assert.match(page, /describeManualSourceLinkHost\(manualEvidenceDraft\.sourceName, manualEvidenceDraft\.canonicalUrl, manualHandoffSourceSuggestions\)/);
-  assert.match(page, /manualSourceLinkHostHint&&<span>\{manualSourceLinkHostHint\}<\/span>/);
+  assert.match(page, /assessManualSourceLinkHost\(manualEvidenceDraft\.sourceName, manualEvidenceDraft\.canonicalUrl, manualHandoffSourceSuggestions\)/);
+  assert.match(page, /manualSourceLinkHostAssessment\.blocksPreview\?"sourceHostHint error":"sourceHostHint"/);
+  assert.match(page, /role=\{manualSourceLinkHostAssessment\.blocksPreview\?"alert":undefined\}/);
   assert.match(page, /target\.originalEvidence&&<a href=\{target\.originalEvidence\.canonicalUrl\} target="_blank" rel="noreferrer">人工打开原始来源<\/a>/);
   assert.match(page, /<a href=\{candidate\.canonicalUrl\} target="_blank" rel="noreferrer">人工打开候选来源<\/a>/);
   assert.match(page, /decision\.candidateMode==="manual_public_metadata"&&<span>发布者身份：/);
@@ -80,6 +81,8 @@ test("hands empty RSS candidates to an explicit no-write manual evidence form", 
   assert.match(page, /不会自动打开、抓取或保存 · 正文读取 0 · 事实核验 0 · 来源锁 0/);
   assert.match(page, /人工补证必填进度 \{manualEvidenceFormReadiness\.completed\}\/\{manualEvidenceFormReadiness\.total\}/);
   assert.match(page, /if \(!manualEvidenceFormReadiness\.ready \|\| evidenceGapShortlist\.length !== 1\)/);
+  assert.match(page, /if \(manualSourceLinkHostAssessment\.blocksPreview\)[\s\S]*?未发送预览请求/);
+  assert.match(page, /disabled=\{manualEvidenceBusy\|\|manualSourceLinkHostAssessment\.blocksPreview\|\|/);
   assert.match(page, /缺少字段时不会发送预览请求/);
 });
 

@@ -5,6 +5,8 @@ type NewsSourceOptionInput = {
   sourceType: string;
   enabled: boolean;
   requiresLogin: boolean;
+  feedUrl?: string | null;
+  feedEvidenceUrl?: string | null;
   editorialAliases?: string[];
 };
 
@@ -13,6 +15,13 @@ type ManualSourceNameSuggestion = {
   name: string;
   aliases: string[];
   expectedHost: string | null;
+  expectedHosts: string[];
+};
+
+type ManualSourceLinkHostAssessment = {
+  status: "unregistered" | "awaiting_link" | "invalid_link" | "mismatch" | "match";
+  message: string | null;
+  blocksPreview: boolean;
 };
 
 function normalizedHost(value: string) {
@@ -23,15 +32,32 @@ function normalizedHost(value: string) {
   }
 }
 
+function normalizedSourceLabel(value: string) {
+  return value.normalize("NFKC").trim().toLocaleLowerCase("en-US");
+}
+
+function expectedHosts(source: NewsSourceOptionInput) {
+  return [...new Set([source.baseUrl, source.feedEvidenceUrl, source.feedUrl]
+    .filter((value): value is string => typeof value === "string")
+    .map(normalizedHost)
+    .filter((host): host is string => Boolean(host)))];
+}
+
+function toSuggestion(source: NewsSourceOptionInput): ManualSourceNameSuggestion {
+  const hosts = expectedHosts(source);
+  return {
+    id: source.id,
+    name: source.name,
+    aliases: [...(source.editorialAliases ?? [])],
+    expectedHost: normalizedHost(source.baseUrl),
+    expectedHosts: hosts,
+  };
+}
+
 export function listManualSourceNameSuggestions(sources: NewsSourceOptionInput[]) {
   return sources
     .filter((source) => source.sourceType === "manual_import" && !source.enabled && source.requiresLogin)
-    .map((source) => ({
-      id: source.id,
-      name: source.name,
-      aliases: [...(source.editorialAliases ?? [])],
-      expectedHost: normalizedHost(source.baseUrl),
-    }))
+    .map(toSuggestion)
     .sort((left, right) => left.name.localeCompare(right.name, "zh-CN"));
 }
 
@@ -41,30 +67,37 @@ export function listEvidenceHandoffSourceSuggestions(sources: NewsSourceOptionIn
       (source.enabled && !source.requiresLogin)
       || (source.sourceType === "manual_import" && !source.enabled && source.requiresLogin)
     ))
-    .map((source) => ({
-      id: source.id,
-      name: source.name,
-      aliases: [...(source.editorialAliases ?? [])],
-      expectedHost: normalizedHost(source.baseUrl),
-    }))
+    .map(toSuggestion)
     .sort((left, right) => left.name.localeCompare(right.name, "zh-CN"));
 }
 
-export function describeManualSourceLinkHost(sourceName: string, canonicalUrl: string, suggestions: ManualSourceNameSuggestion[]) {
-  const selected = suggestions.find((source) => source.name === sourceName);
-  if (!selected) return null;
-  if (!canonicalUrl.trim()) return `已选择“${selected.name}”；请粘贴该来源的公开文章链接`;
+export function assessManualSourceLinkHost(sourceName: string, canonicalUrl: string, suggestions: ManualSourceNameSuggestion[]): ManualSourceLinkHostAssessment {
+  const normalizedName = normalizedSourceLabel(sourceName);
+  const selected = suggestions.find((source) => [source.name, ...source.aliases]
+    .some((label) => normalizedSourceLabel(label) === normalizedName));
+  if (!selected) return { status: "unregistered", message: null, blocksPreview: false };
+  if (!canonicalUrl.trim()) return { status: "awaiting_link", message: `已选择“${selected.name}”；请粘贴该来源的公开文章链接`, blocksPreview: false };
 
   let parsed: URL;
   try {
     parsed = new URL(canonicalUrl);
   } catch {
-    return "链接格式尚不完整；服务器预览会继续执行公开 HTTPS 校验";
+    return { status: "invalid_link", message: "链接格式尚不完整；服务器预览会继续执行公开 HTTPS 校验", blocksPreview: false };
   }
   const currentHost = normalizedHost(parsed.href);
-  if (parsed.protocol !== "https:" || !currentHost) return "链接必须使用公开 HTTPS；服务器预览不会请求不安全地址";
-  if (selected.expectedHost && currentHost !== selected.expectedHost) {
-    return `所选来源登记主机为 ${selected.expectedHost}，当前链接为 ${currentHost}；请核对来源名称或链接`;
+  if (parsed.protocol !== "https:" || !currentHost) {
+    return { status: "invalid_link", message: "链接必须使用公开 HTTPS；服务器预览不会请求不安全地址", blocksPreview: false };
   }
-  return `链接主机与已登记来源一致（${currentHost}）；仍需人工核对标题和发布时间`;
+  if (selected.expectedHosts.length && !selected.expectedHosts.includes(currentHost)) {
+    return {
+      status: "mismatch",
+      message: `所选来源登记主机为 ${selected.expectedHosts.join(" / ")}，当前链接为 ${currentHost}；请核对来源名称或链接`,
+      blocksPreview: true,
+    };
+  }
+  return { status: "match", message: `链接主机与已登记来源一致（${currentHost}）；仍需人工核对标题和发布时间`, blocksPreview: false };
+}
+
+export function describeManualSourceLinkHost(sourceName: string, canonicalUrl: string, suggestions: ManualSourceNameSuggestion[]) {
+  return assessManualSourceLinkHost(sourceName, canonicalUrl, suggestions).message;
 }

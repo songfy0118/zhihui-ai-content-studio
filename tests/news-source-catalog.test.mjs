@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { NEWS_SOURCE_CATALOG, summarizeNewsSourceCatalog, validateNewsSourceCatalog } from "../bridge/news-source-catalog.mjs";
-import { describeManualSourceLinkHost, listEvidenceHandoffSourceSuggestions, listManualSourceNameSuggestions } from "../app/manual-source-options.ts";
+import { assessManualSourceLinkHost, describeManualSourceLinkHost, listEvidenceHandoffSourceSuggestions, listManualSourceNameSuggestions } from "../app/manual-source-options.ts";
 
 test("news source catalog allows only public no-login sources for automatic collection", () => {
   const validation = validateNewsSourceCatalog();
@@ -39,6 +39,7 @@ test("manual source suggestions expose labels without enabling collection", () =
     name: "硅星人Pro · 公众号人工链接",
     aliases: ["硅星人Pro", "硅星人"],
     expectedHost: "mp.weixin.qq.com",
+    expectedHosts: ["mp.weixin.qq.com"],
   });
   assert.equal(suggestions.some((source) => source.id === "qbitai"), false);
 });
@@ -60,6 +61,18 @@ test("manual source link hints compare hosts without fetching the article", () =
   assert.match(describeManualSourceLinkHost(sourceName, "https://example.org/repost", suggestions), /当前链接为 example\.org/);
   assert.match(describeManualSourceLinkHost(sourceName, "http://mp.weixin.qq.com/s/example", suggestions), /链接必须使用公开 HTTPS/);
   assert.equal(describeManualSourceLinkHost("其他公开来源", "https://example.org/story", suggestions), null);
+});
+
+test("manual source host assessment blocks registered name or alias mismatches locally", () => {
+  const suggestions = listEvidenceHandoffSourceSuggestions(NEWS_SOURCE_CATALOG);
+  const mismatch = assessManualSourceLinkHost("量子位", "https://mp.weixin.qq.com/s/not-qbitai", suggestions);
+  assert.equal(mismatch.status, "mismatch");
+  assert.equal(mismatch.blocksPreview, true);
+  assert.match(mismatch.message, /登记主机为 qbitai\.com/);
+
+  const match = assessManualSourceLinkHost("硅星人Pro", "https://mp.weixin.qq.com/s/public-article", suggestions);
+  assert.equal(match.status, "match");
+  assert.equal(match.blocksPreview, false);
 });
 
 test("catalog summary separates automatic and manual sources", () => {
