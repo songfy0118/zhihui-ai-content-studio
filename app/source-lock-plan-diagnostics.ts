@@ -13,3 +13,16 @@ export function formatSourceLockPlanBlocker(blocker: string) {
   }
   return sourceLockPlanBlockerLabels[blocker] ?? blocker;
 }
+
+export function formatSourceLockEvidenceRole(role: string) {
+  if (role === "original") return "原始来源";
+  if (role === "independent") return "独立补证";
+  return role;
+}
+
+export function formatSourceLockPublisherRole(role: string) {
+  if (role === "catalog_metadata") return "已登记 RSS 元数据";
+  if (role === "original_publisher") return "声明为原始发布者";
+  if (role === "syndicated_or_repost") return "声明为转载页 / 聚合页";
+  return role;
+}

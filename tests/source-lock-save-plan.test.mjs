@@ -7,7 +7,7 @@ import { buildEvidenceMetadataPreview } from "../bridge/evidence-metadata-previe
 import { buildEvidenceReviewPreview, EVIDENCE_REVIEW_CHECKS } from "../bridge/evidence-review-preview.mjs";
 import { buildSourceLockSavePlan } from "../bridge/source-lock-save-plan.mjs";
 import { POST } from "../app/api/news/source-lock-save-plan/route.ts";
-import { formatSourceLockPlanBlocker } from "../app/source-lock-plan-diagnostics.ts";
+import { formatSourceLockEvidenceRole, formatSourceLockPlanBlocker, formatSourceLockPublisherRole } from "../app/source-lock-plan-diagnostics.ts";
 
 const lead = {
   id: "cluster:one",
@@ -35,6 +35,14 @@ test("formats source lock plan blockers as actionable Chinese diagnostics", () =
   assert.equal(formatSourceLockPlanBlocker("review_fingerprint_mismatch"), "审查指纹已变化，请重新生成计划");
   assert.equal(formatSourceLockPlanBlocker("review_target_not_eligible:cluster:one"), "线索 cluster:one：审查证据不完整，不能进入保存计划");
   assert.equal(formatSourceLockPlanBlocker("future_blocker"), "future_blocker");
+});
+
+test("labels every source role before authorization", () => {
+  assert.equal(formatSourceLockEvidenceRole("original"), "原始来源");
+  assert.equal(formatSourceLockEvidenceRole("independent"), "独立补证");
+  assert.equal(formatSourceLockPublisherRole("catalog_metadata"), "已登记 RSS 元数据");
+  assert.equal(formatSourceLockPublisherRole("original_publisher"), "声明为原始发布者");
+  assert.equal(formatSourceLockPublisherRole("syndicated_or_repost"), "声明为转载页 / 聚合页");
 });
 
 test("binds a save plan to the exact current review fingerprint", () => {
@@ -99,6 +107,9 @@ test("wires a save-plan-only endpoint without a database adapter", async () => {
   assert.match(page, /setSourceLockSavePlanBusy\(true\);\s*setSourceLockSavePlan\(null\);\s*setSourceLockSaveAuthorizationPreview\(null\);\s*evidencePipelineRevision\.current \+= 1;/);
   assert.match(page, /const plan = await response\.json\(\) as SourceLockSavePlan;\s*if \(requestRevision !== evidencePipelineRevision\.current\) return;\s*setSourceLockSavePlan\(plan\);/);
   assert.match(page, /sourceLockSavePlan\.blockers\.map\(formatSourceLockPlanBlocker\)\.join\(" \/ "\)/);
+  assert.match(page, /function SourceLockPlanSummary/);
+  assert.match(page, /授权前请核对两条公开来源/);
+  assert.match(page, /<SourceLockPlanSummary plan=\{sourceLockSavePlan\}\/>/);
   assert.match(route, /buildManualPublicEvidencePreview/);
   assert.match(route, /manualInputs/);
   assert.match(route, /\.\.\.buildSourceLockSavePlan\(null\)/);
