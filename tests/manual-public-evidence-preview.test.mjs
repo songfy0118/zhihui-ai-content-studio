@@ -174,6 +174,23 @@ function input(overrides = {}) {
   };
 }
 
+test("keeps the local title gate aligned with the server preview policy", () => {
+  const cases = [
+    "Enterprise agent platform launched by OpenAI",
+    "OpenAI enterprise update",
+    "OpenAI enterprise finance markets database security robotics hardware software policy startup venture cloud chip mobile social media",
+    "Local sports schedule update",
+  ];
+  for (const title of cases) {
+    const localAssessment = assessManualEvidenceTitleMatch(lead.title, title);
+    const serverPreview = buildManualPublicEvidencePreview(plan, [input({ title })]);
+    const serverBlocksTitle = serverPreview.blockers.some((blocker) => blocker.endsWith("title_match_below_threshold"));
+    assert.equal(localAssessment.blocksPreview, serverBlocksTitle, title);
+    assert.equal(serverPreview.validationPolicy.minimumSimilarity, 0.12);
+    assert.equal(serverPreview.validationPolicy.minimumSharedTerms, 2);
+  }
+});
+
 test("previews one public manual candidate without fetching or persisting it", () => {
   const preview = buildManualPublicEvidencePreview(plan, [input()]);
   assert.equal(preview.status, "manual_evidence_preview_ready");
