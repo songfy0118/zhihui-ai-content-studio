@@ -2,6 +2,15 @@ import { createHash } from "node:crypto";
 
 const HASH = /^[a-f0-9]{64}$/;
 const DEFAULT_TTL_SECONDS = 300;
+const EXPECTED_AUTHORIZATION_TERMS = Object.freeze({
+  singleUse: true,
+  ttlSecondsAfterAcceptance: DEFAULT_TTL_SECONDS,
+  exactSavePlanFingerprintRequired: true,
+  sourceLockRecordCount: 1,
+  evidenceRecordCount: 2,
+  allowedOperation: "persist_one_reviewed_source_lock_after_single_use_authorization",
+  liveSaveRouteConnected: false,
+});
 
 function hash(value) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -23,6 +32,7 @@ function safePreview(value) {
     || value?.eligibleForExplicitSourceLockSaveAuthorization !== true
     || value?.singleUseAuthorizationRequired !== true
     || value?.sourceLockSaveAuthorizationGranted !== false
+    || JSON.stringify(value?.authorizationTerms) !== JSON.stringify(EXPECTED_AUTHORIZATION_TERMS)
     || value?.liveSaveRouteConnected !== false
     || value?.writeAllowed !== false
     || value?.databaseWriteAttempted !== false
@@ -53,6 +63,7 @@ function safePreview(value) {
     sourceSavePlanFingerprint: value.sourceSavePlanFingerprint,
     sourceReviewFingerprint: value.sourceReviewFingerprint,
     saveTarget: value.saveTarget,
+    authorizationTerms: value.authorizationTerms,
   };
   return hash(fingerprintPayload) === value.authorizationPreviewFingerprint ? target : null;
 }

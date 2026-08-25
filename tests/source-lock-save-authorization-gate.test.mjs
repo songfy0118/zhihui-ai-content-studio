@@ -80,6 +80,10 @@ test("rejects a tampered preview and invalid ticket window", () => {
   tampered.saveTarget.title += " changed";
   assert.ok(authorize(tampered).blockers.includes("source_lock_save_authorization_preview_invalid_or_tampered"));
 
+  const tamperedTerms = readyPreview();
+  tamperedTerms.authorizationTerms.evidenceRecordCount = 3;
+  assert.ok(authorize(tamperedTerms).blockers.includes("source_lock_save_authorization_preview_invalid_or_tampered"));
+
   const invalidWindow = authorize(readyPreview(), {}, { ttlSeconds: 30 });
   assert.ok(invalidWindow.blockers.includes("source_lock_save_authorization_ticket_window_invalid"));
   assert.equal(invalidWindow.authorizationAccepted, false);
