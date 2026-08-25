@@ -19,7 +19,7 @@ type ManualSourceNameSuggestion = {
 };
 
 type ManualSourceLinkHostAssessment = {
-  status: "unregistered" | "awaiting_link" | "invalid_link" | "unsafe_link" | "mismatch" | "match";
+  status: "unregistered" | "awaiting_link" | "invalid_link" | "unsafe_link" | "same_original_host" | "mismatch" | "match";
   message: string | null;
   blocksPreview: boolean;
 };
@@ -94,7 +94,7 @@ export function listEvidenceHandoffSourceSuggestions(sources: NewsSourceOptionIn
     .sort((left, right) => left.name.localeCompare(right.name, "zh-CN"));
 }
 
-export function assessManualSourceLinkHost(sourceName: string, canonicalUrl: string, suggestions: ManualSourceNameSuggestion[]): ManualSourceLinkHostAssessment {
+export function assessManualSourceLinkHost(sourceName: string, canonicalUrl: string, suggestions: ManualSourceNameSuggestion[], originalHosts: string[] = []): ManualSourceLinkHostAssessment {
   const normalizedName = normalizedSourceLabel(sourceName);
   const selected = suggestions.find((source) => [source.name, ...source.aliases]
     .some((label) => normalizedSourceLabel(label) === normalizedName));
@@ -119,6 +119,10 @@ export function assessManualSourceLinkHost(sourceName: string, canonicalUrl: str
   }
   if (!isPublicLookingHost(currentHost)) {
     return { status: "unsafe_link", message: `链接主机 ${currentHost} 不是可公开访问的互联网主机；不会发送当前预览请求`, blocksPreview: true };
+  }
+  const normalizedOriginalHosts = new Set(originalHosts.map((host) => normalizedHost(host) ?? host.trim().toLocaleLowerCase("en-US").replace(/^www\./, "").replace(/^\[|\]$/g, "")));
+  if (normalizedOriginalHosts.has(currentHost)) {
+    return { status: "same_original_host", message: `候选链接与原来源同属 ${currentHost}；需要独立来源，不会发送当前预览请求`, blocksPreview: true };
   }
   if (!selected) return { status: "unregistered", message: null, blocksPreview: false };
   if (selected.expectedHosts.length && !selected.expectedHosts.includes(currentHost)) {

@@ -294,7 +294,8 @@ export default function Home() {
   const evidencePipelineRevision = useRef(0);
   const manualSourceNameSuggestions = useMemo(() => listManualSourceNameSuggestions(newsSourceCatalog.sources), [newsSourceCatalog.sources]);
   const manualHandoffSourceSuggestions = useMemo(() => listEvidenceHandoffSourceSuggestions(newsSourceCatalog.sources), [newsSourceCatalog.sources]);
-  const manualSourceLinkHostAssessment = useMemo(() => assessManualSourceLinkHost(manualEvidenceDraft.sourceName, manualEvidenceDraft.canonicalUrl, manualHandoffSourceSuggestions), [manualEvidenceDraft.sourceName, manualEvidenceDraft.canonicalUrl, manualHandoffSourceSuggestions]);
+  const manualEvidenceOriginalHosts = useMemo(() => evidenceSearchPlan?.targets.find((target) => target.leadId === manualEvidenceDraft.leadId)?.independenceDiagnostics.originalHosts ?? [], [evidenceSearchPlan, manualEvidenceDraft.leadId]);
+  const manualSourceLinkHostAssessment = useMemo(() => assessManualSourceLinkHost(manualEvidenceDraft.sourceName, manualEvidenceDraft.canonicalUrl, manualHandoffSourceSuggestions, manualEvidenceOriginalHosts), [manualEvidenceDraft.sourceName, manualEvidenceDraft.canonicalUrl, manualHandoffSourceSuggestions, manualEvidenceOriginalHosts]);
   const manualEvidenceTextAssessment = useMemo(() => assessManualEvidenceTextFields(manualEvidenceDraft.sourceName, manualEvidenceDraft.title), [manualEvidenceDraft.sourceName, manualEvidenceDraft.title]);
   const manualEvidencePublishedAtAssessment = useMemo(() => assessManualEvidencePublishedAt(manualEvidenceDraft.publishedAt), [manualEvidenceDraft.publishedAt]);
   const manualEvidenceFormReadiness = useMemo(() => buildManualEvidenceFormReadiness(manualEvidenceDraft), [manualEvidenceDraft]);

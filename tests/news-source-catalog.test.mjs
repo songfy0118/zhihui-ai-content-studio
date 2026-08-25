@@ -115,6 +115,17 @@ test("manual source host assessment blocks credentials, local and reserved hosts
   assert.equal(publicIp.blocksPreview, false);
 });
 
+test("manual source host assessment blocks the selected lead's original host locally", () => {
+  const suggestions = listEvidenceHandoffSourceSuggestions(NEWS_SOURCE_CATALOG);
+  const sameHost = assessManualSourceLinkHost("Independent News", "https://www.origin.news/another-story", suggestions, ["origin.news"]);
+  assert.equal(sameHost.status, "same_original_host");
+  assert.equal(sameHost.blocksPreview, true);
+  assert.match(sameHost.message, /需要独立来源/);
+  const independent = assessManualSourceLinkHost("Independent News", "https://independent.news/story", suggestions, ["origin.news"]);
+  assert.equal(independent.status, "unregistered");
+  assert.equal(independent.blocksPreview, false);
+});
+
 test("catalog summary separates automatic and manual sources", () => {
   const summary = summarizeNewsSourceCatalog();
   assert.equal(summary.totalSources, 17);

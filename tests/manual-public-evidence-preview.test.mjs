@@ -94,7 +94,8 @@ test("wires manual source name suggestions without automatic article collection"
   assert.match(page, /list="manualEvidenceSourceOptions"/);
   assert.match(page, /manualSourceNameSuggestions\.map/);
   assert.match(page, /仅提供已登记的名称建议；不会自动抓取公众号/);
-  assert.match(page, /assessManualSourceLinkHost\(manualEvidenceDraft\.sourceName, manualEvidenceDraft\.canonicalUrl, manualHandoffSourceSuggestions\)/);
+  assert.match(page, /const manualEvidenceOriginalHosts = useMemo/);
+  assert.match(page, /assessManualSourceLinkHost\(manualEvidenceDraft\.sourceName, manualEvidenceDraft\.canonicalUrl, manualHandoffSourceSuggestions, manualEvidenceOriginalHosts\)/);
   assert.match(page, /manualSourceLinkHostAssessment\.blocksPreview\?"sourceHostHint error":"sourceHostHint"/);
   assert.match(page, /role=\{manualSourceLinkHostAssessment\.blocksPreview\?"alert":undefined\}/);
   assert.match(page, /target\.originalEvidence&&<a href=\{target\.originalEvidence\.canonicalUrl\} target="_blank" rel="noreferrer">人工打开原始来源<\/a>/);
