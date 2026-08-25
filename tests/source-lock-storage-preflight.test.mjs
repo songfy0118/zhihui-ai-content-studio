@@ -60,14 +60,18 @@ test("blocks partial or already-present storage", async () => {
 });
 
 test("checks in schema, migration-chain artifacts and a GET-only local route", async () => {
-  const [schema, chain, route] = await Promise.all([
+  const [schema, chain, route, page] = await Promise.all([
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
     readFile(new URL("../db/migration-chain-inspector.mjs", import.meta.url), "utf8"),
     readFile(new URL("../app/api/local/source-lock-migration/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
   ]);
   assert.match(schema, /sqliteTable\("source_locks"/);
   assert.match(schema, /sqliteTable\("source_lock_evidence"/);
   assert.match(chain, /0007_silly_turbo/);
   assert.match(route, /export async function GET/);
   assert.doesNotMatch(route, /export async function POST|getDb|\.insert\(|\.update\(|\.delete\(/);
+  assert.match(page, /fetch\("\/api\/local\/source-lock-migration", \{ cache:"no-store" \}\)/);
+  assert.match(page, /检查来源锁表（只读）/);
+  assert.match(page, /<SourceLockStorageReadinessCard readiness=\{sourceLockStorageReadiness\}/);
 });
