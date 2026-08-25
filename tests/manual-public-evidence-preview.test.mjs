@@ -7,7 +7,7 @@ import { buildEvidenceReviewPreview, EVIDENCE_REVIEW_CHECKS } from "../bridge/ev
 import { buildManualPublicEvidencePreview } from "../bridge/manual-public-evidence-preview.mjs";
 import { NEWS_SOURCE_CATALOG } from "../bridge/news-source-catalog.mjs";
 import { buildSourceLockSavePlan } from "../bridge/source-lock-save-plan.mjs";
-import { formatManualEvidenceBlocker, formatManualEvidencePublisherRole } from "../app/manual-evidence-diagnostics.ts";
+import { describeManualEvidenceReviewHandoff, formatManualEvidenceBlocker, formatManualEvidencePublisherRole } from "../app/manual-evidence-diagnostics.ts";
 import { assessManualEvidencePublishedAt, assessManualEvidenceTextFields, assessManualEvidenceTimeWindow, assessManualEvidenceTitleMatch, buildManualEvidenceFormReadiness, describeManualEvidencePreviewReadiness } from "../app/manual-evidence-form-readiness.ts";
 import { assessManualSourceLinkHost, listEvidenceHandoffSourceSuggestions } from "../app/manual-source-options.ts";
 
@@ -39,6 +39,13 @@ test("formats declared publisher roles for the human review card", () => {
   assert.equal(formatManualEvidencePublisherRole("original_publisher"), "原始发布者");
   assert.equal(formatManualEvidencePublisherRole("syndicated_or_repost"), "转载页 / 聚合页（需继续核对转载链）");
   assert.equal(formatManualEvidencePublisherRole(null), "发布者身份未声明");
+});
+
+test("keeps manual evidence selection distinct from completed evidence review", () => {
+  assert.equal(describeManualEvidenceReviewHandoff(0, 6, false), "人工候选已交接；仍需人工完成 6 项判断");
+  assert.equal(describeManualEvidenceReviewHandoff(5, 6, false), "人工候选已交接；仍需人工完成 1 项判断");
+  assert.equal(describeManualEvidenceReviewHandoff(6, 6, false), "六项判断已勾选；还需运行不保存的审查预览");
+  assert.equal(describeManualEvidenceReviewHandoff(6, 6, true), "六项审查预览已通过；下一步只能生成不保存的来源锁计划");
 });
 
 test("reports manual evidence field completion without validating or fetching the link", () => {
@@ -142,6 +149,8 @@ test("wires manual source name suggestions without automatic article collection"
   assert.match(page, /审查时打开原始来源/);
   assert.match(page, /审查时打开候选来源/);
   assert.match(page, /<ManualEvidenceReviewLinks preview=\{manualEvidencePreview\} leadId=\{leadId\} candidateId=\{decision\.candidateId\}\/>/);
+  assert.match(page, /<ManualEvidenceReviewHandoff decisions=\{evidenceReviewDecisions\} preview=\{evidenceReviewPreview\}\/>/);
+  assert.match(page, /“已交接”不代表事实已核验，也不会创建来源锁/);
 });
 
 test("hands empty RSS candidates to an explicit no-write manual evidence form", async () => {

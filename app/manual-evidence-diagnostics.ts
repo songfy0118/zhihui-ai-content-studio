@@ -30,3 +30,9 @@ export function formatManualEvidencePublisherRole(role: string | null | undefine
   if (role === "syndicated_or_repost") return "转载页 / 聚合页（需继续核对转载链）";
   return "发布者身份未声明";
 }
+
+export function describeManualEvidenceReviewHandoff(confirmedChecks: number, totalChecks: number, previewReady: boolean) {
+  if (previewReady) return "六项审查预览已通过；下一步只能生成不保存的来源锁计划";
+  if (confirmedChecks === totalChecks) return "六项判断已勾选；还需运行不保存的审查预览";
+  return `人工候选已交接；仍需人工完成 ${Math.max(0, totalChecks - confirmedChecks)} 项判断`;
+}
