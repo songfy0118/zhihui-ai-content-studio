@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { formatEvidenceReviewBlocker } from "./evidence-review-diagnostics";
-import { assessManualEvidencePublishedAt, assessManualEvidenceTextFields, buildManualEvidenceFormReadiness, describeManualEvidencePreviewReadiness } from "./manual-evidence-form-readiness";
+import { assessManualEvidenceTextFields, assessManualEvidenceTimeWindow, buildManualEvidenceFormReadiness, describeManualEvidencePreviewReadiness } from "./manual-evidence-form-readiness";
 import { formatManualEvidenceBlocker, formatManualEvidencePublisherRole } from "./manual-evidence-diagnostics";
 import { assessManualSourceLinkHost, listEvidenceHandoffSourceSuggestions, listManualSourceNameSuggestions } from "./manual-source-options";
 import { formatSourceLockAuthorizationBlocker } from "./source-lock-authorization-diagnostics";
@@ -295,9 +295,10 @@ export default function Home() {
   const manualSourceNameSuggestions = useMemo(() => listManualSourceNameSuggestions(newsSourceCatalog.sources), [newsSourceCatalog.sources]);
   const manualHandoffSourceSuggestions = useMemo(() => listEvidenceHandoffSourceSuggestions(newsSourceCatalog.sources), [newsSourceCatalog.sources]);
   const manualEvidenceOriginalHosts = useMemo(() => evidenceSearchPlan?.targets.find((target) => target.leadId === manualEvidenceDraft.leadId)?.independenceDiagnostics.originalHosts ?? [], [evidenceSearchPlan, manualEvidenceDraft.leadId]);
+  const manualEvidenceSourcePublishedAt = useMemo(() => evidenceSearchPlan?.targets.find((target) => target.leadId === manualEvidenceDraft.leadId)?.sourcePublishedAt ?? null, [evidenceSearchPlan, manualEvidenceDraft.leadId]);
   const manualSourceLinkHostAssessment = useMemo(() => assessManualSourceLinkHost(manualEvidenceDraft.sourceName, manualEvidenceDraft.canonicalUrl, manualHandoffSourceSuggestions, manualEvidenceOriginalHosts), [manualEvidenceDraft.sourceName, manualEvidenceDraft.canonicalUrl, manualHandoffSourceSuggestions, manualEvidenceOriginalHosts]);
   const manualEvidenceTextAssessment = useMemo(() => assessManualEvidenceTextFields(manualEvidenceDraft.sourceName, manualEvidenceDraft.title), [manualEvidenceDraft.sourceName, manualEvidenceDraft.title]);
-  const manualEvidencePublishedAtAssessment = useMemo(() => assessManualEvidencePublishedAt(manualEvidenceDraft.publishedAt), [manualEvidenceDraft.publishedAt]);
+  const manualEvidencePublishedAtAssessment = useMemo(() => assessManualEvidenceTimeWindow(manualEvidenceDraft.publishedAt, manualEvidenceSourcePublishedAt), [manualEvidenceDraft.publishedAt, manualEvidenceSourcePublishedAt]);
   const manualEvidenceFormReadiness = useMemo(() => buildManualEvidenceFormReadiness(manualEvidenceDraft), [manualEvidenceDraft]);
 
   const clearSourceLockSavePreviews = () => {

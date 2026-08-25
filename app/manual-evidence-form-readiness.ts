@@ -9,6 +9,7 @@ type ManualEvidenceFormInput = {
 
 const ISO_8601_WITH_TIMEZONE = /^(\d{4})-(\d{2})-(\d{2})T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,3})?(?:Z|[+-](?:0\d|1[0-4]):[0-5]\d)$/;
 const FUTURE_CLOCK_SKEW_MS = 5 * 60 * 1000;
+const DEFAULT_EVIDENCE_WINDOW_HOURS = 24 * 7;
 
 const REQUIRED_FIELDS = [
   ["leadId", "待补证标题"],
@@ -47,6 +48,24 @@ export function assessManualEvidencePublishedAt(publishedAt: string, nowMs = Dat
     return { status:"future_time" as const, message:"发布时间晚于当前时间；请核对时区或日期，不会发送当前预览请求", blocksPreview:true };
   }
   return { status:"valid" as const, message:"发布时间格式已通过本地校验；服务器仍会核对与原来源的 7 天时间窗", blocksPreview:false };
+}
+
+export function assessManualEvidenceTimeWindow(publishedAt: string, sourcePublishedAt: string | null | undefined, nowMs = Date.now(), windowHours = DEFAULT_EVIDENCE_WINDOW_HOURS) {
+  const publishedAtAssessment = assessManualEvidencePublishedAt(publishedAt, nowMs);
+  if (publishedAtAssessment.status !== "valid") return { ...publishedAtAssessment, deltaHours:null };
+  if (!sourcePublishedAt) {
+    return { status:"awaiting_source_time" as const, message:"选择待补证标题后，将在本地核对与原来源的 7 天时间窗", blocksPreview:false, deltaHours:null };
+  }
+  const sourcePublishedAtMs = Date.parse(sourcePublishedAt);
+  if (!Number.isFinite(sourcePublishedAtMs)) {
+    return { status:"invalid_source_time" as const, message:"原来源发布时间无效；请重新生成补证清单，不会发送当前预览请求", blocksPreview:true, deltaHours:null };
+  }
+  const rawDeltaHours = (Date.parse(publishedAt) - sourcePublishedAtMs) / 3_600_000;
+  const deltaHours = Number(rawDeltaHours.toFixed(1));
+  if (Math.abs(rawDeltaHours) > windowHours) {
+    return { status:"outside_time_window" as const, message:`候选与原来源相差 ${deltaHours > 0 ? "+" : ""}${deltaHours} 小时，超过 ${windowHours} 小时时间窗；不会发送当前预览请求`, blocksPreview:true, deltaHours };
+  }
+  return { status:"within_time_window" as const, message:`候选与原来源相差 ${deltaHours > 0 ? "+" : ""}${deltaHours} 小时，符合 ${windowHours} 小时时间窗`, blocksPreview:false, deltaHours };
 }
 
 function assessBoundedText(value: string, minimum: number, maximum: number, label: string, collapseWhitespace = false) {

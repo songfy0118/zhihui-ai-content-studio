@@ -8,7 +8,7 @@ import { buildManualPublicEvidencePreview } from "../bridge/manual-public-eviden
 import { NEWS_SOURCE_CATALOG } from "../bridge/news-source-catalog.mjs";
 import { buildSourceLockSavePlan } from "../bridge/source-lock-save-plan.mjs";
 import { formatManualEvidenceBlocker, formatManualEvidencePublisherRole } from "../app/manual-evidence-diagnostics.ts";
-import { assessManualEvidencePublishedAt, assessManualEvidenceTextFields, buildManualEvidenceFormReadiness, describeManualEvidencePreviewReadiness } from "../app/manual-evidence-form-readiness.ts";
+import { assessManualEvidencePublishedAt, assessManualEvidenceTextFields, assessManualEvidenceTimeWindow, buildManualEvidenceFormReadiness, describeManualEvidencePreviewReadiness } from "../app/manual-evidence-form-readiness.ts";
 
 const lead = {
   id: "cluster:one",
@@ -72,6 +72,22 @@ test("blocks invalid, timezone-free and future publication times locally", () =>
   assert.equal(valid.blocksPreview, false);
 });
 
+test("blocks candidate publication times outside the server's seven-day window locally", () => {
+  const now = Date.parse("2026-08-30T16:00:00Z");
+  const sourcePublishedAt = "2026-08-20T12:00:00Z";
+  const withinWindow = assessManualEvidenceTimeWindow("2026-08-27T12:00:00Z", sourcePublishedAt, now);
+  assert.equal(withinWindow.status, "within_time_window");
+  assert.equal(withinWindow.deltaHours, 168);
+  assert.equal(withinWindow.blocksPreview, false);
+  const outsideWindow = assessManualEvidenceTimeWindow("2026-08-27T12:00:01Z", sourcePublishedAt, now);
+  assert.equal(outsideWindow.status, "outside_time_window");
+  assert.equal(outsideWindow.blocksPreview, true);
+  const staleCandidate = assessManualEvidenceTimeWindow("2026-08-13T11:59:59Z", sourcePublishedAt, now);
+  assert.equal(staleCandidate.status, "outside_time_window");
+  assert.equal(staleCandidate.blocksPreview, true);
+  assert.match(staleCandidate.message, /超过 168 小时时间窗/);
+});
+
 test("blocks source names and titles outside the server length bounds locally", () => {
   const shortSource = assessManualEvidenceTextFields("A", "A complete candidate title");
   assert.equal(shortSource.sourceName.status, "invalid_text");
@@ -95,7 +111,9 @@ test("wires manual source name suggestions without automatic article collection"
   assert.match(page, /manualSourceNameSuggestions\.map/);
   assert.match(page, /仅提供已登记的名称建议；不会自动抓取公众号/);
   assert.match(page, /const manualEvidenceOriginalHosts = useMemo/);
+  assert.match(page, /const manualEvidenceSourcePublishedAt = useMemo/);
   assert.match(page, /assessManualSourceLinkHost\(manualEvidenceDraft\.sourceName, manualEvidenceDraft\.canonicalUrl, manualHandoffSourceSuggestions, manualEvidenceOriginalHosts\)/);
+  assert.match(page, /assessManualEvidenceTimeWindow\(manualEvidenceDraft\.publishedAt, manualEvidenceSourcePublishedAt\)/);
   assert.match(page, /manualSourceLinkHostAssessment\.blocksPreview\?"sourceHostHint error":"sourceHostHint"/);
   assert.match(page, /role=\{manualSourceLinkHostAssessment\.blocksPreview\?"alert":undefined\}/);
   assert.match(page, /target\.originalEvidence&&<a href=\{target\.originalEvidence\.canonicalUrl\} target="_blank" rel="noreferrer">人工打开原始来源<\/a>/);
