@@ -13,14 +13,22 @@ const seed = [
   ["us-tech-policy", "美国新的科技政策，真正影响了谁？", "从政策原文解释公司、投资者和技术从业者的影响", "美国科技", 87, 95, 89],
   ["ai-bubble", "AI 是泡沫，还是新一轮基础设施周期？", "对照资本开支、收入、利润和生产率证据", "科技金融", 93, 90, 95],
   ["private-ai", "你的公司为什么开始要求 AI 本地部署？", "解释数据合规、成本、延迟与效果的取舍", "企业AI", 85, 87, 93],
+  ["ai-search", "AI 搜索会取代传统搜索引擎吗？", "比较答案质量、广告模式、来源透明度与用户习惯", "AI", 91, 94, 93],
+  ["stablecoin-payments", "稳定币正在成为跨境支付的新基础设施吗？", "从结算速度、监管、成本和真实机构采用情况拆解", "金融科技", 88, 92, 90],
+  ["ai-datacenter-power", "AI 数据中心为什么开始争夺电力？", "追踪资本开支、电网容量与能耗披露", "科技金融", 93, 91, 92],
+  ["small-models", "小模型会成为企业 AI 的真正主力吗？", "比较部署成本、隐私、延迟和任务准确率", "企业AI", 90, 92, 94],
+  ["robotaxi-scale", "Robotaxi 从试运营到规模化还差什么？", "核对运营区域、安全员要求、车队规模和监管条件", "机器人", 89, 95, 91],
+  ["ai-copyright", "生成式 AI 的版权规则正在变清楚吗？", "从法院文件、授权协议和平台政策分别梳理", "AI政策", 87, 93, 95],
+  ["quantum-commercial", "量子计算离商业回报还有多远？", "区分科研里程碑、硬件路线和企业合同", "前沿科技", 86, 92, 90],
+  ["ipo-window", "美国科技公司 IPO 窗口重新打开了吗？", "结合正式招股文件、利率环境和上市后表现判断", "金融", 90, 94, 92],
+  ["ai-security-agent", "企业为什么开始部署 AI 安全代理？", "从权限、审计、误报和数据泄露风险解释采用门槛", "企业AI", 92, 90, 95],
+  ["chip-supply-chain", "AI 芯片供应链的下一处瓶颈是什么？", "比较先进封装、HBM、设备和电力约束", "科技金融", 94, 93, 91],
 ] as const;
 
 async function seedIfNeeded() {
   const db = getDb();
-  const existing = await db.select({ id: ideas.id }).from(ideas).limit(1);
-  if (existing.length) return;
   const now = new Date().toISOString();
-  await db.insert(ideas).values(seed.map(([id, title, angle, category, douyinScore, tiktokScore, xhsScore]) => ({ id, title, angle, category, douyinScore, tiktokScore, xhsScore, createdAt: now })));
+  await db.insert(ideas).values(seed.map(([id, title, angle, category, douyinScore, tiktokScore, xhsScore]) => ({ id, title, angle, category, douyinScore, tiktokScore, xhsScore, createdAt: now }))).onConflictDoNothing({ target: ideas.id });
 }
 
 export async function GET() {
