@@ -74,4 +74,13 @@ test("checks in schema, migration-chain artifacts and a GET-only local route", a
   assert.match(page, /fetch\("\/api\/local\/source-lock-migration", \{ cache:"no-store" \}\)/);
   assert.match(page, /检查来源锁表（只读）/);
   assert.match(page, /<SourceLockStorageReadinessCard readiness=\{sourceLockStorageReadiness\}/);
+  assert.match(page, /function SourceLockSaveBoundarySummary/);
+  assert.match(page, /保存计划指纹/);
+  assert.match(page, /单次授权预览/);
+  assert.match(page, /来源锁表结构/);
+  assert.match(page, /写入适配器/);
+  assert.match(page, /真实保存路由/);
+  assert.match(page, /preview\?\.liveSaveRouteConnected===true/);
+  assert.match(page, /只读汇总 · 授权请求 0 · 授权票据 0 · 保存调用 0 · 数据库写入 0 · 草稿解锁 0/);
+  assert.match(page, /<SourceLockSaveBoundarySummary plan=\{sourceLockSavePlan\} preview=\{sourceLockSaveAuthorizationPreview\} readiness=\{sourceLockStorageReadiness\}\/\>/);
 });
