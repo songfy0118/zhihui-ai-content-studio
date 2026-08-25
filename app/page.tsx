@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import "./hook-layer.css";
+
 import { formatEvidenceReviewBlocker } from "./evidence-review-diagnostics";
 import { assessManualEvidenceTextFields, assessManualEvidenceTimeWindow, buildManualEvidenceFormReadiness, describeManualEvidencePreviewReadiness } from "./manual-evidence-form-readiness";
 import { describeManualEvidenceReviewHandoff, formatManualEvidenceBlocker, formatManualEvidencePublisherRole } from "./manual-evidence-diagnostics";
@@ -9,7 +11,7 @@ import { assessManualSourceLinkHost, listEvidenceHandoffSourceSuggestions, listM
 import { formatSourceLockAuthorizationBlocker } from "./source-lock-authorization-diagnostics";
 import { formatSourceLockEvidenceRole, formatSourceLockPlanBlocker, formatSourceLockPublisherRole } from "./source-lock-plan-diagnostics";
 
-type Idea = { id:string; title:string; angle:string; category:string; status:string; douyinScore:number; tiktokScore:number; xhsScore:number; selected:boolean };
+type Idea = { id:string; title:string; angle:string; category:string; status:string; douyinScore:number; tiktokScore:number; xhsScore:number; selected:boolean; hookType?:string };
 type LocalDraftPreview = { ideaId:string; title:string; body:string; hashtags:string[]; estimatedViews:string; status:"local_preview" };
 type Account = { platform:string; handle:string|null; status:string; publishMode:string };
 type Job = { id:string; ideaId:string; stage:string; progress:number; status:string; platforms:string };
@@ -134,6 +136,34 @@ const rssOperatorActionLabels: Record<string,string> = { check_tls_or_proxy_and_
 const rssTransportLabels: Record<NewsPreviewStatus["transportAssessment"]["status"],string> = { not_assessed:"尚未判断链路", all_feeds_reachable:"全部 Feed 链路可达", mixed_reachability:"本机外网可达，个别来源链路失败", all_feeds_failed_inconclusive:"全部 Feed 失败，原因仍待人工诊断" };
 const rssFreshnessLabels: Record<NewsPreviewStatus["items"][number]["freshnessStatus"],string> = { timestamp_missing_or_invalid:"时间待复核", future_timestamp_requires_review:"未来时间待复核", within_24_hours:"24小时内", within_72_hours:"72小时内", within_7_days:"7天内", older_than_7_days:"7天前" };
 
+const internetHookProfiles: Record<string,{title:string;hookType:"身份焦虑"|"反常识"|"利益冲突"|"强问题"}> = {
+  "ai-layoffs":{ title:"大厂边裁员边招 AI：最危险的是哪类程序员？", hookType:"身份焦虑" },
+  "ai-agent-work":{ title:"AI Agent 先替代的，会是哪一批白领工作？", hookType:"身份焦虑" },
+  "chip-war":{ title:"英伟达赚走第一桶金后，AI 的下一块利润在哪？", hookType:"利益冲突" },
+  "rate-cut-tech":{ title:"利率一动，为什么科技公司先裁人？", hookType:"反常识" },
+  "open-source-ai":{ title:"开源模型越来越便宜：闭源 AI 的高价还能撑多久？", hookType:"利益冲突" },
+  "coding-career":{ title:"AI 会写代码后，计算机专业会变成下一个土木吗？", hookType:"身份焦虑" },
+  "robotics-factory":{ title:"人形机器人频频宣布进厂：真上岗还是拍视频？", hookType:"强问题" },
+  "us-tech-policy":{ title:"美国一纸科技新规，谁会最先付出代价？", hookType:"利益冲突" },
+  "ai-bubble":{ title:"大厂疯狂扩建数据中心：AI 泡沫会从哪里先破？", hookType:"强问题" },
+  "private-ai":{ title:"公司宁愿自己买服务器，也不愿把数据交给 AI？", hookType:"反常识" },
+  "ai-search":{ title:"AI 搜索正在抢入口：Google 的广告生意会先变吗？", hookType:"利益冲突" },
+  "stablecoin-payments":{ title:"银行还没反应过来，稳定币已经在抢跨境支付？", hookType:"反常识" },
+  "ai-datacenter-power":{ title:"AI 下一步可能不缺芯片，先缺电", hookType:"反常识" },
+  "small-models":{ title:"大模型越做越小：企业终于不再迷信参数了？", hookType:"反常识" },
+  "robotaxi-scale":{ title:"Robotaxi 已经能跑，为什么还是赚不到钱？", hookType:"利益冲突" },
+  "ai-copyright":{ title:"AI 训练了全网，最终要为每篇内容付钱吗？", hookType:"利益冲突" },
+  "quantum-commercial":{ title:"量子计算又突破了：离真正赚钱还差多少年？", hookType:"强问题" },
+  "ipo-window":{ title:"沉寂三年后，美国科技 IPO 真的回来了？", hookType:"强问题" },
+  "ai-security-agent":{ title:"给 AI 一把管理员钥匙，企业真的敢吗？", hookType:"强问题" },
+  "chip-supply-chain":{ title:"英伟达不缺订单，AI 产业真正卡住的是这四样东西", hookType:"反常识" },
+};
+
+const applyInternetHook = (idea:Idea):Idea => {
+  const hook = internetHookProfiles[idea.id];
+  return hook ? { ...idea, title:hook.title, hookType:hook.hookType } : idea;
+};
+
 const fallbackIdeas: Idea[] = [
   ["ai-layoffs","大厂继续裁员：程序员会成为下一个土木行业吗？","从公开裁员数据、岗位结构与AI投入拆开讨论，不把单一公司传闻写成行业结论","AI职场",94,88,96],
   ["ai-agent-work","AI Agent 正在接管哪些白领流程？","追踪企业官方案例，区分演示、试点与已经产生业务结果的部署","AI",92,91,95],
@@ -155,7 +185,7 @@ const fallbackIdeas: Idea[] = [
   ["ipo-window","美国科技公司 IPO 窗口重新打开了吗？","结合正式招股文件、利率环境和上市后表现判断，不引用未经证实的上市传闻","金融",90,94,92],
   ["ai-security-agent","企业为什么开始部署 AI 安全代理？","从权限、审计、误报和数据泄露风险解释真实采用门槛","企业AI",92,90,95],
   ["chip-supply-chain","AI 芯片供应链的下一处瓶颈是什么？","比较先进封装、HBM、设备和电力约束，并保留供应商披露的不确定性","科技金融",94,93,91],
-].map(([id,title,angle,category,douyinScore,tiktokScore,xhsScore]) => ({ id:String(id), title:String(title), angle:String(angle), category:String(category), status:"candidate", douyinScore:Number(douyinScore), tiktokScore:Number(tiktokScore), xhsScore:Number(xhsScore), selected:false }));
+].map(([id,title,angle,category,douyinScore,tiktokScore,xhsScore]) => applyInternetHook({ id:String(id), title:String(title), angle:String(angle), category:String(category), status:"candidate", douyinScore:Number(douyinScore), tiktokScore:Number(tiktokScore), xhsScore:Number(xhsScore), selected:false }));
 
 const TOPICS_PER_PAGE = 10;
 const buildDemoViewRange = (score:number) => {
@@ -381,7 +411,7 @@ export default function Home() {
       const [i,a,j,m] = await Promise.all([fetch("/api/ideas"), fetch("/api/accounts"), fetch("/api/jobs"), fetch("/api/metrics")]);
       if (![i,a,j].every((response) => response.ok)) throw new Error("数据服务尚未初始化");
       const metricPayload = await m.json() as MetricFeedStatus & {metrics:Metric[]};
-      setIdeas((await i.json()).ideas); setAccounts((await a.json()).accounts); setJobs((await j.json()).jobs); setMetrics(metricPayload.metrics ?? []); setMetricFeedStatus(metricPayload);
+      setIdeas(((await i.json()).ideas as Idea[]).map(applyInternetHook)); setAccounts((await a.json()).accounts); setJobs((await j.json()).jobs); setMetrics(metricPayload.metrics ?? []); setMetricFeedStatus(metricPayload);
       setMessage("准备就绪：先从10个候选中选出最多3个。 ");
     } catch { setMessage("当前使用本机候选池；私有线上版会自动保存选择与数据。"); }
   };
@@ -1223,10 +1253,10 @@ export default function Home() {
           <div className="selectionCount"><strong>{selected.length}</strong><span>/ 3 已选择</span></div>
           <button className="generate" disabled={busy} onClick={queueGeneration}>{busy?"创建中…":"生成来源锁定草稿 →"}</button>
         </section>
-        <div className="ideaHeader"><div><b>今日 {ideas.length} 个热点角度 · 第 {ideaPage}/{ideaPageCount} 页</b><span>候选必须保留来源、时间和不确定性；播放区间只是未校准的界面演示。</span></div><div className="legend"><i className="dy"/>抖音图文 <i className="tk"/>美国来源 <i className="xhs"/>小红书</div></div>
+        <div className="ideaHeader"><div><b>今日 {ideas.length} 个热点角度 · 第 {ideaPage}/{ideaPageCount} 页</b><span>已启用互联网钩子层；事实数字未绑定来源前禁止写进标题，播放区间仍是未校准演示。</span></div><div className="legend"><i className="dy"/>抖音图文 <i className="tk"/>美国来源 <i className="xhs"/>小红书</div></div>
         <section className="ideasGrid">{visibleIdeas.map((idea,index)=><article key={idea.id} className={idea.selected?"idea selected":"idea"} onClick={()=>toggleIdea(idea)}>
           <div className="ideaIndex">{String((ideaPage-1)*TOPICS_PER_PAGE+index+1).padStart(2,"0")}<button aria-label={idea.selected?"取消选择":"选择"}>{idea.selected?"✓":"+"}</button></div>
-          <span className="category">{idea.category}</span><h2>{idea.title}</h2><p>{idea.angle}</p>
+          <div className="ideaLabels"><span className="category">{idea.category}</span>{idea.hookType&&<span className="hookType">钩子 · {idea.hookType}</span>}</div><h2>{idea.title}</h2><p>{idea.angle}</p>
           <div className="scores"><div><span>抖音</span><b>{idea.douyinScore}</b></div><div><span>TikTok</span><b>{idea.tiktokScore}</b></div><div><span>小红书</span><b>{idea.xhsScore}</b></div></div>
           <div className="viewForecast"><span>抖音模拟播放区间</span><b>{buildDemoViewRange(idea.douyinScore)}</b><small>待真实账号数据校准</small></div>
           <footer><span>{idea.status === "generating" ? "已进入生成队列" : idea.selected ? "已入选" : "点击选择"}</span><b>潜力分 {Math.round((idea.douyinScore+idea.tiktokScore+idea.xhsScore)/3)}</b></footer>

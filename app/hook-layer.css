@@ -1,0 +1,18 @@
+.ideaLabels {
+  align-items: center;
+  align-self: flex-start;
+  display: flex;
+  gap: 6px;
+}
+
+.ideaLabels .category {
+  align-self: auto;
+}
+
+.hookType {
+  background: var(--ink);
+  color: var(--acid);
+  font-size: 9px;
+  font-weight: 800;
+  padding: 4px 7px;
+}

@@ -6,7 +6,10 @@ test("paginates the topic prototype and labels uncalibrated view ranges", async 
   const [page, route, styles] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/ideas/route.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    Promise.all([
+      readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+      readFile(new URL("../app/hook-layer.css", import.meta.url), "utf8"),
+    ]).then((parts) => parts.join("\n")),
   ]);
 
   assert.match(page, /const TOPICS_PER_PAGE = 10/);
@@ -16,8 +19,13 @@ test("paginates the topic prototype and labels uncalibrated view ranges", async 
   assert.match(page, /待真实账号数据校准/);
   assert.match(page, /DOUYIN DRAFT · LOCAL PROTOTYPE/);
   assert.match(page, /未写入抖音 · 未发布/);
+  assert.match(page, /互联网钩子层/);
+  assert.match(page, /钩子 · \{idea\.hookType\}/);
+  assert.match(page, /事实数字未绑定来源前禁止写进标题/);
+  assert.match(page, /计算机专业会变成下一个土木吗/);
   assert.match(route, /onConflictDoNothing/);
   assert.match(route, /chip-supply-chain/);
   assert.match(styles, /\.topicPager/);
   assert.match(styles, /\.localDraftPreview/);
+  assert.match(styles, /\.hookType/);
 });
