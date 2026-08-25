@@ -10,6 +10,9 @@ type ManualEvidenceFormInput = {
 const ISO_8601_WITH_TIMEZONE = /^(\d{4})-(\d{2})-(\d{2})T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,3})?(?:Z|[+-](?:0\d|1[0-4]):[0-5]\d)$/;
 const FUTURE_CLOCK_SKEW_MS = 5 * 60 * 1000;
 const DEFAULT_EVIDENCE_WINDOW_HOURS = 24 * 7;
+const DEFAULT_MINIMUM_TITLE_SIMILARITY = 0.12;
+const DEFAULT_MINIMUM_SHARED_TITLE_TERMS = 2;
+const TITLE_STOP_WORDS = new Set(["a", "an", "and", "are", "as", "at", "by", "for", "from", "in", "is", "it", "new", "of", "on", "the", "to", "with", "ai"]);
 
 const REQUIRED_FIELDS = [
   ["leadId", "待补证标题"],
@@ -79,12 +82,42 @@ function assessBoundedText(value: string, minimum: number, maximum: number, labe
   return { status:"valid" as const, message:null, blocksPreview:false };
 }
 
-export function assessManualEvidenceTextFields(sourceName: string, title: string) {
+function tokenizeNewsTitle(title: string) {
+  const text = title.normalize("NFKC").toLocaleLowerCase("en-US").replace(/[’']/g, "").replace(/[^\p{Letter}\p{Number}\p{Script=Han}]+/gu, " ").replace(/\s+/g, " ").trim();
+  const tokens = new Set((text.match(/[a-z\p{Letter}\p{Number}]{2,}/gu) ?? [])
+    .filter((token) => !/[\p{Script=Han}]/u.test(token))
+    .filter((token) => !TITLE_STOP_WORDS.has(token)));
+  for (const sequence of text.match(/[\p{Script=Han}]{2,}/gu) ?? []) {
+    const characters = [...sequence];
+    for (let index = 0; index < characters.length - 1; index += 1) tokens.add(characters.slice(index, index + 2).join(""));
+  }
+  return tokens;
+}
+
+export function assessManualEvidenceTitleMatch(targetTitle: string, candidateTitle: string, minimumSimilarity = DEFAULT_MINIMUM_TITLE_SIMILARITY, minimumSharedTerms = DEFAULT_MINIMUM_SHARED_TITLE_TERMS) {
+  if (!targetTitle.trim() || !candidateTitle.trim()) return { status:"awaiting_titles" as const, message:null, blocksPreview:false, similarity:null, sharedTerms:[] as string[] };
+  const targetTerms = tokenizeNewsTitle(targetTitle);
+  const candidateTerms = tokenizeNewsTitle(candidateTitle);
+  const sharedTerms = [...targetTerms].filter((term) => candidateTerms.has(term)).sort();
+  const unionSize = new Set([...targetTerms, ...candidateTerms]).size;
+  const similarity = unionSize ? Number((sharedTerms.length / unionSize).toFixed(4)) : 0;
+  if (sharedTerms.length < minimumSharedTerms || similarity < minimumSimilarity) {
+    return { status:"title_match_below_threshold" as const, message:`候选标题与待补证标题关联度不足（共同词项 ${sharedTerms.length}/${minimumSharedTerms}，相似度 ${similarity}/${minimumSimilarity}）；不会发送当前预览请求`, blocksPreview:true, similarity, sharedTerms };
+  }
+  return { status:"title_match_ready" as const, message:null, blocksPreview:false, similarity, sharedTerms };
+}
+
+export function assessManualEvidenceTextFields(sourceName: string, title: string, targetTitle = "") {
   const sourceNameAssessment = assessBoundedText(sourceName, 2, 80, "来源名称");
-  const titleAssessment = assessBoundedText(title, 8, 300, "候选标题", true);
+  const boundedTitleAssessment = assessBoundedText(title, 8, 300, "候选标题", true);
+  const titleMatch = boundedTitleAssessment.status === "valid" ? assessManualEvidenceTitleMatch(targetTitle, title) : assessManualEvidenceTitleMatch("", "");
+  const titleAssessment = titleMatch.blocksPreview
+    ? { status:titleMatch.status, message:titleMatch.message, blocksPreview:true }
+    : boundedTitleAssessment;
   return {
     sourceName:sourceNameAssessment,
     title:titleAssessment,
+    titleMatch,
     blocksPreview:sourceNameAssessment.blocksPreview || titleAssessment.blocksPreview,
   };
 }

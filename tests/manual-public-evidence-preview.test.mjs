@@ -8,7 +8,7 @@ import { buildManualPublicEvidencePreview } from "../bridge/manual-public-eviden
 import { NEWS_SOURCE_CATALOG } from "../bridge/news-source-catalog.mjs";
 import { buildSourceLockSavePlan } from "../bridge/source-lock-save-plan.mjs";
 import { formatManualEvidenceBlocker, formatManualEvidencePublisherRole } from "../app/manual-evidence-diagnostics.ts";
-import { assessManualEvidencePublishedAt, assessManualEvidenceTextFields, assessManualEvidenceTimeWindow, buildManualEvidenceFormReadiness, describeManualEvidencePreviewReadiness } from "../app/manual-evidence-form-readiness.ts";
+import { assessManualEvidencePublishedAt, assessManualEvidenceTextFields, assessManualEvidenceTimeWindow, assessManualEvidenceTitleMatch, buildManualEvidenceFormReadiness, describeManualEvidencePreviewReadiness } from "../app/manual-evidence-form-readiness.ts";
 
 const lead = {
   id: "cluster:one",
@@ -103,6 +103,20 @@ test("blocks source names and titles outside the server length bounds locally", 
   assert.equal(valid.blocksPreview, false);
 });
 
+test("blocks locally when candidate titles miss the server's shared-term and similarity thresholds", () => {
+  const matching = assessManualEvidenceTitleMatch(lead.title, "Enterprise agent platform launched by OpenAI");
+  assert.equal(matching.status, "title_match_ready");
+  assert.equal(matching.blocksPreview, false);
+  assert.deepEqual(matching.sharedTerms, ["agent", "enterprise", "openai", "platform"]);
+  const unrelated = assessManualEvidenceTitleMatch(lead.title, "Local sports schedule update");
+  assert.equal(unrelated.status, "title_match_below_threshold");
+  assert.equal(unrelated.blocksPreview, true);
+  assert.match(unrelated.message, /共同词项 0\/2/);
+  const combined = assessManualEvidenceTextFields("Independent", "Local sports schedule update", lead.title);
+  assert.equal(combined.title.status, "title_match_below_threshold");
+  assert.equal(combined.blocksPreview, true);
+});
+
 test("wires manual source name suggestions without automatic article collection", async () => {
   const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   assert.match(page, /listManualSourceNameSuggestions\(newsSourceCatalog\.sources\)/);
@@ -111,9 +125,11 @@ test("wires manual source name suggestions without automatic article collection"
   assert.match(page, /manualSourceNameSuggestions\.map/);
   assert.match(page, /仅提供已登记的名称建议；不会自动抓取公众号/);
   assert.match(page, /const manualEvidenceOriginalHosts = useMemo/);
+  assert.match(page, /const manualEvidenceTargetTitle = useMemo/);
   assert.match(page, /const manualEvidenceSourcePublishedAt = useMemo/);
   assert.match(page, /assessManualSourceLinkHost\(manualEvidenceDraft\.sourceName, manualEvidenceDraft\.canonicalUrl, manualHandoffSourceSuggestions, manualEvidenceOriginalHosts\)/);
   assert.match(page, /assessManualEvidenceTimeWindow\(manualEvidenceDraft\.publishedAt, manualEvidenceSourcePublishedAt\)/);
+  assert.match(page, /assessManualEvidenceTextFields\(manualEvidenceDraft\.sourceName, manualEvidenceDraft\.title, manualEvidenceTargetTitle\)/);
   assert.match(page, /manualSourceLinkHostAssessment\.blocksPreview\?"sourceHostHint error":"sourceHostHint"/);
   assert.match(page, /role=\{manualSourceLinkHostAssessment\.blocksPreview\?"alert":undefined\}/);
   assert.match(page, /target\.originalEvidence&&<a href=\{target\.originalEvidence\.canonicalUrl\} target="_blank" rel="noreferrer">人工打开原始来源<\/a>/);

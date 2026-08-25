@@ -295,9 +295,10 @@ export default function Home() {
   const manualSourceNameSuggestions = useMemo(() => listManualSourceNameSuggestions(newsSourceCatalog.sources), [newsSourceCatalog.sources]);
   const manualHandoffSourceSuggestions = useMemo(() => listEvidenceHandoffSourceSuggestions(newsSourceCatalog.sources), [newsSourceCatalog.sources]);
   const manualEvidenceOriginalHosts = useMemo(() => evidenceSearchPlan?.targets.find((target) => target.leadId === manualEvidenceDraft.leadId)?.independenceDiagnostics.originalHosts ?? [], [evidenceSearchPlan, manualEvidenceDraft.leadId]);
+  const manualEvidenceTargetTitle = useMemo(() => evidenceSearchPlan?.targets.find((target) => target.leadId === manualEvidenceDraft.leadId)?.title ?? "", [evidenceSearchPlan, manualEvidenceDraft.leadId]);
   const manualEvidenceSourcePublishedAt = useMemo(() => evidenceSearchPlan?.targets.find((target) => target.leadId === manualEvidenceDraft.leadId)?.sourcePublishedAt ?? null, [evidenceSearchPlan, manualEvidenceDraft.leadId]);
   const manualSourceLinkHostAssessment = useMemo(() => assessManualSourceLinkHost(manualEvidenceDraft.sourceName, manualEvidenceDraft.canonicalUrl, manualHandoffSourceSuggestions, manualEvidenceOriginalHosts), [manualEvidenceDraft.sourceName, manualEvidenceDraft.canonicalUrl, manualHandoffSourceSuggestions, manualEvidenceOriginalHosts]);
-  const manualEvidenceTextAssessment = useMemo(() => assessManualEvidenceTextFields(manualEvidenceDraft.sourceName, manualEvidenceDraft.title), [manualEvidenceDraft.sourceName, manualEvidenceDraft.title]);
+  const manualEvidenceTextAssessment = useMemo(() => assessManualEvidenceTextFields(manualEvidenceDraft.sourceName, manualEvidenceDraft.title, manualEvidenceTargetTitle), [manualEvidenceDraft.sourceName, manualEvidenceDraft.title, manualEvidenceTargetTitle]);
   const manualEvidencePublishedAtAssessment = useMemo(() => assessManualEvidenceTimeWindow(manualEvidenceDraft.publishedAt, manualEvidenceSourcePublishedAt), [manualEvidenceDraft.publishedAt, manualEvidenceSourcePublishedAt]);
   const manualEvidenceFormReadiness = useMemo(() => buildManualEvidenceFormReadiness(manualEvidenceDraft), [manualEvidenceDraft]);
 
