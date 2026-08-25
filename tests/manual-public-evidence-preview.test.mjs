@@ -9,6 +9,7 @@ import { NEWS_SOURCE_CATALOG } from "../bridge/news-source-catalog.mjs";
 import { buildSourceLockSavePlan } from "../bridge/source-lock-save-plan.mjs";
 import { formatManualEvidenceBlocker, formatManualEvidencePublisherRole } from "../app/manual-evidence-diagnostics.ts";
 import { assessManualEvidencePublishedAt, assessManualEvidenceTextFields, assessManualEvidenceTimeWindow, assessManualEvidenceTitleMatch, buildManualEvidenceFormReadiness, describeManualEvidencePreviewReadiness } from "../app/manual-evidence-form-readiness.ts";
+import { assessManualSourceLinkHost, listEvidenceHandoffSourceSuggestions } from "../app/manual-source-options.ts";
 
 const lead = {
   id: "cluster:one",
@@ -188,6 +189,43 @@ test("keeps the local title gate aligned with the server preview policy", () => 
     assert.equal(localAssessment.blocksPreview, serverBlocksTitle, title);
     assert.equal(serverPreview.validationPolicy.minimumSimilarity, 0.12);
     assert.equal(serverPreview.validationPolicy.minimumSharedTerms, 2);
+  }
+});
+
+test("keeps local public-host gates aligned with the server preview policy", () => {
+  const suggestions = listEvidenceHandoffSourceSuggestions(sources);
+  const originalHosts = plan.targets[0].independenceDiagnostics.originalHosts;
+  const cases = [
+    { sourceName:"Independent News", canonicalUrl:"https://independent.news/report" },
+    { sourceName:"Independent News", canonicalUrl:"https://origin.news/other" },
+    { sourceName:"Catalog alias", canonicalUrl:"https://catalog.news/report" },
+    { sourceName:"Catalog alias", canonicalUrl:"https://independent.news/report" },
+    { sourceName:"Independent News", canonicalUrl:"https://127.0.0.1/report" },
+  ];
+  const hostBlockers = ["public_https_url_required", "registered_source_host_mismatch", "same_exact_host"];
+  for (const candidate of cases) {
+    const localAssessment = assessManualSourceLinkHost(candidate.sourceName, candidate.canonicalUrl, suggestions, originalHosts);
+    const serverPreview = buildManualPublicEvidencePreview(plan, [input(candidate)], { registeredSources:sources });
+    const serverBlocksHost = serverPreview.blockers.some((blocker) => hostBlockers.some((reason) => blocker.endsWith(reason)));
+    assert.equal(localAssessment.blocksPreview, serverBlocksHost, candidate.canonicalUrl);
+  }
+});
+
+test("keeps local 168-hour boundaries aligned with the server preview policy", () => {
+  const now = Date.parse("2026-09-01T00:00:00Z");
+  const cases = [
+    "2026-08-13T12:00:00Z",
+    "2026-08-13T11:59:59Z",
+    "2026-08-20T14:00:00Z",
+    "2026-08-27T12:00:00Z",
+    "2026-08-27T12:00:01Z",
+  ];
+  for (const publishedAt of cases) {
+    const localAssessment = assessManualEvidenceTimeWindow(publishedAt, lead.publishedAt, now);
+    const serverPreview = buildManualPublicEvidencePreview(plan, [input({ publishedAt })]);
+    const serverBlocksTime = serverPreview.blockers.some((blocker) => blocker.endsWith("outside_time_window"));
+    assert.equal(localAssessment.blocksPreview, serverBlocksTime, publishedAt);
+    assert.equal(serverPreview.validationPolicy.windowHours, 168);
   }
 });
 
