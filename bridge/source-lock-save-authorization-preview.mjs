@@ -85,6 +85,7 @@ function safeResult(fields = {}) {
     authorizationPreviewFingerprint: null,
     requiredConfirmation: null,
     saveTarget: null,
+    authorizationTerms: null,
     eligibleForExplicitSourceLockSaveAuthorization: false,
     singleUseAuthorizationRequired: true,
     sourceLockSaveAuthorizationGranted: false,
@@ -120,10 +121,20 @@ export function buildSourceLockSaveAuthorizationPreview(savePlan) {
     requiresExactSavePlanFingerprint: true,
     writeAllowed: false,
   };
+  const authorizationTerms = {
+    singleUse: true,
+    ttlSecondsAfterAcceptance: 300,
+    exactSavePlanFingerprintRequired: true,
+    sourceLockRecordCount: 1,
+    evidenceRecordCount: lock.sources.length,
+    allowedOperation: saveTarget.operation,
+    liveSaveRouteConnected: false,
+  };
   const fingerprintPayload = {
     sourceSavePlanFingerprint: savePlan.savePlanFingerprint,
     sourceReviewFingerprint: savePlan.reviewFingerprint,
     saveTarget,
+    authorizationTerms,
   };
   const authorizationPreviewFingerprint = hash(fingerprintPayload);
   return safeResult({

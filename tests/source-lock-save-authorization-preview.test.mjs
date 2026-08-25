@@ -41,6 +41,15 @@ test("builds a deterministic single-use authorization preview bound to the exact
   assert.equal(first.sourceReviewFingerprint, plan.reviewFingerprint);
   assert.equal(first.saveTarget.evidenceCount, 2);
   assert.deepEqual(first.saveTarget.evidenceRoles, ["independent", "original"]);
+  assert.deepEqual(first.authorizationTerms, {
+    singleUse: true,
+    ttlSecondsAfterAcceptance: 300,
+    exactSavePlanFingerprintRequired: true,
+    sourceLockRecordCount: 1,
+    evidenceRecordCount: 2,
+    allowedOperation: "persist_one_reviewed_source_lock_after_single_use_authorization",
+    liveSaveRouteConnected: false,
+  });
   assert.equal(first.requiredConfirmation, `AUTHORIZE REVIEWED SOURCE LOCK SAVE ${first.authorizationPreviewFingerprint}`);
   assert.equal(first.eligibleForExplicitSourceLockSaveAuthorization, true);
 });
@@ -77,13 +86,17 @@ test("keeps authorization, writes, source locks, drafts and publication closed",
 });
 
 test("does not connect the preview contract to a save route, store or live database", async () => {
-  const [source, savePlanRoute, migrationRoute] = await Promise.all([
+  const [source, page, savePlanRoute, migrationRoute] = await Promise.all([
     readFile(new URL("../bridge/source-lock-save-authorization-preview.mjs", import.meta.url), "utf8"),
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/news/source-lock-save-plan/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/local/source-lock-migration/route.ts", import.meta.url), "utf8"),
   ]);
 
   assert.doesNotMatch(source, /source-lock-store|\bfetch\s*\(|\bgetDb\b|\.batch\(|\.run\(/);
+  assert.match(page, /function SourceLockAuthorizationTerms/);
+  assert.match(page, /未来授权票据从接受时开始计时，过期或重放均应失效/);
+  assert.match(page, /<SourceLockAuthorizationTerms preview=\{sourceLockSaveAuthorizationPreview\}\/>/);
   assert.doesNotMatch(savePlanRoute, /source-lock-save-authorization-preview|source-lock-store|\.batch\(|\.run\(/);
   assert.doesNotMatch(migrationRoute, /source-lock-save-authorization-preview|source-lock-store/);
 });
