@@ -130,6 +130,26 @@ test("blocks missing authorization and mismatched fingerprints before preparing 
   assert.equal(rowCount(d1.database, "source_locks"), 0);
 });
 
+test("blocks plan content changed after fingerprinting before preparing a batch", async () => {
+  const d1 = await createMemoryD1();
+  const plan = readyPlan();
+  plan.plannedLocks[0].title += " changed after review";
+  let batchCalls = 0;
+  d1.batch = async () => {
+    batchCalls += 1;
+    throw new Error("batch_must_not_run");
+  };
+
+  const result = await createSourceLockStore(d1).save(saveInput(plan));
+
+  assert.ok(result.blockers.includes("source_lock_save_plan_fingerprint_mismatch"));
+  assert.equal(result.persisted, false);
+  assert.equal(result.databaseWriteAttempted, false);
+  assert.equal(batchCalls, 0);
+  assert.equal(rowCount(d1.database, "source_locks"), 0);
+  assert.equal(rowCount(d1.database, "source_lock_evidence"), 0);
+});
+
 test("rolls back the entire isolated batch when an evidence insert fails", async () => {
   const d1 = await createMemoryD1({ failAtStatement: 1 });
   const plan = readyPlan();

@@ -45,6 +45,13 @@ function validText(value) {
   return typeof value === "string" && value.trim() !== "";
 }
 
+function expectedSavePlanFingerprint(plan) {
+  return createHash("sha256").update(JSON.stringify({
+    reviewFingerprint: plan.reviewFingerprint,
+    locks: plan.plannedLocks,
+  })).digest("hex");
+}
+
 function validatePlannedLock(lock, plan) {
   if (!validText(lock?.leadId) || !validText(lock?.title)) return false;
   if (lock?.reviewFingerprint !== plan.reviewFingerprint) return false;
@@ -67,6 +74,7 @@ export function assessSourceLockSaveRequest({
   const blockers = [];
   if (plan?.status !== "source_lock_save_plan_ready" || plan?.readyForAuthorizationRequest !== true) blockers.push("source_lock_save_plan_not_ready");
   if (!HASH.test(plan?.reviewFingerprint ?? "") || !HASH.test(plan?.savePlanFingerprint ?? "")) blockers.push("source_lock_fingerprint_invalid");
+  if (HASH.test(plan?.reviewFingerprint ?? "") && Array.isArray(plan?.plannedLocks) && expectedSavePlanFingerprint(plan) !== plan.savePlanFingerprint) blockers.push("source_lock_save_plan_fingerprint_mismatch");
   if (executeRequested !== true) blockers.push("source_lock_save_execution_not_requested");
   if (confirmation !== SOURCE_LOCK_SAVE_CONFIRMATION) blockers.push("source_lock_save_confirmation_invalid");
   if (authorizedSavePlanFingerprint !== plan?.savePlanFingerprint) blockers.push("source_lock_save_fingerprint_mismatch");
