@@ -12,11 +12,11 @@ test("blocks remote callers before local model execution", async () => {
   assert.match((await response.json()).error, /只能从本机/);
 });
 
-test("returns a diagnostic contract failure for an invalid local plan", async () => {
+test("builds its own plan and rejects an unreviewed local blueprint", async () => {
   const response = await POST(new Request("http://127.0.0.1:3002/api/local/chinese-rewrite", {
     method:"POST",
     headers:{ "content-type":"application/json" },
-    body:JSON.stringify({ status:"not_ready" }),
+    body:JSON.stringify({ blueprintResult:{ status:"not_ready" } }),
   }));
   const body = await response.json();
   assert.equal(response.status, 422);
