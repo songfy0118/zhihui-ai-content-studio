@@ -156,6 +156,25 @@ test("classifies a cause-less fetch TypeError as a retryable network failure", a
   assert.equal(preview.sourceHealth[0].operatorAction, "retry_later");
 });
 
+test("cancels a chunked feed as soon as it exceeds the byte limit", async () => {
+  let cancelled = false;
+  const body = new ReadableStream({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode("123456"));
+      controller.enqueue(new TextEncoder().encode("789012"));
+    },
+    cancel(reason) {
+      cancelled = reason === "feed_too_large";
+    },
+  });
+  const fetcher = async () => new Response(body, { status: 200, headers: { "content-type": "application/rss+xml" } });
+  const preview = await buildRssNewsPreview({ sources: [source], fetcher, maxBytes: 10 });
+  assert.equal(preview.sourceHealth[0].errorCode, "feed_too_large");
+  assert.equal(preview.sourceHealth[0].failureClass, "feed_limit_exceeded");
+  assert.equal(preview.sourceHealth[0].itemsParsed, 0);
+  assert.equal(cancelled, true);
+});
+
 test("classifies TLS or proxy failures without weakening transport security", () => {
   assert.deepEqual(diagnoseRssFailure("network_err_ssl_packet_length_too_long"), {
     failureClass: "tls_or_proxy_error",

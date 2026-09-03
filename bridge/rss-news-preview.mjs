@@ -203,6 +203,34 @@ export function auditRssMetadataQuality(items = [], sources = [], { asOf = new D
   };
 }
 
+async function readResponseTextWithLimit(response, maxBytes) {
+  if (!response.body?.getReader) {
+    const text = await response.text();
+    if (new TextEncoder().encode(text).byteLength > maxBytes) throw new Error("feed_too_large");
+    return text;
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let byteLength = 0;
+  let text = "";
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      byteLength += value.byteLength;
+      if (byteLength > maxBytes) {
+        await reader.cancel("feed_too_large").catch(() => undefined);
+        throw new Error("feed_too_large");
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    return text + decoder.decode();
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 async function fetchSourcePreview(source, { fetcher, maxBytes, maxItems, timeoutMs }) {
   const startedAt = Date.now();
   try {
@@ -217,8 +245,7 @@ async function fetchSourcePreview(source, { fetcher, maxBytes, maxItems, timeout
     if (!response.ok) throw new Error(`http_${response.status}`);
     const reportedBytes = Number(response.headers.get("content-length") ?? 0);
     if (reportedBytes > maxBytes) throw new Error("feed_too_large");
-    const xml = await response.text();
-    if (new TextEncoder().encode(xml).byteLength > maxBytes) throw new Error("feed_too_large");
+    const xml = await readResponseTextWithLimit(response, maxBytes);
     const items = parseRssItems(xml, source, maxItems);
     return {
       health: { sourceId: source.id, status: items.length ? "ready" : "empty", httpStatus: response.status, itemsParsed: items.length, durationMs: Date.now() - startedAt, errorCode: null, ...diagnoseRssFailure(null) },
