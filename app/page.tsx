@@ -971,7 +971,7 @@ export default function Home() {
         setMessage(generating
           ? `已创建 ${results.length} 个真实漫剧项目，其中 ${generating} 个正在生成剧本。`
           : `已创建 ${results.length} 个真实漫剧项目。现在只差配置一个文本模型，才能自动写剧本。`);
-        if (cloudQueued) await load();
+        if (cloudQueued) await load().catch(() => undefined);
         setView("production");
       } catch (error) {
         const previewCount = showLocalDraftPreviews();
@@ -985,7 +985,7 @@ export default function Home() {
       setMessage(previewCount
         ? `${cloudQueued ? "生产任务已保存；" : "任务服务暂不可用；"}已生成 ${previewCount} 份本地规则草稿雏形，尚未写入抖音，也没有发布。`
         : "暂时无法创建任务：请先启动本机操作台。");
-      if (cloudQueued) await load();
+      if (cloudQueued) await load().catch(() => undefined);
     }
     setBusy(false);
   };

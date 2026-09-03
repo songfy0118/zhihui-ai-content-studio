@@ -1093,6 +1093,7 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(page, /showLocalDraftPreviews/);
   assert.match(page, /生产任务已保存；/);
   assert.match(page, /已改为显示 \$\{previewCount\} 份规则草稿雏形/);
+  assert.equal((page.match(/await load\(\)\.catch\(\(\) => undefined\)/g) ?? []).length, 2);
   assert.match(page, /\/api\/local\/generate/);
   assert.match(page, /LumenX 本机适配器/);
   assert.match(page, /生成竖屏静帧/);
