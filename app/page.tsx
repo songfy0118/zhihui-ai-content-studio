@@ -947,6 +947,13 @@ export default function Home() {
       cloudQueued = response.ok;
     } catch { cloudQueued = false; }
 
+    const showLocalDraftPreviews = () => {
+      const previews = platforms.includes("douyin") ? selected.map(buildLocalDraftPreview) : [];
+      setLocalDraftPreviews(previews);
+      if (previews.length) setView("production");
+      return previews.length;
+    };
+
     if (localEngine.ready) {
       try {
         const results = await Promise.all(selected.map(async (idea) => {
@@ -967,19 +974,18 @@ export default function Home() {
         if (cloudQueued) await load();
         setView("production");
       } catch (error) {
-        setMessage(error instanceof Error ? `本机引擎返回：${error.message}` : "本机项目创建失败。");
+        const previewCount = showLocalDraftPreviews();
+        const detail = error instanceof Error ? error.message : "本机项目创建失败";
+        setMessage(previewCount
+          ? `本机引擎返回：${detail}；已改为显示 ${previewCount} 份规则草稿雏形。`
+          : `本机引擎返回：${detail}`);
       }
-    } else if (cloudQueued) {
-      setMessage(`已保存 ${selected.length} 个生产任务。双击“启动知绘工厂”后，可在本机真正创建项目。`);
-      await load();
-      setView("production");
     } else {
-      const previews = platforms.includes("douyin") ? selected.map(buildLocalDraftPreview) : [];
-      setLocalDraftPreviews(previews);
-      setMessage(previews.length
-        ? `已生成 ${previews.length} 份本地抖音草稿雏形；尚未写入抖音，也没有发布。`
+      const previewCount = showLocalDraftPreviews();
+      setMessage(previewCount
+        ? `${cloudQueued ? "生产任务已保存；" : "任务服务暂不可用；"}已生成 ${previewCount} 份本地规则草稿雏形，尚未写入抖音，也没有发布。`
         : "暂时无法创建任务：请先启动本机操作台。");
-      if (previews.length) setView("production");
+      if (cloudQueued) await load();
     }
     setBusy(false);
   };

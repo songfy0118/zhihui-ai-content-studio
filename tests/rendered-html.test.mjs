@@ -1090,6 +1090,9 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(page, /审核交接/);
   assert.match(page, /增长学习/);
   assert.match(page, /生成来源锁定草稿/);
+  assert.match(page, /showLocalDraftPreviews/);
+  assert.match(page, /生产任务已保存；/);
+  assert.match(page, /已改为显示 \$\{previewCount\} 份规则草稿雏形/);
   assert.match(page, /\/api\/local\/generate/);
   assert.match(page, /LumenX 本机适配器/);
   assert.match(page, /生成竖屏静帧/);
