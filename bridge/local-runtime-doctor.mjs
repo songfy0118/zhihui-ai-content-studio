@@ -5,6 +5,7 @@ export const LOCAL_RUNTIME_SERVICES = [
   { id: "bridge", url: "http://127.0.0.1:3765/health" },
   { id: "local_mini_drama_api", url: "http://127.0.0.1:5679/health" },
   { id: "local_mini_drama_web", url: "http://127.0.0.1:3013" },
+  { id: "ollama", url: "http://127.0.0.1:11434/api/tags" },
 ];
 
 async function inspectService(service, fetchImpl, timeoutMs) {
@@ -37,8 +38,10 @@ export async function inspectLocalRuntime({ fetchImpl = fetch, timeoutMs = 3000 
     services,
     offlineServices,
     bridgeProtocol,
-    nextAction: offlineServices.length
-      ? "run_start_local_studio"
+    nextAction: offlineServices.includes("ollama")
+      ? "install_or_start_ollama"
+      : offlineServices.length
+        ? "run_start_local_studio"
       : bridgeProtocol.current
         ? "none"
         : "close_old_studio_and_rerun_launcher",

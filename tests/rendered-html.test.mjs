@@ -1642,6 +1642,16 @@ test("diagnoses the full local runtime without restarting services", async () =>
   assert.equal(offline.status, "services_offline");
   assert.deepEqual(offline.offlineServices, ["local_mini_drama_web"]);
   assert.equal(offline.nextAction, "run_start_local_studio");
+
+  const ollamaOffline = await inspectLocalRuntime({
+    fetchImpl: async (url) => {
+      if (url.includes(":11434/")) throw new Error("offline");
+      return { ok: true, status: 200, json: async () => ({ protocolVersion: BRIDGE_PROTOCOL_VERSION, capabilities: BRIDGE_CAPABILITIES }) };
+    },
+    timeoutMs: 50,
+  });
+  assert.deepEqual(ollamaOffline.offlineServices, ["ollama"]);
+  assert.equal(ollamaOffline.nextAction, "install_or_start_ollama");
   assert.equal(offline.processMutation, false);
   assert.equal(offline.externalCalls, false);
   assert.equal(offline.modelCalls, false);
@@ -1662,6 +1672,7 @@ test("diagnoses the full local runtime without restarting services", async () =>
   assert.doesNotMatch(runtimeRoute, /Stop-Process|taskkill|process\.kill|spawn\(/);
   assert.match(page, /fetch\("\/api\/local\/runtime-status"/);
   assert.match(page, /LOCAL RUNTIME · 只读体检/);
+  assert.match(page, /ollama:"中文改写模型"/);
   assert.match(page, /重启 0 · 下载 0 · 模型调用 0 · 发布 0/);
   assert.match(styles, /\.runtimeStatus/);
 });
