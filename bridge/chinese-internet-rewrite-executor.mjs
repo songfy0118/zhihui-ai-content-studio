@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 const LOCAL_ENDPOINT = "http://127.0.0.1:11434/api/chat";
 const HASH = /^[a-f0-9]{64}$/;
+const PERFORMANCE_PROMISE = /(?:必爆|爆款保证|保证(?:播放|流量|涨粉)|百万播放|稳赚|轻松月入|guaranteed\s+(?:viral|views?)|(?:100k|1m)\s+views?)/i;
 const PLATFORM_LIMITS = Object.freeze({
   xiaohongshu:Object.freeze({ title:20, coverText:16 }),
   douyin:Object.freeze({ title:30, coverText:16 }),
@@ -52,6 +53,18 @@ function validateDraft(draft, plan) {
     ) return false;
   }
   return Object.keys(draft).every((key) => plan.targets.includes(key));
+}
+
+function containsPerformancePromise(draft, targets) {
+  return targets.some((target) => {
+    const item = draft[target];
+    return PERFORMANCE_PROMISE.test([
+      item.title,
+      item.body,
+      item.coverText,
+      ...item.hashtags,
+    ].join(" "));
+  });
 }
 
 function safePlan(planResult) {
@@ -120,6 +133,7 @@ export async function executeChineseInternetRewrite(planResult, { fetchImpl = fe
     return blocked(["local_model_response_not_json"], 1);
   }
   if (!validateDraft(draft, plan)) return blocked(["local_model_draft_contract_invalid"], 1);
+  if (containsPerformancePromise(draft, plan.targets)) return blocked(["local_model_performance_promise_detected"], 1);
 
   return {
     status:"chinese_internet_rewrite_generated_for_review",

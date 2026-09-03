@@ -79,3 +79,14 @@ test("rejects copy that exceeds a target platform limit", async () => {
   assert.deepEqual(result.blockers, ["local_model_draft_contract_invalid"]);
   assert.equal(result.draftSaved, false);
 });
+
+test("rejects model-written traffic or virality guarantees", async () => {
+  const promised = validDraft();
+  promised.douyin.body = "照着这个写法做，保证百万播放。";
+  const result = await executeChineseInternetRewrite(readyPlan(), {
+    fetchImpl:async () => ({ ok:true, json:async () => ({ message:{ content:JSON.stringify(promised) } }) }),
+  });
+  assert.deepEqual(result.blockers, ["local_model_performance_promise_detected"]);
+  assert.equal(result.humanReviewRequired, true);
+  assert.equal(result.publishTriggered, false);
+});
