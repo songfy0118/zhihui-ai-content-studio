@@ -100,7 +100,9 @@ test("flags future timestamps and unregistered sources for human review", () => 
 
 test("builds a partial live preview with explicit source health and no writes", async () => {
   const failedSource = { ...source, id: "failed", name: "Failed", feedUrl: "https://failed.example/feed.xml" };
-  const fetcher = async (url) => {
+  const requests = [];
+  const fetcher = async (url, options) => {
+    requests.push({ url, options });
     if (url.includes("failed")) return new Response("blocked", { status: 403 });
     return new Response(`<rss><channel><item><title>Verified feed entry</title><link>https://example.com/live</link><pubDate>Fri, 21 Aug 2026 12:00:00 GMT</pubDate></item></channel></rss>`, { status: 200, headers: { "content-type": "application/rss+xml" } });
   };
@@ -110,6 +112,9 @@ test("builds a partial live preview with explicit source health and no writes", 
   assert.equal(preview.sourceHealth.find((row) => row.sourceId === "failed").errorCode, "http_403");
   assert.equal(preview.sourceHealth.find((row) => row.sourceId === "failed").failureClass, "access_refused");
   assert.equal(preview.sourceHealth.find((row) => row.sourceId === "failed").retryable, false);
+  assert.equal(requests.length, 2);
+  assert.equal(requests[0].options.headers["User-Agent"], "ZhihuiAIContentStudio/0.1 (+https://github.com/songfy0118/zhihui-ai-content-studio)");
+  assert.match(requests[0].options.headers.Accept, /application\/rss\+xml/);
   assert.deepEqual(preview.transportAssessment, {
     status: "mixed_reachability",
     reachableSources: 1,

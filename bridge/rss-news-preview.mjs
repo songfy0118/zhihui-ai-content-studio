@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 const DEFAULT_MAX_BYTES = 1_500_000;
 const DEFAULT_MAX_ITEMS = 5;
+const RSS_USER_AGENT = "ZhihuiAIContentStudio/0.1 (+https://github.com/songfy0118/zhihui-ai-content-studio)";
 const TRACKING_PARAMETERS = /^(?:utm_.+|fbclid|gclid|mc_cid|mc_eid|ref|source)$/i;
 
 export function diagnoseRssFailure(errorCode) {
@@ -206,7 +207,10 @@ async function fetchSourcePreview(source, { fetcher, maxBytes, maxItems, timeout
   const startedAt = Date.now();
   try {
     const response = await fetcher(source.feedUrl, {
-      headers: { Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9" },
+      headers: {
+        Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9",
+        "User-Agent": RSS_USER_AGENT,
+      },
       redirect: "follow",
       signal: AbortSignal.timeout(timeoutMs),
     });
