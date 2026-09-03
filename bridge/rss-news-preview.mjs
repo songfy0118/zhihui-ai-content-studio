@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 const DEFAULT_MAX_BYTES = 1_500_000;
 const DEFAULT_MAX_ITEMS = 5;
+const MAX_REDIRECTS = 3;
 const RSS_USER_AGENT = "ZhihuiAIContentStudio/0.1 (+https://github.com/songfy0118/zhihui-ai-content-studio)";
 const TRACKING_PARAMETERS = /^(?:utm_.+|fbclid|gclid|mc_cid|mc_eid|ref|source)$/i;
 
@@ -15,6 +16,8 @@ export function diagnoseRssFailure(errorCode) {
   if (errorCode === "http_404") return { failureClass: "feed_not_found", retryable: false, operatorAction: "verify_feed_url" };
   if (errorCode === "feed_too_large") return { failureClass: "feed_limit_exceeded", retryable: false, operatorAction: "review_source_limits" };
   if (errorCode === "invalid_feed_document") return { failureClass: "invalid_feed_format", retryable: false, operatorAction: "verify_feed_url" };
+  if (errorCode === "unsafe_feed_redirect") return { failureClass: "unsafe_redirect", retryable: false, operatorAction: "manual_source_review" };
+  if (errorCode === "feed_redirect_limit") return { failureClass: "redirect_limit", retryable: false, operatorAction: "verify_feed_url" };
   if (/^network_/.test(errorCode)) return { failureClass: "network_error", retryable: true, operatorAction: "retry_later" };
   return { failureClass: "fetch_error", retryable: false, operatorAction: "inspect_source_failure" };
 }
@@ -80,6 +83,15 @@ function isPublicLinkHostname(hostname) {
   if (octets.some((octet) => octet > 255)) return false;
   const [a, b] = octets;
   return !(a === 0 || a === 10 || a === 127 || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 198 && (b === 18 || b === 19)) || a >= 224);
+}
+
+function isSafePublicUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password && isPublicLinkHostname(url.hostname);
+  } catch {
+    return false;
+  }
 }
 
 function normalizePublishedAt(value) {
@@ -244,15 +256,48 @@ async function readResponseTextWithLimit(response, maxBytes) {
   }
 }
 
+async function fetchWithSafeRedirects(initialUrl, fetcher, options) {
+  let currentUrl = initialUrl;
+  let requestCount = 0;
+  for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
+    if (!isSafePublicUrl(currentUrl)) {
+      const error = new Error("unsafe_feed_redirect");
+      error.requestCount = requestCount;
+      throw error;
+    }
+    let response;
+    try {
+      response = await fetcher(currentUrl, { ...options, redirect: "manual" });
+      requestCount += 1;
+    } catch (error) {
+      if (error && typeof error === "object") error.requestCount = requestCount + 1;
+      throw error;
+    }
+    if (![301, 302, 303, 307, 308].includes(response.status)) return { response, requestCount };
+    const location = response.headers.get("location");
+    if (!location) {
+      const error = new Error("unsafe_feed_redirect");
+      error.requestCount = requestCount;
+      throw error;
+    }
+    if (redirectCount === MAX_REDIRECTS) {
+      const error = new Error("feed_redirect_limit");
+      error.requestCount = requestCount;
+      throw error;
+    }
+    currentUrl = new URL(location, currentUrl).toString();
+  }
+  throw new Error("feed_redirect_limit");
+}
+
 async function fetchSourcePreview(source, { fetcher, maxBytes, maxItems, timeoutMs }) {
   const startedAt = Date.now();
   try {
-    const response = await fetcher(source.feedUrl, {
+    const { response, requestCount } = await fetchWithSafeRedirects(source.feedUrl, fetcher, {
       headers: {
         Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9",
         "User-Agent": RSS_USER_AGENT,
       },
-      redirect: "follow",
       signal: AbortSignal.timeout(timeoutMs),
     });
     if (!response.ok) throw new Error(`http_${response.status}`);
@@ -262,17 +307,17 @@ async function fetchSourcePreview(source, { fetcher, maxBytes, maxItems, timeout
     if (!/<(?:rss|feed|rdf:RDF)\b/i.test(xml)) throw new Error("invalid_feed_document");
     const items = parseRssItems(xml, source, maxItems);
     return {
-      health: { sourceId: source.id, status: items.length ? "ready" : "empty", httpStatus: response.status, itemsParsed: items.length, durationMs: Date.now() - startedAt, errorCode: null, ...diagnoseRssFailure(null) },
+      health: { sourceId: source.id, status: items.length ? "ready" : "empty", httpStatus: response.status, itemsParsed: items.length, requestCount, durationMs: Date.now() - startedAt, errorCode: null, ...diagnoseRssFailure(null) },
       items,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "fetch_failed";
     const causeCode = typeof error?.cause?.code === "string" ? error.cause.code.toLowerCase().replace(/[^a-z0-9_]/g, "") : "";
     const genericNetworkFailure = error?.name === "TypeError" && /^fetch failed$/i.test(message);
-    const knownFeedError = message === "feed_too_large" || message === "invalid_feed_document";
+    const knownFeedError = ["feed_too_large", "invalid_feed_document", "unsafe_feed_redirect", "feed_redirect_limit"].includes(message);
     const errorCode = /^http_\d{3}$/.test(message) || knownFeedError ? message : error?.name === "TimeoutError" ? "timeout" : causeCode ? `network_${causeCode}` : genericNetworkFailure ? "network_fetch_failed" : "fetch_failed";
     return {
-      health: { sourceId: source.id, status: "error", httpStatus: errorCode.startsWith("http_") ? Number(errorCode.slice(5)) : null, itemsParsed: 0, durationMs: Date.now() - startedAt, errorCode, ...diagnoseRssFailure(errorCode) },
+      health: { sourceId: source.id, status: "error", httpStatus: errorCode.startsWith("http_") ? Number(errorCode.slice(5)) : null, itemsParsed: 0, requestCount: Number(error?.requestCount ?? 1), durationMs: Date.now() - startedAt, errorCode, ...diagnoseRssFailure(errorCode) },
       items: [],
     };
   }
@@ -312,7 +357,7 @@ export async function buildRssNewsPreview({ sources = [], fetcher = fetch, maxBy
     contentFetched: items.length > 0,
     factsVerified: false,
     humanReviewRequired: true,
-    externalCalls: rssSources.length,
+    externalCalls: sourceHealth.reduce((sum, source) => sum + source.requestCount, 0),
     databaseWrites: false,
     publishTriggered: false,
   };

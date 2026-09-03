@@ -200,6 +200,25 @@ test("rejects a successful HTML response instead of treating it as an empty feed
   assert.equal(preview.sourceHealth[0].operatorAction, "verify_feed_url");
 });
 
+test("blocks redirects from a public feed to a non-public address", async () => {
+  const fetcher = async () => new Response(null, { status: 302, headers: { location: "https://127.0.0.1/private" } });
+  const preview = await buildRssNewsPreview({ sources: [source], fetcher });
+  assert.equal(preview.sourceHealth[0].errorCode, "unsafe_feed_redirect");
+  assert.equal(preview.sourceHealth[0].failureClass, "unsafe_redirect");
+  assert.equal(preview.sourceHealth[0].requestCount, 1);
+  assert.equal(preview.externalCalls, 1);
+});
+
+test("follows a bounded safe HTTPS redirect and counts both requests", async () => {
+  const fetcher = async (url) => url.endsWith("feed.xml")
+    ? new Response(null, { status: 302, headers: { location: "/rss.xml" } })
+    : new Response(`<rss><channel><item><title>Redirected feed</title><link>https://example.com/story</link></item></channel></rss>`, { status: 200 });
+  const preview = await buildRssNewsPreview({ sources: [source], fetcher });
+  assert.equal(preview.sourceHealth[0].status, "ready");
+  assert.equal(preview.sourceHealth[0].requestCount, 2);
+  assert.equal(preview.externalCalls, 2);
+});
+
 test("classifies TLS or proxy failures without weakening transport security", () => {
   assert.deepEqual(diagnoseRssFailure("network_err_ssl_packet_length_too_long"), {
     failureClass: "tls_or_proxy_error",
