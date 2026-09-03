@@ -46,6 +46,7 @@
     "news:claim-selection:check": "node --test tests/human-claim-selection-plan.test.mjs",
     "news:claim-acceptance:check": "node --test tests/human-claim-acceptance-preview.test.mjs",
     "news:accepted-claim-blueprint:check": "node --test tests/accepted-claim-draft-blueprint.test.mjs",
+    "news:chinese-rewrite:check": "node --test tests/chinese-internet-rewrite-plan.test.mjs tests/chinese-internet-rewrite-executor.test.mjs",
     "news:platform-text-draft:check": "node --test tests/platform-text-draft-preview.test.mjs",
     "news:platform-text-review:check": "node --test tests/platform-text-draft-review-preview.test.mjs",
     "db:platform-text-review:store:isolated": "node --test tests/platform-text-draft-review-store.test.mjs",
