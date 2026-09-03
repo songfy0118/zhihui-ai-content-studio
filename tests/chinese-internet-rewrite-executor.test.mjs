@@ -30,9 +30,9 @@ function readyPlan() {
 
 function validDraft() {
   const item = {
-    title:"AI 编程助手来了，初级工程师会先被改变什么？",
+    title:"AI 助手先改变谁？",
     body:"公司已经为内部开发者引入 AI 编程助手，但目前没有经过核实的效率提升比例。",
-    coverText:"AI 正在改写初级工程师的工作",
+    coverText:"AI 改写工程师工作",
     hashtags:["AI","程序员"],
     sourceNote:"来源：https://company.example/news https://news.example/report",
     claimSourceRefs:["claim-1-original","claim-1-independent"],
@@ -68,4 +68,14 @@ test("rejects missing citations and tampered plans", async () => {
   tampered.plan.endpoint = "https://example.com/api/chat";
   const blocked = await executeChineseInternetRewrite(tampered, { fetchImpl:async () => assert.fail("must not call") });
   assert.deepEqual(blocked.blockers, ["chinese_internet_rewrite_plan_invalid_or_tampered"]);
+});
+
+test("rejects copy that exceeds a target platform limit", async () => {
+  const oversized = validDraft();
+  oversized.xiaohongshu.title = "这是一个明显超过小红书二十字标题限制所以不能进入审核的标题";
+  const result = await executeChineseInternetRewrite(readyPlan(), {
+    fetchImpl:async () => ({ ok:true, json:async () => ({ message:{ content:JSON.stringify(oversized) } }) }),
+  });
+  assert.deepEqual(result.blockers, ["local_model_draft_contract_invalid"]);
+  assert.equal(result.draftSaved, false);
 });

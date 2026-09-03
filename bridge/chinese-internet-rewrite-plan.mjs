@@ -2,6 +2,10 @@ import { createHash } from "node:crypto";
 
 const HASH = /^[a-f0-9]{64}$/;
 const TARGETS = new Set(["douyin", "xiaohongshu"]);
+const PLATFORM_LIMITS = Object.freeze({
+  xiaohongshu:Object.freeze({ title:20, coverText:16 }),
+  douyin:Object.freeze({ title:30, coverText:16 }),
+});
 
 function cleanText(value, maximumLength) {
   if (typeof value !== "string") return null;
@@ -59,6 +63,15 @@ export function buildChineseInternetRewritePlan(blueprintResult, { model = "qwen
     properties:Object.fromEntries(blueprint.targets.map((target) => [target, {
       type:"object",
       required:["title","body","coverText","hashtags","sourceNote","claimSourceRefs"],
+      additionalProperties:false,
+      properties:{
+        title:{ type:"string", minLength:1, maxLength:PLATFORM_LIMITS[target].title },
+        body:{ type:"string", minLength:1, maxLength:20_000 },
+        coverText:{ type:"string", minLength:1, maxLength:PLATFORM_LIMITS[target].coverText },
+        hashtags:{ type:"array", minItems:2, maxItems:8, items:{ type:"string", minLength:1, maxLength:24 } },
+        sourceNote:{ type:"string", minLength:1, maxLength:10_000 },
+        claimSourceRefs:{ type:"array", minItems:1, items:{ type:"string" } },
+      },
     }])),
   };
   const plan = {

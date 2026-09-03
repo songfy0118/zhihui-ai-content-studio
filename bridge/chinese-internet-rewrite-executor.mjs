@@ -2,6 +2,10 @@ import { createHash } from "node:crypto";
 
 const LOCAL_ENDPOINT = "http://127.0.0.1:11434/api/chat";
 const HASH = /^[a-f0-9]{64}$/;
+const PLATFORM_LIMITS = Object.freeze({
+  xiaohongshu:Object.freeze({ title:20, coverText:16 }),
+  douyin:Object.freeze({ title:30, coverText:16 }),
+});
 
 function hash(value) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -30,15 +34,17 @@ function validateDraft(draft, plan) {
   const requiredUrls = plan.sourceLedger.map((source) => source.canonicalUrl);
   for (const target of plan.targets) {
     const item = draft[target];
+    const limits = PLATFORM_LIMITS[target];
     if (
-      !safeText(item?.title, 60)
+      !limits
+      || !safeText(item?.title, limits.title)
       || !safeText(item?.body, 20_000)
-      || !safeText(item?.coverText, 60)
+      || !safeText(item?.coverText, limits.coverText)
       || !safeText(item?.sourceNote, 10_000)
       || !Array.isArray(item?.hashtags)
       || item.hashtags.length < 2
       || item.hashtags.length > 8
-      || item.hashtags.some((tag) => !safeText(tag, 40))
+      || item.hashtags.some((tag) => !safeText(tag, 24))
       || !Array.isArray(item?.claimSourceRefs)
       || item.claimSourceRefs.length < 1
       || item.claimSourceRefs.some((ref) => !allowedRefs.has(ref))

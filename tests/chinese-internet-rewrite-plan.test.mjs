@@ -32,6 +32,9 @@ test("plans faithful English-to-Chinese internet rewriting from accepted claims 
   assert.equal(result.status, "chinese_internet_rewrite_plan_ready");
   assert.equal(result.plan.provider, "ollama_local");
   assert.equal(result.plan.model, "qwen3:4b");
+  assert.equal(result.plan.outputSchema.properties.xiaohongshu.properties.title.maxLength, 20);
+  assert.equal(result.plan.outputSchema.properties.douyin.properties.title.maxLength, 30);
+  assert.equal(result.plan.outputSchema.properties.douyin.properties.coverText.maxLength, 16);
   assert.match(result.plan.instruction, /不得新增数字/);
   assert.match(result.plan.instruction, /不要逐句翻译/);
   assert.deepEqual(result.plan.inputClaims[0].sourceRefs, ["claim-1-original","claim-1-independent"]);
