@@ -1613,9 +1613,11 @@ test("diagnoses the full local runtime without restarting services", async () =>
   const currentFetch = async (url) => ({
     ok: true,
     status: 200,
-    json: async () => url.includes(":3765/")
-      ? { protocolVersion: BRIDGE_PROTOCOL_VERSION, capabilities: BRIDGE_CAPABILITIES }
-      : {},
+      json: async () => url.includes(":3765/")
+        ? { protocolVersion: BRIDGE_PROTOCOL_VERSION, capabilities: BRIDGE_CAPABILITIES }
+        : url.includes(":11434/")
+          ? { models: [{ name: "qwen3:4b" }] }
+        : {},
   });
   const current = await inspectLocalRuntime({ fetchImpl: currentFetch, timeoutMs: 50 });
   assert.equal(current.status, "current");
@@ -1625,7 +1627,7 @@ test("diagnoses the full local runtime without restarting services", async () =>
   assert.equal(current.nextAction, "none");
 
   const stale = await inspectLocalRuntime({
-    fetchImpl: async () => ({ ok: true, status: 200, json: async () => ({ ok: true }) }),
+    fetchImpl: async (url) => ({ ok: true, status: 200, json: async () => url.includes(":11434/") ? { models: [{ name: "qwen3:4b" }] } : { ok: true } }),
     timeoutMs: 50,
   });
   assert.equal(stale.status, "bridge_stale");
@@ -1635,7 +1637,7 @@ test("diagnoses the full local runtime without restarting services", async () =>
   const offline = await inspectLocalRuntime({
     fetchImpl: async (url) => {
       if (url.includes(":3013")) throw new Error("offline");
-      return { ok: true, status: 200, json: async () => ({ protocolVersion: BRIDGE_PROTOCOL_VERSION, capabilities: BRIDGE_CAPABILITIES }) };
+        return { ok: true, status: 200, json: async () => url.includes(":11434/") ? { models: [{ name: "qwen3:4b" }] } : ({ protocolVersion: BRIDGE_PROTOCOL_VERSION, capabilities: BRIDGE_CAPABILITIES }) };
     },
     timeoutMs: 50,
   });
@@ -1652,6 +1654,20 @@ test("diagnoses the full local runtime without restarting services", async () =>
   });
   assert.deepEqual(ollamaOffline.offlineServices, ["ollama"]);
   assert.equal(ollamaOffline.nextAction, "install_or_start_ollama");
+
+  const modelMissing = await inspectLocalRuntime({
+    fetchImpl: async (url) => ({
+      ok:true,
+      status:200,
+      json:async () => url.includes(":3765/")
+        ? { protocolVersion:BRIDGE_PROTOCOL_VERSION, capabilities:BRIDGE_CAPABILITIES }
+        : url.includes(":11434/") ? { models:[] } : {},
+    }),
+    timeoutMs:50,
+  });
+  assert.equal(modelMissing.status, "models_missing");
+  assert.equal(modelMissing.ollamaModelReady, false);
+  assert.equal(modelMissing.nextAction, "pull_qwen3_4b");
   assert.equal(offline.processMutation, false);
   assert.equal(offline.externalCalls, false);
   assert.equal(offline.modelCalls, false);
