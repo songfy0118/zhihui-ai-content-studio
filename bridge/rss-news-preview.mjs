@@ -14,6 +14,7 @@ export function diagnoseRssFailure(errorCode) {
   if (/^http_(?:401|403)$/.test(errorCode)) return { failureClass: "access_refused", retryable: false, operatorAction: "manual_source_review" };
   if (errorCode === "http_404") return { failureClass: "feed_not_found", retryable: false, operatorAction: "verify_feed_url" };
   if (errorCode === "feed_too_large") return { failureClass: "feed_limit_exceeded", retryable: false, operatorAction: "review_source_limits" };
+  if (errorCode === "invalid_feed_document") return { failureClass: "invalid_feed_format", retryable: false, operatorAction: "verify_feed_url" };
   if (/^network_/.test(errorCode)) return { failureClass: "network_error", retryable: true, operatorAction: "retry_later" };
   return { failureClass: "fetch_error", retryable: false, operatorAction: "inspect_source_failure" };
 }
@@ -246,6 +247,7 @@ async function fetchSourcePreview(source, { fetcher, maxBytes, maxItems, timeout
     const reportedBytes = Number(response.headers.get("content-length") ?? 0);
     if (reportedBytes > maxBytes) throw new Error("feed_too_large");
     const xml = await readResponseTextWithLimit(response, maxBytes);
+    if (!/<(?:rss|feed|rdf:RDF)\b/i.test(xml)) throw new Error("invalid_feed_document");
     const items = parseRssItems(xml, source, maxItems);
     return {
       health: { sourceId: source.id, status: items.length ? "ready" : "empty", httpStatus: response.status, itemsParsed: items.length, durationMs: Date.now() - startedAt, errorCode: null, ...diagnoseRssFailure(null) },
@@ -255,7 +257,8 @@ async function fetchSourcePreview(source, { fetcher, maxBytes, maxItems, timeout
     const message = error instanceof Error ? error.message : "fetch_failed";
     const causeCode = typeof error?.cause?.code === "string" ? error.cause.code.toLowerCase().replace(/[^a-z0-9_]/g, "") : "";
     const genericNetworkFailure = error?.name === "TypeError" && /^fetch failed$/i.test(message);
-    const errorCode = /^http_\d{3}$/.test(message) || message === "feed_too_large" ? message : error?.name === "TimeoutError" ? "timeout" : causeCode ? `network_${causeCode}` : genericNetworkFailure ? "network_fetch_failed" : "fetch_failed";
+    const knownFeedError = message === "feed_too_large" || message === "invalid_feed_document";
+    const errorCode = /^http_\d{3}$/.test(message) || knownFeedError ? message : error?.name === "TimeoutError" ? "timeout" : causeCode ? `network_${causeCode}` : genericNetworkFailure ? "network_fetch_failed" : "fetch_failed";
     return {
       health: { sourceId: source.id, status: "error", httpStatus: errorCode.startsWith("http_") ? Number(errorCode.slice(5)) : null, itemsParsed: 0, durationMs: Date.now() - startedAt, errorCode, ...diagnoseRssFailure(errorCode) },
       items: [],

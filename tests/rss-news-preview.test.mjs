@@ -175,6 +175,18 @@ test("cancels a chunked feed as soon as it exceeds the byte limit", async () => 
   assert.equal(cancelled, true);
 });
 
+test("rejects a successful HTML response instead of treating it as an empty feed", async () => {
+  const fetcher = async () => new Response("<!doctype html><title>Access page</title>", {
+    status: 200,
+    headers: { "content-type": "text/html" },
+  });
+  const preview = await buildRssNewsPreview({ sources: [source], fetcher });
+  assert.equal(preview.sourceHealth[0].status, "error");
+  assert.equal(preview.sourceHealth[0].errorCode, "invalid_feed_document");
+  assert.equal(preview.sourceHealth[0].failureClass, "invalid_feed_format");
+  assert.equal(preview.sourceHealth[0].operatorAction, "verify_feed_url");
+});
+
 test("classifies TLS or proxy failures without weakening transport security", () => {
   assert.deepEqual(diagnoseRssFailure("network_err_ssl_packet_length_too_long"), {
     failureClass: "tls_or_proxy_error",
