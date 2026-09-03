@@ -130,9 +130,18 @@ test("catalog summary separates automatic and manual sources", () => {
   const summary = summarizeNewsSourceCatalog();
   assert.equal(summary.totalSources, 17);
   assert.equal(summary.enabledSources, 15);
-  assert.equal(summary.rssSources, 10);
-  assert.equal(summary.officialNewsrooms, 5);
+  assert.equal(summary.rssSources, 9);
+  assert.equal(summary.officialNewsrooms, 6);
   assert.equal(summary.manualReviewSources, 2);
+});
+
+test("Microsoft AI falls back to manual newsroom review after its feed refuses access", () => {
+  const microsoft = NEWS_SOURCE_CATALOG.find((source) => source.id === "microsoft-ai-source");
+  assert.ok(microsoft);
+  assert.equal(microsoft.sourceType, "official_newsroom");
+  assert.equal(microsoft.feedUrl, null);
+  assert.equal(microsoft.automaticCollectionBlockedReason, "feed_access_refused_http_403");
+  assert.equal(microsoft.rightsPolicy, "public_page_manual_metadata_with_attribution");
 });
 
 test("TechCrunch feed is metadata-only and keeps article acquisition blocked", () => {

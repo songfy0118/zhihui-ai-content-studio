@@ -1,4 +1,4 @@
-export const NEWS_SOURCE_CATALOG_VERSION = 7;
+export const NEWS_SOURCE_CATALOG_VERSION = 8;
 
 export const NEWS_SOURCE_CATALOG = Object.freeze([
   Object.freeze({
@@ -35,13 +35,14 @@ export const NEWS_SOURCE_CATALOG = Object.freeze([
     region: "US",
     language: "en",
     category: "ai",
-    sourceType: "rss",
+    sourceType: "official_newsroom",
     baseUrl: "https://news.microsoft.com/source/topics/ai/",
-    feedUrl: "https://news.microsoft.com/source/topics/ai/feed/",
-    rightsPolicy: "link_and_summarize_with_attribution",
+    feedUrl: null,
+    rightsPolicy: "public_page_manual_metadata_with_attribution",
+    automaticCollectionBlockedReason: "feed_access_refused_http_403",
     requiresLogin: false,
     enabled: true,
-    refreshMinutes: 60,
+    refreshMinutes: 180,
   }),
   Object.freeze({
     id: "google-blog",
