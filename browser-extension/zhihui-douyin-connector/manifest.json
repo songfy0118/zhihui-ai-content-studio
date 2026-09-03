@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "知绘工厂 · 抖音草稿连接器",
+  "version": "0.1.0",
+  "description": "把知绘工厂已生成的文章填入当前登录的抖音创作页；不会保存或发布。",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://zhihui-ai-studio.songfy0118.chatgpt.site/*",
+    "https://creator.douyin.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://zhihui-ai-studio.songfy0118.chatgpt.site/*",
+        "http://127.0.0.1/*",
+        "http://localhost/*"
+      ],
+      "js": ["site-bridge.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://creator.douyin.com/*"],
+      "js": ["douyin-fill.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "知绘工厂 · 抖音草稿连接器"
+  }
+}
