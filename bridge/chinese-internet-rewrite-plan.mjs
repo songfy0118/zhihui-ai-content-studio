@@ -30,6 +30,7 @@ export function buildChineseInternetRewritePlan(blueprintResult, { model = "qwen
   const modelName = cleanText(model, 120);
   if (blueprintResult?.status !== "accepted_claim_draft_blueprint_ready" || !blueprint) blockers.push("accepted_claim_blueprint_not_ready");
   if (!HASH.test(blueprintResult?.blueprintFingerprint ?? "")) blockers.push("accepted_claim_blueprint_fingerprint_invalid");
+  if (blueprint && HASH.test(blueprintResult?.blueprintFingerprint ?? "") && createHash("sha256").update(JSON.stringify(blueprint)).digest("hex") !== blueprintResult.blueprintFingerprint) blockers.push("accepted_claim_blueprint_tampered");
   if (!modelName) blockers.push("local_model_required");
   if (!Array.isArray(blueprint?.targets) || blueprint.targets.some((target) => !TARGETS.has(target))) blockers.push("target_platform_invalid");
   if (!Array.isArray(blueprint?.approvedClaimBlocks) || blueprint.approvedClaimBlocks.length < 1) blockers.push("accepted_claims_required");

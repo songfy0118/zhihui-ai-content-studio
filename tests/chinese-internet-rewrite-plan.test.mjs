@@ -50,3 +50,12 @@ test("blocks unreviewed or rewriteable claims", () => {
   assert.ok(result.blockers.includes("claim_boundary_invalid"));
   assert.equal(result.readyForLocalModelExecution, false);
 });
+
+test("blocks a blueprint changed after its human-review fingerprint", () => {
+  const tampered = readyBlueprint();
+  tampered.blueprint.editorialAngle = "被指纹签署后偷偷替换的角度";
+  const result = buildChineseInternetRewritePlan(tampered);
+  assert.ok(result.blockers.includes("accepted_claim_blueprint_tampered"));
+  assert.equal(result.modelCalls, 0);
+  assert.equal(result.draftGenerated, false);
+});
