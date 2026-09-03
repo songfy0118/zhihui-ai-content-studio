@@ -292,14 +292,17 @@ async function fetchWithSafeRedirects(initialUrl, fetcher, options) {
 
 async function fetchSourcePreview(source, { fetcher, maxBytes, maxItems, timeoutMs }) {
   const startedAt = Date.now();
+  let requestCount = 0;
   try {
-    const { response, requestCount } = await fetchWithSafeRedirects(source.feedUrl, fetcher, {
+    const result = await fetchWithSafeRedirects(source.feedUrl, fetcher, {
       headers: {
         Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9",
         "User-Agent": RSS_USER_AGENT,
       },
       signal: AbortSignal.timeout(timeoutMs),
     });
+    const { response } = result;
+    requestCount = result.requestCount;
     if (!response.ok) throw new Error(`http_${response.status}`);
     const reportedBytes = Number(response.headers.get("content-length") ?? 0);
     if (reportedBytes > maxBytes) throw new Error("feed_too_large");
@@ -317,7 +320,7 @@ async function fetchSourcePreview(source, { fetcher, maxBytes, maxItems, timeout
     const knownFeedError = ["feed_too_large", "invalid_feed_document", "unsafe_feed_redirect", "feed_redirect_limit"].includes(message);
     const errorCode = /^http_\d{3}$/.test(message) || knownFeedError ? message : error?.name === "TimeoutError" ? "timeout" : causeCode ? `network_${causeCode}` : genericNetworkFailure ? "network_fetch_failed" : "fetch_failed";
     return {
-      health: { sourceId: source.id, status: "error", httpStatus: errorCode.startsWith("http_") ? Number(errorCode.slice(5)) : null, itemsParsed: 0, requestCount: Number(error?.requestCount ?? 1), durationMs: Date.now() - startedAt, errorCode, ...diagnoseRssFailure(errorCode) },
+      health: { sourceId: source.id, status: "error", httpStatus: errorCode.startsWith("http_") ? Number(errorCode.slice(5)) : null, itemsParsed: 0, requestCount: Number(error?.requestCount ?? (requestCount || 1)), durationMs: Date.now() - startedAt, errorCode, ...diagnoseRssFailure(errorCode) },
       items: [],
     };
   }

@@ -219,6 +219,16 @@ test("follows a bounded safe HTTPS redirect and counts both requests", async () 
   assert.equal(preview.externalCalls, 2);
 });
 
+test("preserves redirect request counts when the final response fails validation", async () => {
+  const fetcher = async (url) => url.endsWith("feed.xml")
+    ? new Response(null, { status: 302, headers: { location: "/not-a-feed" } })
+    : new Response("<!doctype html><title>Access page</title>", { status: 200 });
+  const preview = await buildRssNewsPreview({ sources: [source], fetcher });
+  assert.equal(preview.sourceHealth[0].errorCode, "invalid_feed_document");
+  assert.equal(preview.sourceHealth[0].requestCount, 2);
+  assert.equal(preview.externalCalls, 2);
+});
+
 test("classifies TLS or proxy failures without weakening transport security", () => {
   assert.deepEqual(diagnoseRssFailure("network_err_ssl_packet_length_too_long"), {
     failureClass: "tls_or_proxy_error",
