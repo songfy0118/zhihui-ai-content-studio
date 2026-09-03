@@ -140,6 +140,17 @@ test("reports a safe network cause code without swallowing source failures", asy
   assert.equal(preview.sourceHealth[0].retryable, true);
 });
 
+test("classifies a cause-less fetch TypeError as a retryable network failure", async () => {
+  const fetcher = async () => {
+    throw new TypeError("fetch failed");
+  };
+  const preview = await buildRssNewsPreview({ sources: [source], fetcher });
+  assert.equal(preview.sourceHealth[0].errorCode, "network_fetch_failed");
+  assert.equal(preview.sourceHealth[0].failureClass, "network_error");
+  assert.equal(preview.sourceHealth[0].retryable, true);
+  assert.equal(preview.sourceHealth[0].operatorAction, "retry_later");
+});
+
 test("classifies TLS or proxy failures without weakening transport security", () => {
   assert.deepEqual(diagnoseRssFailure("network_err_ssl_packet_length_too_long"), {
     failureClass: "tls_or_proxy_error",

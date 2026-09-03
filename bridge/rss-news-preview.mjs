@@ -223,7 +223,8 @@ async function fetchSourcePreview(source, { fetcher, maxBytes, maxItems, timeout
   } catch (error) {
     const message = error instanceof Error ? error.message : "fetch_failed";
     const causeCode = typeof error?.cause?.code === "string" ? error.cause.code.toLowerCase().replace(/[^a-z0-9_]/g, "") : "";
-    const errorCode = /^http_\d{3}$/.test(message) || message === "feed_too_large" ? message : error?.name === "TimeoutError" ? "timeout" : causeCode ? `network_${causeCode}` : "fetch_failed";
+    const genericNetworkFailure = error?.name === "TypeError" && /^fetch failed$/i.test(message);
+    const errorCode = /^http_\d{3}$/.test(message) || message === "feed_too_large" ? message : error?.name === "TimeoutError" ? "timeout" : causeCode ? `network_${causeCode}` : genericNetworkFailure ? "network_fetch_failed" : "fetch_failed";
     return {
       health: { sourceId: source.id, status: "error", httpStatus: errorCode.startsWith("http_") ? Number(errorCode.slice(5)) : null, itemsParsed: 0, durationMs: Date.now() - startedAt, errorCode, ...diagnoseRssFailure(errorCode) },
       items: [],
