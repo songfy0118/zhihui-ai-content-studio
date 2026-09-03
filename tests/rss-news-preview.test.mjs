@@ -23,6 +23,19 @@ test("normalizes canonical URLs without tracking parameters", () => {
   assert.equal(normalizeCanonicalUrl("http://example.com/story", source.baseUrl), null);
 });
 
+test("rejects credential-bearing and non-public feed item links", () => {
+  for (const unsafeUrl of [
+    "https://user:secret@example.com/story",
+    "https://localhost/story",
+    "https://127.0.0.1/story",
+    "https://10.1.2.3/story",
+    "https://192.168.1.2/story",
+    "https://[::1]/story",
+    "https://news.internal/story",
+  ]) assert.equal(normalizeCanonicalUrl(unsafeUrl, source.baseUrl), null, unsafeUrl);
+  assert.equal(normalizeCanonicalUrl("https://8.8.8.8/story", source.baseUrl), "https://8.8.8.8/story");
+});
+
 test("parses RSS and Atom metadata without returning full article bodies", () => {
   const rss = `<rss><channel><item><title><![CDATA[AI &amp; Work]]></title><link>https://example.com/story?utm_medium=rss</link><pubDate>Thu, 20 Aug 2026 10:00:00 GMT</pubDate><description><![CDATA[<p>Short official summary.</p>]]></description></item></channel></rss>`;
   const atom = `<feed><entry><title>Agent update</title><link href="https://example.com/agent"/><updated>2026-08-21T08:00:00Z</updated><summary>Release notes</summary></entry></feed>`;

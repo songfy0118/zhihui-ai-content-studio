@@ -70,6 +70,18 @@ function readLink(block) {
   return attributeLink?.[1] ?? readTag(block, ["link", "guid", "id"]);
 }
 
+function isPublicLinkHostname(hostname) {
+  const normalized = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (!normalized || normalized === "localhost" || normalized.endsWith(".localhost") || normalized.endsWith(".local") || normalized.endsWith(".internal")) return false;
+  if (normalized === "::" || normalized === "::1" || /^(?:fc|fd|fe8|fe9|fea|feb)/i.test(normalized)) return false;
+  const ipv4 = normalized.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (!ipv4) return true;
+  const octets = ipv4.slice(1).map(Number);
+  if (octets.some((octet) => octet > 255)) return false;
+  const [a, b] = octets;
+  return !(a === 0 || a === 10 || a === 127 || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 198 && (b === 18 || b === 19)) || a >= 224);
+}
+
 function normalizePublishedAt(value) {
   if (!value) return null;
   const timestamp = Date.parse(stripMarkup(value));
@@ -79,7 +91,7 @@ function normalizePublishedAt(value) {
 export function normalizeCanonicalUrl(value, baseUrl) {
   try {
     const url = new URL(stripMarkup(value), baseUrl);
-    if (url.protocol !== "https:") return null;
+    if (url.protocol !== "https:" || url.username || url.password || !isPublicLinkHostname(url.hostname)) return null;
     url.hash = "";
     for (const key of [...url.searchParams.keys()]) {
       if (TRACKING_PARAMETERS.test(key)) url.searchParams.delete(key);
