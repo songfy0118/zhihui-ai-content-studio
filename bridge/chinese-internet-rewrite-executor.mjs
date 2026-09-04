@@ -97,6 +97,7 @@ export async function executeChineseInternetRewrite(planResult, { fetchImpl = fe
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response;
+  let draft;
   try {
     response = await fetchImpl(LOCAL_ENDPOINT, {
       method:"POST",
@@ -117,20 +118,17 @@ export async function executeChineseInternetRewrite(planResult, { fetchImpl = fe
         ],
       }),
     });
+    if (!response?.ok) return blocked(["local_model_http_error"], 1);
+    try {
+      const payload = await response.json();
+      draft = JSON.parse(payload?.message?.content);
+    } catch {
+      return blocked([controller.signal.aborted ? "local_model_unreachable_or_timed_out" : "local_model_response_not_json"], 1);
+    }
   } catch {
     return blocked(["local_model_unreachable_or_timed_out"], 1);
   } finally {
     clearTimeout(timer);
-  }
-  if (!response?.ok) return blocked(["local_model_http_error"], 1);
-
-  let payload;
-  let draft;
-  try {
-    payload = await response.json();
-    draft = JSON.parse(payload?.message?.content);
-  } catch {
-    return blocked(["local_model_response_not_json"], 1);
   }
   if (!validateDraft(draft, plan)) return blocked(["local_model_draft_contract_invalid"], 1);
   if (containsPerformancePromise(draft, plan.targets)) return blocked(["local_model_performance_promise_detected"], 1);

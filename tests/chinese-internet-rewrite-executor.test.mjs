@@ -40,6 +40,23 @@ function validDraft() {
   return { xiaohongshu:{ ...item }, douyin:{ ...item } };
 }
 
+test("keeps the timeout active while reading the model response body", async () => {
+  const result = await executeChineseInternetRewrite(readyPlan(), {
+    timeoutMs:20,
+    fetchImpl:async (_url, { signal }) => ({
+      ok:true,
+      json:() => new Promise((_resolve, reject) => {
+        signal.addEventListener("abort", () => reject(new Error("body aborted")), { once:true });
+      }),
+    }),
+  });
+  assert.deepEqual(result.blockers, ["local_model_unreachable_or_timed_out"]);
+  assert.equal(result.draft, null);
+  assert.equal(result.modelCalls, 1);
+  assert.equal(result.draftSaved, false);
+  assert.equal(result.publishTriggered, false);
+});
+
 test("calls only the fixed local Ollama endpoint and returns a review-only draft", async () => {
   let request;
   const result = await executeChineseInternetRewrite(readyPlan(), {
