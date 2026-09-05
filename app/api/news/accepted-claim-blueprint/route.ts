@@ -1,5 +1,5 @@
 import { buildAcceptedClaimDraftBlueprint } from "../../../../bridge/accepted-claim-draft-blueprint.mjs";
-import { getD1 } from "../../../../db";
+import { getD1 } from "../../../../db/index.ts";
 import { createHumanClaimAcceptanceReader } from "../../../../db/human-claim-acceptance-reader.mjs";
 
 const MAX_REQUEST_BYTES = 2_000;
