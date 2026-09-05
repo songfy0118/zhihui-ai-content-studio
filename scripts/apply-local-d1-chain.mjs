@@ -3,6 +3,7 @@ import { assessD1ChainApplyRequest } from "../bridge/d1-chain-apply-guard.mjs";
 import { buildD1ChainPlan } from "../bridge/d1-chain-plan.mjs";
 
 const root = new URL("../", import.meta.url);
+const studioUrl = process.env.ZHIHUI_STUDIO_URL ?? "http://127.0.0.1:3000";
 const args = new Set(process.argv.slice(2));
 const executeRequested = args.has("--execute");
 const confirmationArg = [...args].find((arg) => arg.startsWith("--confirmation="));
@@ -15,7 +16,7 @@ const migrations = await Promise.all((journal.entries ?? []).map(async ({ tag })
 
 let liveStatus = null;
 try {
-  const response = await fetch("http://127.0.0.1:3000/api/local/migration-chain", { signal: AbortSignal.timeout(5000) });
+  const response = await fetch(`${studioUrl}/api/local/migration-chain`, { signal: AbortSignal.timeout(5000) });
   if (response.ok) liveStatus = await response.json();
 } catch {
   liveStatus = null;
