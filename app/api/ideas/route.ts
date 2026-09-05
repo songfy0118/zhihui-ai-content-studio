@@ -25,10 +25,21 @@ const seed = [
   ["chip-supply-chain", "AI 芯片供应链的下一处瓶颈是什么？", "比较先进封装、HBM、设备和电力约束", "科技金融", 94, 93, 91],
 ] as const;
 
+const D1_INSERT_BATCH_SIZE = 10;
+
 async function seedIfNeeded() {
   const db = getDb();
   const now = new Date().toISOString();
-  await db.insert(ideas).values(seed.map(([id, title, angle, category, douyinScore, tiktokScore, xhsScore]) => ({ id, title, angle, category, douyinScore, tiktokScore, xhsScore, createdAt: now }))).onConflictDoNothing({ target: ideas.id });
+  const rows = seed.map(([id, title, angle, category, douyinScore, tiktokScore, xhsScore]) => ({ id, title, angle, category, douyinScore, tiktokScore, xhsScore, createdAt: now }));
+
+  // D1 enforces SQLite's bind-variable ceiling. Keep the initial catalog in
+  // small, idempotent batches so expanding it cannot make the whole API fail.
+  for (let offset = 0; offset < rows.length; offset += D1_INSERT_BATCH_SIZE) {
+    await db
+      .insert(ideas)
+      .values(rows.slice(offset, offset + D1_INSERT_BATCH_SIZE))
+      .onConflictDoNothing({ target: ideas.id });
+  }
 }
 
 export async function GET() {
