@@ -114,7 +114,7 @@ function SourceLockPlanSummary({ plan }:{ plan:SourceLockSavePlan }) {
 }
 function SourceLockAuthorizationTerms({ preview }:{ preview:SourceLockSaveAuthorizationPreview }) {
   if (!preview.eligibleForExplicitSourceLockSaveAuthorization || !preview.saveTarget || !preview.authorizationTerms) return null;
-  return <section className="sourceLockAuthorizationTerms" aria-label="来源锁单次授权预览条款"><header><small>SINGLE-USE AUTHORIZATION · PREVIEW ONLY</small><b>授权范围已锁定，但尚未授权</b><span>未来若本人精确确认，只允许写入当前计划中的记录</span></header><div><span><b>{preview.authorizationTerms.sourceLockRecordCount}</b> 条来源锁</span><span><b>{preview.authorizationTerms.evidenceRecordCount}</b> 条证据记录</span><span><b>1</b> 次使用</span><span><b>{preview.authorizationTerms.ttlSecondsAfterAcceptance/60}</b> 分钟有效</span></div><p>必须精确匹配计划指纹 <code>{preview.sourceSavePlanFingerprint?.slice(0,16)}…</code>；未来授权票据从接受时开始计时，过期或重放均应失效。</p>{preview.requiredConfirmation&&<code>{preview.requiredConfirmation}</code>}<footer>此页面不接收确认 · 授权 0 · 保存路由 0 · 写库 0 · 来源锁 0</footer></section>;
+  return <section className="sourceLockAuthorizationTerms" aria-label="来源锁单次授权预览条款"><header><small>SINGLE-USE AUTHORIZATION · PREVIEW ONLY</small><b>授权范围已锁定，但尚未授权</b><span>未来若本人精确确认，只允许写入当前计划中的记录</span></header><div><span><b>{preview.authorizationTerms.sourceLockRecordCount}</b> 条来源锁</span><span><b>{preview.authorizationTerms.evidenceRecordCount}</b> 条证据记录</span><span><b>1</b> 次使用</span><span><b>{preview.authorizationTerms.ttlSecondsAfterAcceptance/60}</b> 分钟有效</span></div><p>必须精确匹配计划指纹 <code>{preview.sourceSavePlanFingerprint?.slice(0,16)}…</code>；未来授权票据从接受时开始计时，过期或重放均应失效。</p>{preview.requiredConfirmation&&<code>{preview.requiredConfirmation}</code>}<footer>本机保存路由已连接 · 此页面仍不接收确认 · 授权 0 · 写库 0 · 来源锁 0</footer></section>;
 }
 function SourceLockStorageReadinessCard({ readiness, busy, onInspect }:{ readiness:SourceLockStorageReadiness|null;busy:boolean;onInspect:()=>void }) {
   const storage = readiness?.storage;
@@ -126,11 +126,11 @@ function SourceLockSaveBoundarySummary({ plan, preview, readiness }:{ plan:Sourc
     { label:"保存计划指纹", ready:plan.readyForAuthorizationRequest && Boolean(plan.savePlanFingerprint) },
     { label:"单次授权预览", ready:preview?.eligibleForExplicitSourceLockSaveAuthorization===true },
     { label:"来源锁表结构", ready:readiness?.storage?.verified===true },
-    { label:"写入适配器", ready:false },
+    { label:"写入适配器", ready:true },
     { label:"真实保存路由", ready:preview?.liveSaveRouteConnected===true },
   ];
   const ready = gates.every((gate)=>gate.ready);
-  return <section className={ready?"sourceLockSaveBoundary ready":"sourceLockSaveBoundary blocked"} aria-label="来源锁真实保存边界"><header><div><small>SOURCE LOCK SAVE · EXECUTION BOUNDARY</small><b>{ready?"保存前置条件已齐备，仍需本人另行授权":"真实保存门保持关闭"}</b></div><span>{gates.filter((gate)=>gate.ready).length}/{gates.length} 条件就绪</span></header><div>{gates.map((gate)=><span className={gate.ready?"ready":"blocked"} key={gate.label}><i>{gate.ready?"✓":"○"}</i>{gate.label}</span>)}</div><p>{readiness?.storage?.verified?"表结构已验证，但授权预览不等于授权，且当前没有真实保存路由。":"必须先完成只读表结构检查；缺失、部分或不可用状态都禁止进入真实保存。"}</p><footer>只读汇总 · 授权请求 0 · 授权票据 0 · 保存调用 0 · 数据库写入 0 · 草稿解锁 0</footer></section>;
+  return <section className={ready?"sourceLockSaveBoundary ready":"sourceLockSaveBoundary blocked"} aria-label="来源锁真实保存边界"><header><div><small>SOURCE LOCK SAVE · EXECUTION BOUNDARY</small><b>{ready?"保存前置条件已齐备，仍需本人另行授权":"真实保存门保持关闭"}</b></div><span>{gates.filter((gate)=>gate.ready).length}/{gates.length} 条件就绪</span></header><div>{gates.map((gate)=><span className={gate.ready?"ready":"blocked"} key={gate.label}><i>{gate.ready?"✓":"○"}</i>{gate.label}</span>)}</div><p>{readiness?.storage?.verified?"表结构、写入适配器与本机保存路由已验证；授权预览仍不等于授权，本卡不会写入。":"必须先完成只读表结构检查；缺失、部分或不可用状态都禁止进入真实保存。"}</p><footer>只读汇总 · 授权请求 0 · 授权票据 0 · 保存调用 0 · 数据库写入 0 · 草稿解锁 0</footer></section>;
 }
 const runtimeServiceLabels: Record<string,string> = { studio:"知绘操作台", bridge:"本机桥接", local_mini_drama_api:"漫剧后端", local_mini_drama_web:"漫剧前端", ollama:"中文改写模型" };
 const rssOperatorActionLabels: Record<string,string> = { check_tls_or_proxy_and_retry:"检查 TLS/代理后重试", retry_later:"稍后重试", respect_retry_window:"遵守限流窗口", manual_source_review:"转人工检查来源", verify_feed_url:"核对 Feed 地址", review_source_limits:"复核来源大小限制", inspect_source_failure:"检查来源失败" };
