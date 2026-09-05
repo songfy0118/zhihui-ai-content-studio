@@ -162,11 +162,17 @@ test("rolls back the entire isolated batch when an evidence insert fails", async
   assert.equal(rowCount(d1.database, "source_lock_evidence"), 0);
 });
 
-test("keeps the writer disconnected from every route and live database", async () => {
-  const [savePlanRoute, localMigrationRoute] = await Promise.all([
+test("connects the writer only to the bounded local route with exact confirmation", async () => {
+  const [savePlanRoute, localMigrationRoute, localSaveRoute] = await Promise.all([
     readFile(new URL("../app/api/news/source-lock-save-plan/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/local/source-lock-migration/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/local/source-lock-save/route.ts", import.meta.url), "utf8"),
   ]);
   assert.doesNotMatch(savePlanRoute, /source-lock-store|\.batch\(|\.run\(/);
   assert.doesNotMatch(localMigrationRoute, /source-lock-store/);
+  assert.match(localSaveRoute, /hostname === "127\.0\.0\.1" \|\| hostname === "localhost"/);
+  assert.match(localSaveRoute, /const MAX_REQUEST_BYTES = 60_000/);
+  assert.match(localSaveRoute, /createSourceLockStore\(getD1\(\)\)\.save\(body\)/);
+  assert.match(localSaveRoute, /databaseWriteAttempted:false/);
+  assert.match(localSaveRoute, /publishTriggered:false/);
 });
