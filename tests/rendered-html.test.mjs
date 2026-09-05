@@ -1098,6 +1098,9 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(page, /抖音文章草稿雏形已生成/);
   assert.match(page, /fetch\("\/api\/local\/topic-draft"/);
   assert.match(page, /本机 AI 生成 · 待来源核验/);
+  assert.match(page, /draft\.status !== "source_locked_review_ready"/);
+  assert.match(page, /disabled=\{draft\.status!=="source_locked_review_ready"\}/);
+  assert.match(page, /待来源核验后填入/);
   assert.match(page, /signal:AbortSignal\.timeout\(5000\)/);
   assert.equal((page.match(/await load\(\)\.catch\(\(\) => undefined\)/g) ?? []).length, 2);
   assert.match(page, /\/api\/local\/generate/);
