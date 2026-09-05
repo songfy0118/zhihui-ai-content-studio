@@ -128,7 +128,7 @@ export function buildSourceLockSaveAuthorizationPreview(savePlan) {
     sourceLockRecordCount: 1,
     evidenceRecordCount: lock.sources.length,
     allowedOperation: saveTarget.operation,
-    liveSaveRouteConnected: false,
+    liveSaveRouteConnected: true,
   };
   const fingerprintPayload = {
     sourceSavePlanFingerprint: savePlan.savePlanFingerprint,
@@ -143,5 +143,6 @@ export function buildSourceLockSaveAuthorizationPreview(savePlan) {
     authorizationPreviewFingerprint,
     requiredConfirmation: `AUTHORIZE REVIEWED SOURCE LOCK SAVE ${authorizationPreviewFingerprint}`,
     eligibleForExplicitSourceLockSaveAuthorization: true,
+    liveSaveRouteConnected: true,
   });
 }

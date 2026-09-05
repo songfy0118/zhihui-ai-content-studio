@@ -57,7 +57,7 @@ function validAuthorization(value) {
     || value?.ticketRevoked !== false
     || value?.executionPreflightRequired !== true
     || value?.executionEligible !== false
-    || value?.liveSaveRouteConnected !== false
+    || value?.liveSaveRouteConnected !== true
     || value?.writeAllowedByContract !== false
     || value?.databaseWriteAttempted !== false
     || value?.databaseWrites !== false

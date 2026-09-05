@@ -48,7 +48,7 @@ test("builds a deterministic single-use authorization preview bound to the exact
     sourceLockRecordCount: 1,
     evidenceRecordCount: 2,
     allowedOperation: "persist_one_reviewed_source_lock_after_single_use_authorization",
-    liveSaveRouteConnected: false,
+    liveSaveRouteConnected: true,
   });
   assert.equal(first.requiredConfirmation, `AUTHORIZE REVIEWED SOURCE LOCK SAVE ${first.authorizationPreviewFingerprint}`);
   assert.equal(first.eligibleForExplicitSourceLockSaveAuthorization, true);
@@ -73,7 +73,7 @@ test("keeps authorization, writes, source locks, drafts and publication closed",
 
   assert.equal(result.singleUseAuthorizationRequired, true);
   assert.equal(result.sourceLockSaveAuthorizationGranted, false);
-  assert.equal(result.liveSaveRouteConnected, false);
+  assert.equal(result.liveSaveRouteConnected, true);
   assert.equal(result.writeAllowed, false);
   assert.equal(result.databaseWriteAttempted, false);
   assert.equal(result.databaseWrites, false);
@@ -85,12 +85,13 @@ test("keeps authorization, writes, source locks, drafts and publication closed",
   assert.equal(result.businessResult, false);
 });
 
-test("does not connect the preview contract to a save route, store or live database", async () => {
-  const [source, page, savePlanRoute, migrationRoute] = await Promise.all([
+test("reports the guarded local save route without performing a write", async () => {
+  const [source, page, savePlanRoute, migrationRoute, localSaveRoute] = await Promise.all([
     readFile(new URL("../bridge/source-lock-save-authorization-preview.mjs", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/news/source-lock-save-plan/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/local/source-lock-migration/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/local/source-lock-save/route.ts", import.meta.url), "utf8"),
   ]);
 
   assert.doesNotMatch(source, /source-lock-store|\bfetch\s*\(|\bgetDb\b|\.batch\(|\.run\(/);
@@ -99,4 +100,6 @@ test("does not connect the preview contract to a save route, store or live datab
   assert.match(page, /<SourceLockAuthorizationTerms preview=\{sourceLockSaveAuthorizationPreview\}\/>/);
   assert.doesNotMatch(savePlanRoute, /source-lock-save-authorization-preview|source-lock-store|\.batch\(|\.run\(/);
   assert.doesNotMatch(migrationRoute, /source-lock-save-authorization-preview|source-lock-store/);
+  assert.match(localSaveRoute, /createSourceLockStore/);
+  assert.match(localSaveRoute, /hostname === "127\.0\.0\.1" \|\| hostname === "localhost"/);
 });

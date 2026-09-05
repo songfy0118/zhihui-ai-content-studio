@@ -109,7 +109,7 @@ test("accepted authorization still cannot execute, write, unlock drafts or publi
   assert.equal(result.ticketConsumed, false);
   assert.equal(result.executionPreflightRequired, true);
   assert.equal(result.executionEligible, false);
-  assert.equal(result.liveSaveRouteConnected, false);
+  assert.equal(result.liveSaveRouteConnected, true);
   assert.equal(result.writeAllowedByContract, false);
   assert.equal(result.databaseWriteAttempted, false);
   assert.equal(result.databaseWrites, false);
@@ -119,16 +119,19 @@ test("accepted authorization still cannot execute, write, unlock drafts or publi
   assert.equal(result.publishTriggered, false);
 });
 
-test("does not connect the authorization gate to routes, writer or live database", async () => {
-  const [source, previewRoute, savePlanRoute, migrationRoute] = await Promise.all([
+test("keeps authorization pure while the guarded local save route remains separate", async () => {
+  const [source, previewRoute, savePlanRoute, migrationRoute, localSaveRoute] = await Promise.all([
     readFile(new URL("../bridge/source-lock-save-authorization-gate.mjs", import.meta.url), "utf8"),
     readFile(new URL("../app/api/news/source-lock-save-authorization-preview/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/news/source-lock-save-plan/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/local/source-lock-migration/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/local/source-lock-save/route.ts", import.meta.url), "utf8"),
   ]);
 
   assert.doesNotMatch(source, /source-lock-store|\bfetch\s*\(|\bgetDb\b|\.batch\(|\.run\(/);
   assert.doesNotMatch(previewRoute, /source-lock-save-authorization-gate|source-lock-store|\.batch\(|\.run\(/);
   assert.doesNotMatch(savePlanRoute, /source-lock-save-authorization-gate|source-lock-store|\.batch\(|\.run\(/);
   assert.doesNotMatch(migrationRoute, /source-lock-save-authorization-gate|source-lock-store/);
+  assert.match(localSaveRoute, /source-lock-store/);
+  assert.doesNotMatch(localSaveRoute, /source-lock-save-authorization-gate/);
 });

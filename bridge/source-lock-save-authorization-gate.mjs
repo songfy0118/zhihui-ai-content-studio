@@ -9,7 +9,7 @@ const EXPECTED_AUTHORIZATION_TERMS = Object.freeze({
   sourceLockRecordCount: 1,
   evidenceRecordCount: 2,
   allowedOperation: "persist_one_reviewed_source_lock_after_single_use_authorization",
-  liveSaveRouteConnected: false,
+  liveSaveRouteConnected: true,
 });
 
 function hash(value) {
@@ -33,7 +33,7 @@ function safePreview(value) {
     || value?.singleUseAuthorizationRequired !== true
     || value?.sourceLockSaveAuthorizationGranted !== false
     || JSON.stringify(value?.authorizationTerms) !== JSON.stringify(EXPECTED_AUTHORIZATION_TERMS)
-    || value?.liveSaveRouteConnected !== false
+    || value?.liveSaveRouteConnected !== true
     || value?.writeAllowed !== false
     || value?.databaseWriteAttempted !== false
     || value?.databaseWrites !== false
@@ -159,5 +159,6 @@ export function assessSourceLockSaveAuthorization({
       status: "authorized_pending_execution_preflight",
     },
     sourceLockSaveAuthorizationGranted: true,
+    liveSaveRouteConnected: true,
   });
 }
