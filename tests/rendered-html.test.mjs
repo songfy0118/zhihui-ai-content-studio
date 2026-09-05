@@ -1089,11 +1089,13 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(page, /生成队列/);
   assert.match(page, /审核交接/);
   assert.match(page, /增长学习/);
-  assert.match(page, /生成来源锁定草稿/);
+  assert.match(page, /立即生成草稿雏形/);
   assert.match(page, /showLocalDraftPreviews/);
   assert.match(page, /生产任务已保存；/);
   assert.match(page, /已改为显示 \$\{previewCount\} 份规则草稿雏形/);
   assert.match(page, /const initialPreviewCount = showLocalDraftPreviews\(\)/);
+  assert.match(page, /localDraftPreviewRef\.current\?\.scrollIntoView/);
+  assert.match(page, /抖音文章草稿雏形已生成/);
   assert.match(page, /signal:AbortSignal\.timeout\(5000\)/);
   assert.equal((page.match(/await load\(\)\.catch\(\(\) => undefined\)/g) ?? []).length, 2);
   assert.match(page, /\/api\/local\/generate/);
