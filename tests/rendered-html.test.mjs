@@ -1101,9 +1101,13 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(page, /draft\.status !== "source_locked_review_ready"/);
   assert.match(page, /disabled=\{draft\.status!=="source_locked_review_ready"\}/);
   assert.match(page, /待来源核验后填入/);
-  assert.match(page, /本机保存路由已连接 · 此页面仍不接收确认/);
+  assert.match(page, /本机保存路由已连接 · 下方需本人精确确认/);
   assert.match(page, /写入适配器\", ready:true/);
   assert.match(page, /表结构、写入适配器与本机保存路由已验证/);
+  assert.match(page, /fetch\("\/api\/local\/source-lock-save"/);
+  assert.match(page, /sourceLockSaveConfirmation!==sourceLockSaveAuthorizationPreview\.requiredConfirmation/);
+  assert.match(page, /确认并保存 1 条来源锁/);
+  assert.match(page, /不会自动核验事实、生成草稿、打开平台或发布/);
   assert.match(page, /signal:AbortSignal\.timeout\(5000\)/);
   assert.equal((page.match(/await load\(\)\.catch\(\(\) => undefined\)/g) ?? []).length, 2);
   assert.match(page, /\/api\/local\/generate/);
