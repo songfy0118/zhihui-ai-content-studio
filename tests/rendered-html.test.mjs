@@ -1096,6 +1096,8 @@ test("ships the finished content operations dashboard", async () => {
   assert.match(page, /const initialPreviewCount = showLocalDraftPreviews\(\)/);
   assert.match(page, /localDraftPreviewRef\.current\?\.scrollIntoView/);
   assert.match(page, /抖音文章草稿雏形已生成/);
+  assert.match(page, /fetch\("\/api\/local\/topic-draft"/);
+  assert.match(page, /本机 AI 生成 · 待来源核验/);
   assert.match(page, /signal:AbortSignal\.timeout\(5000\)/);
   assert.equal((page.match(/await load\(\)\.catch\(\(\) => undefined\)/g) ?? []).length, 2);
   assert.match(page, /\/api\/local\/generate/);
