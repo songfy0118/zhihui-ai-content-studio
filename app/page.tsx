@@ -941,18 +941,21 @@ export default function Home() {
     setBusy(true);
     setMessage(localEngine.ready ? "正在把选题交给本机漫剧引擎…" : "正在保存选题和三平台生产任务…");
 
-    let cloudQueued = false;
-    try {
-      const response = await fetch("/api/jobs", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ ideaIds:selected.map((i)=>i.id), platforms }) });
-      cloudQueued = response.ok;
-    } catch { cloudQueued = false; }
-
     const showLocalDraftPreviews = () => {
       const previews = platforms.includes("douyin") ? selected.map(buildLocalDraftPreview) : [];
       setLocalDraftPreviews(previews);
       if (previews.length) setView("production");
       return previews.length;
     };
+
+    // The reviewable draft must remain visible even when the optional job store is unavailable.
+    const initialPreviewCount = showLocalDraftPreviews();
+
+    let cloudQueued = false;
+    try {
+      const response = await fetch("/api/jobs", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ ideaIds:selected.map((i)=>i.id), platforms }), signal:AbortSignal.timeout(5000) });
+      cloudQueued = response.ok;
+    } catch { cloudQueued = false; }
 
     if (localEngine.ready) {
       try {
@@ -981,7 +984,7 @@ export default function Home() {
           : `本机引擎返回：${detail}`);
       }
     } else {
-      const previewCount = showLocalDraftPreviews();
+      const previewCount = initialPreviewCount;
       setMessage(previewCount
         ? `${cloudQueued ? "生产任务已保存；" : "任务服务暂不可用；"}已生成 ${previewCount} 份本地规则草稿雏形，尚未写入抖音，也没有发布。`
         : "暂时无法创建任务：请先启动本机操作台。");
