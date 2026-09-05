@@ -88,9 +88,13 @@ test("fails closed for missing durable acceptance, invalid claims or unsupported
   assert.ok(unsupported.blockers.includes("target_platform_unsupported"));
   assert.equal(unsupported.blueprint, null);
 
-  const routes = await Promise.all([
+  const unrelatedRoutes = await Promise.all([
     readFile(new URL("../app/api/news/preview/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/local/social-draft-handoff/route.ts", import.meta.url), "utf8"),
   ]);
-  assert.ok(routes.every((route) => !route.includes("accepted-claim-draft-blueprint")));
+  const blueprintRoute = await readFile(new URL("../app/api/news/accepted-claim-blueprint/route.ts", import.meta.url), "utf8");
+  assert.ok(unrelatedRoutes.every((route) => !route.includes("accepted-claim-draft-blueprint")));
+  assert.match(blueprintRoute, /buildAcceptedClaimDraftBlueprint/);
+  assert.match(blueprintRoute, /databaseReads:acceptanceRead\.databaseReads/);
+  assert.doesNotMatch(blueprintRoute, /\b(?:INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)\b/i);
 });

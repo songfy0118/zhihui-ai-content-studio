@@ -120,12 +120,15 @@ test("fails closed on inactive, incomplete or malformed persisted acceptance dat
   assert.equal(malformedResult.draftResearchInputReady, false);
 });
 
-test("ships only SELECT access and remains disconnected from API routes", async () => {
+test("ships only SELECT access and connects only through the read-only blueprint route", async () => {
   const routes = await Promise.all([
     readFile(new URL("../app/api/news/preview/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/local/social-draft-handoff/route.ts", import.meta.url), "utf8"),
   ]);
+  const blueprintRoute = await readFile(new URL("../app/api/news/accepted-claim-blueprint/route.ts", import.meta.url), "utf8");
   assert.match(READ_HUMAN_CLAIM_ACCEPTANCE_SQL, /^SELECT/);
   assert.doesNotMatch(READ_HUMAN_CLAIM_ACCEPTANCE_SQL, /\b(?:INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)\b/i);
   assert.ok(routes.every((route) => !route.includes("human-claim-acceptance-reader")));
+  assert.match(blueprintRoute, /createHumanClaimAcceptanceReader/);
+  assert.doesNotMatch(blueprintRoute, /\b(?:INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)\b/i);
 });
