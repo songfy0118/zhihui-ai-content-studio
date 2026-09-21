@@ -23,9 +23,9 @@ function platformPlan(platform, body) {
     platform,
     canvas,
     style: {
-      layout: "editorial_information_cards",
-      background: "editorial_dark",
-      typography: "headline_body_source",
+      layout: "accessible_research_note",
+      background: "paper_light",
+      typography: "serif_headline_sans_body",
       motion: "not_applicable_to_static_cards",
     },
     caption: {
@@ -80,7 +80,10 @@ test("renders deterministic in-memory SVG assets at each platform canvas size", 
     [1080, 1440], [1080, 1440], [1080, 1920], [1080, 1920],
   ]);
   assert.ok(first.assets.every(({ svgFingerprint, svgBytes }) => /^[a-f0-9]{64}$/.test(svgFingerprint) && svgBytes > 500));
-  assert.ok(first.assets.every(({ svg }) => svg.includes("Noto Sans SC") && svg.includes("Microsoft YaHei")));
+  assert.ok(first.assets.every(({ svg }) => svg.includes("Noto Serif SC") && svg.includes("Noto Sans SC") && svg.includes("Microsoft YaHei")));
+  assert.ok(first.assets.every(({ svg }) => svg.includes("#f6f2e8") && svg.includes("paper-grid")));
+  assert.ok(first.assets.every(({ svg }) => !svg.includes("知绘观察") && !svg.includes("人工复核") && !svg.includes("原文卡片")));
+  assert.ok(first.assets.every(({ svg }) => !/\d{2} \/ \d{2}/u.test(svg)));
 });
 
 test("embeds lossless reviewed copy metadata and escapes active SVG markup", () => {

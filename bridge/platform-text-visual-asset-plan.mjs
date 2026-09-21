@@ -186,9 +186,9 @@ export function buildPlatformTextVisualAssetPlan(handoffPlan) {
       platform: item.platform,
       canvas: { ...config.canvas },
       style: {
-        layout: "editorial_information_cards",
-        background: "editorial_dark",
-        typography: "headline_body_source",
+        layout: "accessible_research_note",
+        background: "paper_light",
+        typography: "serif_headline_sans_body",
         motion: "not_applicable_to_static_cards",
       },
       caption: {

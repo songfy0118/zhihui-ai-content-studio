@@ -23,9 +23,9 @@ const PLATFORM_CONFIG = Object.freeze({
   }),
 });
 const EXPECTED_STYLE = Object.freeze({
-  layout: "editorial_information_cards",
-  background: "editorial_dark",
-  typography: "headline_body_source",
+  layout: "accessible_research_note",
+  background: "paper_light",
+  typography: "serif_headline_sans_body",
   motion: "not_applicable_to_static_cards",
 });
 
@@ -183,7 +183,7 @@ function svgForCard(plan, card) {
     : card.exactText;
   const copyFingerprint = hash(copyPayload);
   const encodedCopy = Buffer.from(copyPayload, "utf8").toString("base64url");
-  const titleText = card.role === "cover" ? card.primaryText : `${config.platformLabel}第 ${card.cardIndex} 张`;
+  const titleText = card.role === "cover" ? card.primaryText : card.exactText.slice(0, 36);
   const content = [];
 
   if (card.role === "cover") {
@@ -196,7 +196,7 @@ function svgForCard(plan, card) {
       lineHeight: 112,
       fontSize: 92,
       fontWeight: 800,
-      fill: "#f8fafc",
+      fill: "#15243a",
       className: "cover-primary",
     }));
     const primaryHeight = (primaryLines.length - 1) * 112;
@@ -206,7 +206,7 @@ function svgForCard(plan, card) {
       lineHeight: 58,
       fontSize: 42,
       fontWeight: 500,
-      fill: "#a7f3d0",
+      fill: "#375a64",
       className: "cover-secondary",
     }));
   } else {
@@ -218,26 +218,23 @@ function svgForCard(plan, card) {
       lineHeight: config.bodyLineHeight,
       fontSize: plan.platform === "xiaohongshu" ? 36 : 46,
       fontWeight: 500,
-      fill: "#e2e8f0",
+      fill: "#1f2937",
       className: "body-copy",
     }));
   }
 
-  const footer = card.role === "cover" ? "来源锁定 · 人工审核文案" : "原文卡片 · 视觉仍待人工复核";
   const svg = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="card-title card-description" data-exact-copy-base64url="${encodedCopy}" data-copy-sha256="${copyFingerprint}">`,
     `<title id="card-title">${escapeXml(titleText)}</title>`,
-    `<desc id="card-description">${escapeXml(config.platformLabel)}静态信息卡；文案已审核，视觉待人工复核。</desc>`,
+    `<desc id="card-description">适合移动端阅读的研究笔记式信息卡。</desc>`,
     `<metadata id="copy-metadata">encoding=base64url;sha256=${copyFingerprint}</metadata>`,
-    "<style>text{font-family:\"Noto Sans SC\",\"Microsoft YaHei\",\"PingFang SC\",Arial,sans-serif}</style>",
-    "<defs><linearGradient id=\"bg\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#07111f\"/><stop offset=\"0.58\" stop-color=\"#111827\"/><stop offset=\"1\" stop-color=\"#0f3d3e\"/></linearGradient></defs>",
-    `<rect width="${width}" height="${height}" fill="url(#bg)"/>`,
-    `<circle cx="${width - safeMargin}" cy="${safeMargin}" r="112" fill="#34d399" opacity="0.12"/>`,
-    `<path d="M ${safeMargin} ${safeMargin + 76} H ${width - safeMargin}" stroke="#34d399" stroke-width="4" opacity="0.72"/>`,
-    `<text x="${safeMargin}" y="${safeMargin + 34}" fill="#6ee7b7" font-size="30" font-weight="700" letter-spacing="3">知绘观察 · ${escapeXml(config.platformLabel)}</text>`,
+    "<style>.cover-primary{font-family:\"Noto Serif SC\",\"Source Han Serif SC\",\"SimSun\",serif}.cover-secondary,.body-copy{font-family:\"Noto Sans SC\",\"Microsoft YaHei\",\"PingFang SC\",Arial,sans-serif}</style>",
+    "<defs><pattern id=\"paper-grid\" width=\"54\" height=\"54\" patternUnits=\"userSpaceOnUse\"><path d=\"M 54 0 L 0 0 0 54\" fill=\"none\" stroke=\"#c8d0cb\" stroke-width=\"1\" opacity=\"0.16\"/></pattern></defs>",
+    `<rect width="${width}" height="${height}" fill="#f6f2e8"/>`,
+    `<rect width="${width}" height="${height}" fill="url(#paper-grid)"/>`,
+    `<rect x="${safeMargin - 28}" y="${safeMargin}" width="8" height="${height - safeMargin * 2}" rx="4" fill="#2f6f73"/>`,
+    `<path d="M ${safeMargin} ${safeMargin + 78} H ${width - safeMargin}" stroke="#15243a" stroke-width="3" opacity="0.86"/>`,
     ...content,
-    `<text x="${safeMargin}" y="${config.footerY}" fill="#94a3b8" font-size="28" font-weight="500">${escapeXml(footer)}</text>`,
-    `<text x="${width - safeMargin}" y="${config.footerY}" fill="#f8fafc" font-size="30" font-weight="700" text-anchor="end">${String(card.cardIndex).padStart(2, "0")} / ${String(plan.cards.length).padStart(2, "0")}</text>`,
     "</svg>",
   ].join("");
   return { svg, copyFingerprint };
