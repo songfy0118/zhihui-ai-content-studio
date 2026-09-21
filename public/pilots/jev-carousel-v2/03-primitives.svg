@@ -1,0 +1,67 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
+  <title>Jev 的野心，只有三个按钮</title>
+  <defs>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#2c3935" stroke-opacity=".045"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#2b302d" flood-opacity=".10"/>
+    </filter>
+    <style>
+      .cn{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;fill:#24322e}
+      .serif{font-family:"SimSun","Noto Serif SC",serif;fill:#24322e}
+      .mono{font-family:Consolas,"SFMono-Regular",monospace;fill:#28423b}
+      .kicker{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:25px;font-weight:800;letter-spacing:2px;fill:#b95c3f}
+      .title{font-family:"SimSun","Noto Serif SC",serif;font-size:68px;font-weight:900;fill:#24322e}
+      .subtitle{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:30px;font-weight:600;fill:#53645e}
+      .h2{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:34px;font-weight:800;fill:#24322e}
+      .body{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:27px;fill:#43534e}
+      .small{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:21px;fill:#66736e}
+      .tiny{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:17px;fill:#74807b}
+    </style>
+  </defs>
+  <rect width="1080" height="1440" fill="#f4efe3"/>
+  <rect width="1080" height="1440" fill="url(#grid)"/>
+  <circle cx="984" cy="92" r="66" fill="#b95c3f" opacity=".12"/>
+  <circle cx="972" cy="104" r="14" fill="#b95c3f"/>
+  <text x="80" y="82" class="kicker">02｜不写一句话，却想控制整个 Agent</text>
+  <text x="1000" y="1365" class="small" text-anchor="end">03 / 07</text>
+  <path d="M80 1320H1000" stroke="#263630" stroke-width="2" opacity=".25"/>
+  
+        <text x="80" y="225" class="serif" font-size="66" font-weight="900">它不生成一个字</text>
+        <text x="80" y="300" class="subtitle">只回答三个问题：选哪个 / 打几分 / 要不要</text>
+        <g transform="translate(80 398)">
+          <g filter="url(#shadow)">
+            <rect width="286" height="620" rx="24" fill="#fbf8ef" stroke="#2c3c37" stroke-width="3"/>
+            <rect width="286" height="105" rx="24" fill="#cd815c"/><text x="143" y="66" class="cn" font-size="34" font-weight="900" fill="#fff" text-anchor="middle">Choice</text>
+            <text x="143" y="156" class="h2" text-anchor="middle">选哪个？</text>
+            <text x="34" y="225" class="body">• 工具路由</text><text x="34" y="277" class="body">• 意图分类</text><text x="34" y="329" class="body">• 队列分发</text>
+            <rect x="34" y="395" width="218" height="34" rx="17" fill="#e5ded2"/><rect x="34" y="395" width="150" height="34" rx="17" fill="#cd815c"/>
+            <rect x="34" y="451" width="218" height="34" rx="17" fill="#e5ded2"/><rect x="34" y="451" width="82" height="34" rx="17" fill="#7d9d93"/>
+            <text x="143" y="555" class="small" text-anchor="middle">返回各选项概率</text>
+          </g>
+          <g transform="translate(317)" filter="url(#shadow)">
+            <rect width="286" height="620" rx="24" fill="#fbf8ef" stroke="#2c3c37" stroke-width="3"/>
+            <rect width="286" height="105" rx="24" fill="#73978e"/><text x="143" y="66" class="cn" font-size="34" font-weight="900" fill="#fff" text-anchor="middle">Score</text>
+            <text x="143" y="156" class="h2" text-anchor="middle">打几分？</text>
+            <text x="34" y="225" class="body">• 风险分级</text><text x="34" y="277" class="body">• 质量排序</text><text x="34" y="329" class="body">• 相关性判断</text>
+            <path d="M42 444H244" stroke="#31423d" stroke-width="5"/><circle cx="174" cy="444" r="18" fill="#f4efe3" stroke="#b95c3f" stroke-width="6"/>
+            <g class="small" text-anchor="middle"><text x="42" y="488">低</text><text x="143" y="488">中</text><text x="244" y="488">高</text></g>
+            <text x="143" y="555" class="small" text-anchor="middle">返回量表位置</text>
+          </g>
+          <g transform="translate(634)" filter="url(#shadow)">
+            <rect width="286" height="620" rx="24" fill="#fbf8ef" stroke="#2c3c37" stroke-width="3"/>
+            <rect width="286" height="105" rx="24" fill="#b95c3f"/><text x="143" y="66" class="cn" font-size="34" font-weight="900" fill="#fff" text-anchor="middle">Noul</text>
+            <text x="143" y="156" class="h2" text-anchor="middle">要不要？</text>
+            <text x="34" y="225" class="body">• 是否升级</text><text x="34" y="277" class="body">• 是否拦截</text><text x="34" y="329" class="body">• 是否转人工</text>
+            <path d="M50 470A93 93 0 01143 377 93 93 0 01236 470" fill="none" stroke="#d8d5c8" stroke-width="26" stroke-linecap="round"/>
+            <path d="M143 470l62-62" stroke="#b95c3f" stroke-width="8" stroke-linecap="round"/><circle cx="143" cy="470" r="15" fill="#f4efe3" stroke="#b95c3f" stroke-width="6"/>
+            <text x="143" y="555" class="small" text-anchor="middle">返回“是”的概率</text>
+          </g>
+        </g>
+        <rect x="80" y="1090" width="920" height="150" rx="24" fill="#e8e3d5"/>
+        <text x="540" y="1148" class="h2" text-anchor="middle">共同点：都不生成长文本</text>
+        <text x="540" y="1196" class="body" text-anchor="middle">输出交给下一行代码继续执行</text>
+      
+</svg>

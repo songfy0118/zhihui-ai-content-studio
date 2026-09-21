@@ -1,0 +1,61 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
+  <title>美国 AI 大变局：OpenAI 不再包办？</title>
+  <defs>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#2c3935" stroke-opacity=".045"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#2b302d" flood-opacity=".10"/>
+    </filter>
+    <style>
+      .cn{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;fill:#24322e}
+      .serif{font-family:"SimSun","Noto Serif SC",serif;fill:#24322e}
+      .mono{font-family:Consolas,"SFMono-Regular",monospace;fill:#28423b}
+      .kicker{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:25px;font-weight:800;letter-spacing:2px;fill:#b95c3f}
+      .title{font-family:"SimSun","Noto Serif SC",serif;font-size:68px;font-weight:900;fill:#24322e}
+      .subtitle{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:30px;font-weight:600;fill:#53645e}
+      .h2{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:34px;font-weight:800;fill:#24322e}
+      .body{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:27px;fill:#43534e}
+      .small{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:21px;fill:#66736e}
+      .tiny{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:17px;fill:#74807b}
+    </style>
+  </defs>
+  <rect width="1080" height="1440" fill="#f4efe3"/>
+  <rect width="1080" height="1440" fill="url(#grid)"/>
+  <circle cx="984" cy="92" r="66" fill="#b95c3f" opacity=".12"/>
+  <circle cx="972" cy="104" r="14" fill="#b95c3f"/>
+  <text x="80" y="82" class="kicker">美国 AI 要变天？</text>
+  <text x="1000" y="1365" class="small" text-anchor="end">01 / 07</text>
+  <path d="M80 1320H1000" stroke="#263630" stroke-width="2" opacity=".25"/>
+  
+        <rect x="80" y="168" width="258" height="56" rx="28" fill="#b95c3f"/>
+        <text x="209" y="205" class="cn" font-size="25" font-weight="900" fill="#fff" text-anchor="middle">只会选择的新模型</text>
+        <text x="80" y="310" class="serif" font-size="70" font-weight="900">OpenAI 不再包办一切？</text>
+        <text x="80" y="405" class="serif" font-size="70" font-weight="900" fill="#b95c3f">Jev 正在抢走“下一步”</text>
+        <text x="82" y="470" class="subtitle">大模型负责回答，新模型只负责做决定</text>
+
+        <g transform="translate(80 560)" filter="url(#shadow)">
+          <rect width="920" height="500" rx="34" fill="#fbf8ef" stroke="#293a34" stroke-width="3"/>
+          <text x="460" y="74" class="small" text-anchor="middle">美国 AI 的新分工：一个负责想，一个负责选</text>
+          <g transform="translate(58 125)">
+            <rect width="222" height="105" rx="24" fill="#d9e2dc" stroke="#5f7f74" stroke-width="3"/>
+            <path d="M45 44h132M45 70h92" stroke="#5f7f74" stroke-width="9" stroke-linecap="round" opacity=".7"/>
+            <path d="M248 53h84" stroke="#b95c3f" stroke-width="7"/><path d="M314 35l22 18-22 18" fill="none" stroke="#b95c3f" stroke-width="7"/>
+            <circle cx="420" cy="53" r="62" fill="#b95c3f"/><text x="420" y="66" class="cn" font-size="36" font-weight="900" fill="#fff" text-anchor="middle">JEV</text>
+            <path d="M486 53h82" stroke="#b95c3f" stroke-width="7"/><path d="M550 35l22 18-22 18" fill="none" stroke="#b95c3f" stroke-width="7"/>
+            <g transform="translate(598 0)">
+              <rect width="206" height="32" rx="10" fill="#315e5e"/><text x="103" y="23" class="cn" font-size="17" font-weight="800" fill="#fff" text-anchor="middle">选哪个</text>
+              <rect y="38" width="206" height="32" rx="10" fill="#73978e"/><text x="103" y="61" class="cn" font-size="17" font-weight="800" fill="#fff" text-anchor="middle">打几分</text>
+              <rect y="76" width="206" height="32" rx="10" fill="#d18a61"/><text x="103" y="99" class="cn" font-size="17" font-weight="800" fill="#fff" text-anchor="middle">要不要执行</text>
+            </g>
+          </g>
+          <text x="460" y="314" class="serif" font-size="43" font-weight="800" text-anchor="middle">它不写答案，也不陪你聊天</text>
+          <text x="460" y="372" class="serif" font-size="43" font-weight="800" text-anchor="middle">只想控制 Agent 的下一步</text>
+          <rect x="84" y="410" width="752" height="58" rx="29" fill="#efe3d7"/>
+          <text x="460" y="449" class="cn" font-size="22" font-weight="700" text-anchor="middle">Jev ≠ OpenAI 产品，也未被证实能替代大模型</text>
+        </g>
+        <text x="80" y="1142" class="h2">只会“选、评、判”，它凭什么在硅谷出圈？</text>
+        <text x="80" y="1195" class="body">后面 6 张：原理 / 代码 / GitHub 接法 / 最大风险</text>
+      
+</svg>

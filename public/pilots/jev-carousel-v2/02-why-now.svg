@@ -1,0 +1,61 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
+  <title>每做一个小决定，都要重新问一次大模型</title>
+  <defs>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#2c3935" stroke-opacity=".045"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#2b302d" flood-opacity=".10"/>
+    </filter>
+    <style>
+      .cn{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;fill:#24322e}
+      .serif{font-family:"SimSun","Noto Serif SC",serif;fill:#24322e}
+      .mono{font-family:Consolas,"SFMono-Regular",monospace;fill:#28423b}
+      .kicker{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:25px;font-weight:800;letter-spacing:2px;fill:#315e5e}
+      .title{font-family:"SimSun","Noto Serif SC",serif;font-size:68px;font-weight:900;fill:#24322e}
+      .subtitle{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:30px;font-weight:600;fill:#53645e}
+      .h2{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:34px;font-weight:800;fill:#24322e}
+      .body{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:27px;fill:#43534e}
+      .small{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:21px;fill:#66736e}
+      .tiny{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:17px;fill:#74807b}
+    </style>
+  </defs>
+  <rect width="1080" height="1440" fill="#f4efe3"/>
+  <rect width="1080" height="1440" fill="url(#grid)"/>
+  <circle cx="984" cy="92" r="66" fill="#315e5e" opacity=".12"/>
+  <circle cx="972" cy="104" r="14" fill="#315e5e"/>
+  <text x="80" y="82" class="kicker">01｜AI Agent 最烧钱的，可能不是写答案</text>
+  <text x="1000" y="1365" class="small" text-anchor="end">02 / 07</text>
+  <path d="M80 1320H1000" stroke="#263630" stroke-width="2" opacity=".25"/>
+  
+        <text x="80" y="220" class="serif" font-size="62" font-weight="900">AI Agent 最浪费的一步</text>
+        <text x="80" y="302" class="serif" font-size="62" font-weight="900">可能不是写答案</text>
+        <text x="80" y="375" class="subtitle">而是每做一个小决定，都要重新问一次大模型</text>
+        <g transform="translate(80 470)">
+          <rect width="920" height="220" rx="26" fill="#fbf8ef" stroke="#2d4039" stroke-width="3" filter="url(#shadow)"/>
+          <text x="42" y="62" class="h2">今天常见的 Agent 路线</text>
+          <g transform="translate(42 102)">
+            <rect width="166" height="70" rx="18" fill="#dbe4de"/><text x="83" y="45" class="cn" font-size="24" font-weight="700" text-anchor="middle">读上下文</text>
+            <path d="M182 35h60" stroke="#65756f" stroke-width="5"/><path d="M227 22l16 13-16 13" fill="none" stroke="#65756f" stroke-width="5"/>
+            <rect x="260" width="166" height="70" rx="18" fill="#ead5c7"/><text x="343" y="45" class="cn" font-size="24" font-weight="700" text-anchor="middle">调用大模型</text>
+            <path d="M442 35h60" stroke="#65756f" stroke-width="5"/><path d="M487 22l16 13-16 13" fill="none" stroke="#65756f" stroke-width="5"/>
+            <rect x="520" width="166" height="70" rx="18" fill="#dbe4de"/><text x="603" y="45" class="cn" font-size="24" font-weight="700" text-anchor="middle">解析文字</text>
+            <path d="M702 35h60" stroke="#65756f" stroke-width="5"/><path d="M747 22l16 13-16 13" fill="none" stroke="#65756f" stroke-width="5"/>
+            <rect x="780" width="98" height="70" rx="18" fill="#e5ddbf"/><text x="829" y="45" class="cn" font-size="24" font-weight="700" text-anchor="middle">执行</text>
+          </g>
+        </g>
+        <g transform="translate(80 748)" filter="url(#shadow)">
+          <rect width="920" height="366" rx="26" fill="#2d4e46"/>
+          <text x="46" y="72" class="cn" font-size="34" font-weight="800" fill="#fff">Jev 要抢的，就是这些高频“小决定”</text>
+          <g class="cn" font-size="28" fill="#edf3ef">
+            <text x="64" y="148">01　下一步调用哪个工具？</text>
+            <text x="64" y="210">02　这条结果相关度多高？</text>
+            <text x="64" y="272">03　不确定时要不要转人工？</text>
+          </g>
+          <path d="M620 118C706 118 700 184 774 184s70 68 80 118" fill="none" stroke="#e7a77e" stroke-width="10" stroke-linecap="round"/>
+          <circle cx="620" cy="118" r="14" fill="#e7a77e"/><circle cx="774" cy="184" r="14" fill="#e7a77e"/><circle cx="854" cy="302" r="14" fill="#e7a77e"/>
+        </g>
+        <text x="80" y="1195" class="body">注意：这是产品定位，不等于已被独立验证的性能结论。</text>
+      
+</svg>

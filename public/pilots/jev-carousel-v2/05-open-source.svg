@@ -1,0 +1,61 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
+  <title>GitHub 上的路，早就有人铺好了</title>
+  <defs>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#2c3935" stroke-opacity=".045"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#2b302d" flood-opacity=".10"/>
+    </filter>
+    <style>
+      .cn{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;fill:#24322e}
+      .serif{font-family:"SimSun","Noto Serif SC",serif;fill:#24322e}
+      .mono{font-family:Consolas,"SFMono-Regular",monospace;fill:#28423b}
+      .kicker{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:25px;font-weight:800;letter-spacing:2px;fill:#b95c3f}
+      .title{font-family:"SimSun","Noto Serif SC",serif;font-size:68px;font-weight:900;fill:#24322e}
+      .subtitle{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:30px;font-weight:600;fill:#53645e}
+      .h2{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:34px;font-weight:800;fill:#24322e}
+      .body{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:27px;fill:#43534e}
+      .small{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:21px;fill:#66736e}
+      .tiny{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:17px;fill:#74807b}
+    </style>
+  </defs>
+  <rect width="1080" height="1440" fill="#f4efe3"/>
+  <rect width="1080" height="1440" fill="url(#grid)"/>
+  <circle cx="984" cy="92" r="66" fill="#b95c3f" opacity=".12"/>
+  <circle cx="972" cy="104" r="14" fill="#b95c3f"/>
+  <text x="80" y="82" class="kicker">04｜它最聪明的一步：没有重造 Agent</text>
+  <text x="1000" y="1365" class="small" text-anchor="end">05 / 07</text>
+  <path d="M80 1320H1000" stroke="#263630" stroke-width="2" opacity=".25"/>
+  
+        <text x="80" y="220" class="serif" font-size="60" font-weight="900">它不想重造 Agent</text>
+        <text x="80" y="292" class="serif" font-size="60" font-weight="900">只想卡进“判断层”</text>
+        <text x="80" y="350" class="subtitle">LangGraph 管流程，LiteLLM 管模型，Jev 想管决定</text>
+        <g transform="translate(80 412)" filter="url(#shadow)">
+          <rect width="920" height="330" rx="28" fill="#fbf8ef" stroke="#2c3c37" stroke-width="3"/>
+          <circle cx="86" cy="85" r="44" fill="#315e5e"/><path d="M63 85h46M86 62v46" stroke="#fff" stroke-width="7" stroke-linecap="round"/>
+          <text x="156" y="80" class="h2">LangGraph</text>
+          <text x="156" y="124" class="small">github.com/langchain-ai/langgraph</text>
+          <text x="56" y="196" class="body">Conditional Edges：路由函数决定下一节点</text>
+          <rect x="56" y="235" width="808" height="58" rx="12" fill="#e6ece8"/>
+          <text x="460" y="273" class="mono" font-size="22" text-anchor="middle">add_conditional_edges("node_a", routing_function)</text>
+        </g>
+        <g transform="translate(80 774)" filter="url(#shadow)">
+          <rect width="920" height="330" rx="28" fill="#fbf8ef" stroke="#2c3c37" stroke-width="3"/>
+          <circle cx="86" cy="85" r="44" fill="#b95c3f"/><path d="M61 97l25-38 25 38M70 87h32" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="156" y="80" class="h2">LiteLLM</text>
+          <text x="156" y="124" class="small">github.com/BerriAI/litellm</text>
+          <text x="56" y="196" class="body">统一调用多家模型，并提供负载均衡与路由能力</text>
+          <g transform="translate(56 236)">
+            <rect width="178" height="54" rx="12" fill="#ead5c7"/><text x="89" y="36" class="cn" font-size="22" font-weight="700" text-anchor="middle">请求</text>
+            <path d="M194 27h80" stroke="#65756f" stroke-width="5"/><path d="M259 14l16 13-16 13" fill="none" stroke="#65756f" stroke-width="5"/>
+            <rect x="292" width="220" height="54" rx="12" fill="#dbe4de"/><text x="402" y="36" class="cn" font-size="22" font-weight="700" text-anchor="middle">Router</text>
+            <path d="M528 27h80" stroke="#65756f" stroke-width="5"/><path d="M593 14l16 13-16 13" fill="none" stroke="#65756f" stroke-width="5"/>
+            <rect x="626" width="182" height="54" rx="12" fill="#e5ddbf"/><text x="717" y="36" class="cn" font-size="22" font-weight="700" text-anchor="middle">模型池</text>
+          </g>
+        </g>
+        <text x="80" y="1185" class="body">推断：Jev 若有效，价值可能在“替路由函数做细判断”。</text>
+        <text x="80" y="1230" class="small">这不是两项目对 Jev 的背书，只是工作流位置对照。</text>
+      
+</svg>

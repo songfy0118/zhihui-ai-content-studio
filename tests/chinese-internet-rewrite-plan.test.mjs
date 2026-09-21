@@ -37,6 +37,10 @@ test("plans faithful English-to-Chinese internet rewriting from accepted claims 
   assert.equal(result.plan.outputSchema.properties.douyin.properties.coverText.maxLength, 16);
   assert.match(result.plan.instruction, /不得新增数字/);
   assert.match(result.plan.instruction, /不要逐句翻译/);
+  assert.match(result.plan.instruction, /陌生技术名词不要单独放在标题最前面/);
+  assert.match(result.plan.instruction, /一次只制造一个冲突/);
+  assert.ok(result.plan.constraints.includes("familiar_anchor_before_unfamiliar_term"));
+  assert.ok(result.plan.constraints.includes("single_hook_with_immediate_explanation"));
   assert.deepEqual(result.plan.inputClaims[0].sourceRefs, ["claim-1-original","claim-1-independent"]);
   assert.equal(result.modelCalls, 0);
   assert.equal(result.draftGenerated, false);

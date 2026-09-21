@@ -1,0 +1,53 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
+  <title>真正值钱的不是 API，而是失败兜底</title>
+  <defs>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#2c3935" stroke-opacity=".045"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#2b302d" flood-opacity=".10"/>
+    </filter>
+    <style>
+      .cn{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;fill:#24322e}
+      .serif{font-family:"SimSun","Noto Serif SC",serif;fill:#24322e}
+      .mono{font-family:Consolas,"SFMono-Regular",monospace;fill:#28423b}
+      .kicker{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:25px;font-weight:800;letter-spacing:2px;fill:#315e5e}
+      .title{font-family:"SimSun","Noto Serif SC",serif;font-size:68px;font-weight:900;fill:#24322e}
+      .subtitle{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:30px;font-weight:600;fill:#53645e}
+      .h2{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:34px;font-weight:800;fill:#24322e}
+      .body{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:27px;fill:#43534e}
+      .small{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:21px;fill:#66736e}
+      .tiny{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:17px;fill:#74807b}
+    </style>
+  </defs>
+  <rect width="1080" height="1440" fill="#f4efe3"/>
+  <rect width="1080" height="1440" fill="url(#grid)"/>
+  <circle cx="984" cy="92" r="66" fill="#315e5e" opacity=".12"/>
+  <circle cx="972" cy="104" r="14" fill="#315e5e"/>
+  <text x="80" y="82" class="kicker">03｜模型敢做决定，代码就必须敢拦</text>
+  <text x="1000" y="1365" class="small" text-anchor="end">04 / 07</text>
+  <path d="M80 1320H1000" stroke="#263630" stroke-width="2" opacity=".25"/>
+  
+        <text x="80" y="220" class="serif" font-size="64" font-weight="900">模型敢做决定</text>
+        <text x="80" y="294" class="subtitle">代码就必须知道：什么时候立刻交给人</text>
+        <g transform="translate(80 386)" filter="url(#shadow)">
+          <rect width="920" height="548" rx="28" fill="#20322d"/>
+          <circle cx="42" cy="39" r="10" fill="#d97155"/><circle cx="72" cy="39" r="10" fill="#d6aa61"/><circle cx="102" cy="39" r="10" fill="#73a08d"/>
+          <text x="870" y="46" class="mono" font-size="20" fill="#a8bbb4" text-anchor="end">concept.py</text>
+          <g class="mono" font-size="28">
+            <text x="48" y="116" fill="#d6e5de">decision = decide(</text>
+            <text x="86" y="160" fill="#e7bc8e">"是否需要转人工？"</text>
+            <text x="48" y="204" fill="#d6e5de">)</text>
+            <text x="48" y="286" fill="#82bca5">if</text><text x="92" y="286" fill="#d6e5de"> decision.probability &gt; threshold:</text>
+            <text x="86" y="338" fill="#e7bc8e">route_to_human()</text>
+            <text x="48" y="410" fill="#82bca5">else:</text>
+            <text x="86" y="462" fill="#e7bc8e">continue_agent()</text>
+          </g>
+        </g>
+        <rect x="80" y="988" width="920" height="224" rx="24" fill="#fbf8ef" stroke="#2d4039" stroke-width="3"/>
+        <text x="116" y="1052" class="h2">真正重要的不是 API 名字</text>
+        <text x="116" y="1110" class="body">而是：阈值谁定？错判怎么办？何时必须人工复核？</text>
+        <text x="116" y="1170" class="small">示意代码，不代表 Jev 官方 SDK；实际字段以官方文档为准。</text>
+      
+</svg>

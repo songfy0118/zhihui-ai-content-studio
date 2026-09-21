@@ -45,5 +45,6 @@ next-env.d.ts
 /vendor/
 /site-build.tar.gz
 /.npm-cache/
+/.tools/
 .*-output.log
 .*-error.log
