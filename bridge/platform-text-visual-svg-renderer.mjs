@@ -153,15 +153,16 @@ function wrapText(value, maximumUnits) {
     }
     let line = "";
     let units = 0;
-    for (const character of paragraph) {
-      const nextUnits = characterUnits(character);
-      if (line && units + nextUnits > maximumUnits) {
+    const tokens = paragraph.match(/[A-Za-z0-9_./+\-]+|./gu) ?? [];
+    for (const token of tokens) {
+      const tokenUnits = [...token].reduce((total, character) => total + characterUnits(character), 0);
+      if (line && units + tokenUnits > maximumUnits) {
         lines.push(line);
         line = "";
         units = 0;
       }
-      line += character;
-      units += nextUnits;
+      line += token;
+      units += tokenUnits;
     }
     if (line) lines.push(line);
   }

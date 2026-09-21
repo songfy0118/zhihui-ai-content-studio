@@ -106,6 +106,14 @@ test("embeds lossless reviewed copy metadata and escapes active SVG markup", () 
   assert.ok(!bodySvg.includes("<script>"));
 });
 
+test("keeps Latin technical terms intact when wrapping Chinese copy", () => {
+  const result = renderPlatformTextVisualSvgAssets(readyPlan("中文内容接近行尾时 Choice 不应被拆开。"));
+  const bodySvg = result.assets.find(({ platform, role }) => platform === "douyin" && role === "body").svg;
+  assert.ok(bodySvg.includes("Choice"));
+  assert.ok(!bodySvg.includes("Choic</tspan>"));
+  assert.ok(!bodySvg.includes(">e</tspan>"));
+});
+
 test("rejects a tampered asset plan and text that exceeds the SVG layout", () => {
   const tampered = readyPlan();
   tampered.platformPlans[0].caption.body += "篡改";
