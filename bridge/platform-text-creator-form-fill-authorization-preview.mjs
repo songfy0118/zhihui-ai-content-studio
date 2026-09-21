@@ -156,7 +156,8 @@ export function buildPlatformTextCreatorFormFillAuthorizationPreview({
         accountHandle: account.accountHandle,
         identityConfirmationFingerprint: accountConfirmation.identityConfirmationFingerprint,
       },
-      operation: "prefill_reviewed_creator_form_after_separate_authorization",
+      operation: "replace_existing_creator_form_with_reviewed_version_after_separate_authorization",
+      replacementMode: "clear_existing_fields_and_media_before_fill",
       exactReviewedFields: {
         contentMode: item.contentMode,
         title: item.title,
@@ -171,6 +172,7 @@ export function buildPlatformTextCreatorFormFillAuthorizationPreview({
       draftReviewFingerprint: item.draftReviewFingerprint,
       visualReviewFingerprint: item.visualReviewFingerprint,
       targetStatus: "preview_only_not_authorized",
+      existingDraftContentsClearAllowed: false,
       saveDraftAllowed: false,
       publishAllowed: false,
     };
@@ -186,7 +188,7 @@ export function buildPlatformTextCreatorFormFillAuthorizationPreview({
     status: "platform_text_creator_form_fill_authorization_preview_ready",
     ...fingerprintPayload,
     formFillAuthorizationPreviewFingerprint,
-    requiredConfirmation: `PREFILL REVIEWED CREATOR FORMS ${formFillAuthorizationPreviewFingerprint}`,
+    requiredConfirmation: `REPLACE WITH REVIEWED CREATOR VERSION ${formFillAuthorizationPreviewFingerprint}`,
     targetCount: fillTargets.length,
     reviewedAssetCount: fillTargets.reduce((total, target) => total + target.reviewedAssetCount, 0),
     eligibleForExplicitFormFillAuthorization: true,

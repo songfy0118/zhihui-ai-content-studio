@@ -25,7 +25,8 @@ function fillTarget(platform) {
       accountHandle: null,
       identityConfirmationFingerprint: "c".repeat(64),
     },
-    operation: "prefill_reviewed_creator_form_after_separate_authorization",
+    operation: "replace_existing_creator_form_with_reviewed_version_after_separate_authorization",
+    replacementMode: "clear_existing_fields_and_media_before_fill",
     exactReviewedFields: {
       contentMode: platform === "xiaohongshu" ? "text_image_carousel_structure" : "text_image_post_structure",
       title: platform === "xiaohongshu" ? "为什么要核对两个来源？" : "一条消息为什么需要两个来源？",
@@ -51,6 +52,7 @@ function fillTarget(platform) {
     draftReviewFingerprint: "5".repeat(64),
     visualReviewFingerprint: "6".repeat(64),
     targetStatus: "preview_only_not_authorized",
+    existingDraftContentsClearAllowed: false,
     saveDraftAllowed: false,
     publishAllowed: false,
   };
@@ -70,7 +72,7 @@ function readyAuthorization(platforms = ["xiaohongshu", "douyin"]) {
     blockers: [],
     ...fingerprintPayload,
     formFillAuthorizationPreviewFingerprint,
-    requiredConfirmation: `PREFILL REVIEWED CREATOR FORMS ${formFillAuthorizationPreviewFingerprint}`,
+    requiredConfirmation: `REPLACE WITH REVIEWED CREATOR VERSION ${formFillAuthorizationPreviewFingerprint}`,
     targetCount: fillTargets.length,
     reviewedAssetCount: fillTargets.length,
     eligibleForExplicitFormFillAuthorization: true,
@@ -105,6 +107,7 @@ function successfulResponse(request) {
     accountHandle: request.confirmedAccount.accountHandle,
     filledFieldFingerprint: hash(request.exactReviewedFields),
     uploadedAssetFingerprints: request.reviewedAssets.map((asset) => asset.svgFingerprint),
+    existingDraftContentsCleared: true,
     draftSaved: false,
     publishTriggered: false,
   };
@@ -117,13 +120,17 @@ test("prefills two authorized targets sequentially through an injected simulator
     return successfulResponse(request);
   }).execute(readyAuthorization());
 
-  assert.equal(result.status, "platform_text_creator_forms_prefilled_review_pending_not_saved");
+  assert.equal(result.status, "platform_text_creator_forms_replaced_review_pending_not_saved");
   assert.equal(result.prefillAttempts, 2);
   assert.equal(result.prefilledCount, 2);
   assert.equal(result.allTargetsPrefilled, true);
   assert.deepEqual(calls.map(({ platform }) => platform), ["xiaohongshu", "douyin"]);
-  assert.ok(calls.every((call) => call.visible && call.operation === "prefill_visible_creator_form_and_upload_reviewed_assets_only"));
-  assert.ok(result.prefilledTargets.every((target) => target.status === "prefilled_visible_review_pending_not_saved"));
+  assert.ok(calls.every((call) => (
+    call.visible
+    && call.operation === "replace_visible_creator_form_contents_and_upload_reviewed_assets_only"
+    && call.clearExistingFieldsAndMedia === true
+  )));
+  assert.ok(result.prefilledTargets.every((target) => target.status === "replaced_visible_review_pending_not_saved"));
   assert.ok(result.prefilledTargets.every((target) => target.saveDraftRequiredSeparateAuthorization === true));
 });
 
@@ -178,6 +185,16 @@ test("blocks mismatched account, fingerprints and any reported save or publish",
     assert.equal(result.draftSaved, false);
     assert.equal(result.publishTriggered, false);
   }
+});
+
+test("blocks an adapter that appends the new version without clearing the previous contents", async () => {
+  const result = await createPlatformTextCreatorFormFillExecutor(async (request) => ({
+    ...successfulResponse(request),
+    existingDraftContentsCleared: false,
+  })).execute(readyAuthorization(["douyin"]));
+
+  assert.deepEqual(result.blockers, ["existing_draft_contents_not_confirmed_cleared"]);
+  assert.equal(result.prefilledCount, 0);
 });
 
 test("supports one target and remains disconnected from routes and browser libraries", async () => {

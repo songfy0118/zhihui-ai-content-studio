@@ -12,6 +12,7 @@ const CONTRACT_CONSTRAINTS = Object.freeze({
   loginAllowed: false,
   reviewedAssetUploadAllowed: true,
   reviewedFieldFillAllowed: true,
+  existingDraftContentsClearAllowed: true,
   draftSaveAllowed: false,
   publishAllowed: false,
 });
@@ -60,7 +61,8 @@ function safeTarget(value, sourceAccountConfirmationFingerprint) {
     || identityLabel !== value.confirmedAccount.identityLabel
     || (value.confirmedAccount.accountHandle != null && (!accountHandle || accountHandle !== value.confirmedAccount.accountHandle))
     || value?.confirmedAccount?.identityConfirmationFingerprint !== sourceAccountConfirmationFingerprint
-    || value?.operation !== "prefill_visible_creator_form_and_upload_reviewed_assets_only"
+    || value?.operation !== "replace_visible_creator_form_contents_and_upload_reviewed_assets_only"
+    || value?.replacementMode !== "clear_existing_fields_and_media_before_fill"
     || !safeFields(value?.exactReviewedFields)
     || !Array.isArray(value?.reviewedAssets)
     || value.reviewedAssets.length < 1
@@ -107,6 +109,7 @@ function safeAuthorization(value) {
     || value?.browserInteractionAllowedByContract !== true
     || value?.reviewedAssetUploadAllowedByContract !== true
     || value?.reviewedFieldFillAllowedByContract !== true
+    || value?.existingDraftContentsClearAllowedByContract !== true
     || value?.draftSaveAllowedByContract !== false
     || value?.publishAllowedByContract !== false
     || value?.browserInteractionPerformed !== false
@@ -171,6 +174,7 @@ function safeResult(fields = {}) {
     loginTriggered: false,
     uploadTriggered: false,
     formFieldsFilled: false,
+    existingDraftContentsCleared: false,
     draftSaved: false,
     publishTriggered: false,
     databaseWrites: false,
@@ -191,6 +195,9 @@ function failureReason(response, target, fieldFingerprint, assetFingerprints) {
     || typeof response?.finalUrl !== "string"
     || !sameOrigin(response.finalUrl, target.creatorEntryUrl)
   ) return "prefill_result_off_origin_or_invisible";
+  if (response?.existingDraftContentsCleared !== true) {
+    return "existing_draft_contents_not_confirmed_cleared";
+  }
   if (
     response?.accountIdentityVisible !== true
     || response?.identityLabel !== target.confirmedAccount.identityLabel
@@ -230,6 +237,8 @@ export function createPlatformTextCreatorFormFillExecutor(prefillVisibleForm) {
             visible: true,
             confirmedAccount: { ...target.confirmedAccount },
             operation: target.operation,
+            replacementMode: target.replacementMode,
+            clearExistingFieldsAndMedia: true,
             exactReviewedFields: {
               ...target.exactReviewedFields,
               hashtags: [...target.exactReviewedFields.hashtags],
@@ -250,7 +259,7 @@ export function createPlatformTextCreatorFormFillExecutor(prefillVisibleForm) {
         prefilledTargets.push({
           platform: target.platform,
           finalUrl: response.finalUrl,
-          status: "prefilled_visible_review_pending_not_saved",
+          status: "replaced_visible_review_pending_not_saved",
           filledFieldFingerprint,
           uploadedAssetFingerprints,
           reviewedAssetCount: target.reviewedAssetCount,
@@ -261,7 +270,7 @@ export function createPlatformTextCreatorFormFillExecutor(prefillVisibleForm) {
       const allTargetsPrefilled = prefilledTargets.length === targets.length && !failedTarget;
       return safeResult({
         status: allTargetsPrefilled
-          ? "platform_text_creator_forms_prefilled_review_pending_not_saved"
+          ? "platform_text_creator_forms_replaced_review_pending_not_saved"
           : prefilledTargets.length
             ? "platform_text_creator_form_fill_execution_partial_failed"
             : "platform_text_creator_form_fill_execution_failed",
@@ -276,6 +285,7 @@ export function createPlatformTextCreatorFormFillExecutor(prefillVisibleForm) {
         accountIdentityRemainedVisible: allTargetsPrefilled,
         uploadTriggered: prefilledTargets.length > 0,
         formFieldsFilled: prefilledTargets.length > 0,
+        existingDraftContentsCleared: prefilledTargets.length > 0,
         externalCalls: prefillAttempts > 0,
       });
     },

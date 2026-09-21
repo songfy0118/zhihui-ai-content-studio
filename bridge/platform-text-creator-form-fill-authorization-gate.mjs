@@ -52,7 +52,8 @@ function safeTarget(value, sourceAccountConfirmationFingerprint) {
     || identityLabel !== value.confirmedAccount.identityLabel
     || (value.confirmedAccount.accountHandle != null && (!accountHandle || accountHandle !== value.confirmedAccount.accountHandle))
     || value.confirmedAccount.identityConfirmationFingerprint !== sourceAccountConfirmationFingerprint
-    || value?.operation !== "prefill_reviewed_creator_form_after_separate_authorization"
+    || value?.operation !== "replace_existing_creator_form_with_reviewed_version_after_separate_authorization"
+    || value?.replacementMode !== "clear_existing_fields_and_media_before_fill"
     || !safeFields(value?.exactReviewedFields)
     || !Array.isArray(value?.reviewedAssets)
     || value.reviewedAssets.length < 1
@@ -62,6 +63,7 @@ function safeTarget(value, sourceAccountConfirmationFingerprint) {
     || !HASH.test(value?.draftReviewFingerprint ?? "")
     || !HASH.test(value?.visualReviewFingerprint ?? "")
     || value?.targetStatus !== "preview_only_not_authorized"
+    || value?.existingDraftContentsClearAllowed !== false
     || value?.saveDraftAllowed !== false
     || value?.publishAllowed !== false
   ) return null;
@@ -100,7 +102,7 @@ function safePreview(value) {
     || !HASH.test(value?.sourceCreatorOpenContractFingerprint ?? "")
     || !HASH.test(value?.sourceAccountConfirmationFingerprint ?? "")
     || !HASH.test(value?.formFillAuthorizationPreviewFingerprint ?? "")
-    || value?.requiredConfirmation !== `PREFILL REVIEWED CREATOR FORMS ${value.formFillAuthorizationPreviewFingerprint}`
+    || value?.requiredConfirmation !== `REPLACE WITH REVIEWED CREATOR VERSION ${value.formFillAuthorizationPreviewFingerprint}`
     || !Array.isArray(value?.fillTargets)
     || value.fillTargets.length < 1
     || value.fillTargets.length > 2
@@ -153,6 +155,7 @@ function safeResult(fields = {}) {
     browserInteractionAllowedByContract: false,
     reviewedAssetUploadAllowedByContract: false,
     reviewedFieldFillAllowedByContract: false,
+    existingDraftContentsClearAllowedByContract: false,
     draftSaveAllowedByContract: false,
     publishAllowedByContract: false,
     browserInteractionPerformed: false,
@@ -191,7 +194,8 @@ export function assessPlatformTextCreatorFormFillAuthorization({
     creatorEntryUrl: target.creatorEntryUrl,
     visiblePageUrl: target.visiblePageUrl,
     confirmedAccount: { ...target.confirmedAccount },
-    operation: "prefill_visible_creator_form_and_upload_reviewed_assets_only",
+    operation: "replace_visible_creator_form_contents_and_upload_reviewed_assets_only",
+    replacementMode: target.replacementMode,
     exactReviewedFields: {
       ...target.exactReviewedFields,
       hashtags: [...target.exactReviewedFields.hashtags],
@@ -214,6 +218,7 @@ export function assessPlatformTextCreatorFormFillAuthorization({
       loginAllowed: false,
       reviewedAssetUploadAllowed: true,
       reviewedFieldFillAllowed: true,
+      existingDraftContentsClearAllowed: true,
       draftSaveAllowed: false,
       publishAllowed: false,
     },
@@ -232,5 +237,6 @@ export function assessPlatformTextCreatorFormFillAuthorization({
     browserInteractionAllowedByContract: true,
     reviewedAssetUploadAllowedByContract: true,
     reviewedFieldFillAllowedByContract: true,
+    existingDraftContentsClearAllowedByContract: true,
   });
 }

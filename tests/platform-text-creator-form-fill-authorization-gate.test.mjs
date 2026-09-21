@@ -25,7 +25,8 @@ function fillTarget(platform) {
       accountHandle: null,
       identityConfirmationFingerprint: "c".repeat(64),
     },
-    operation: "prefill_reviewed_creator_form_after_separate_authorization",
+    operation: "replace_existing_creator_form_with_reviewed_version_after_separate_authorization",
+    replacementMode: "clear_existing_fields_and_media_before_fill",
     exactReviewedFields: {
       contentMode: platform === "xiaohongshu" ? "text_image_carousel_structure" : "text_image_post_structure",
       title: platform === "xiaohongshu" ? "为什么要核对两个来源？" : "一条消息为什么需要两个来源？",
@@ -51,6 +52,7 @@ function fillTarget(platform) {
     draftReviewFingerprint: "5".repeat(64),
     visualReviewFingerprint: "6".repeat(64),
     targetStatus: "preview_only_not_authorized",
+    existingDraftContentsClearAllowed: false,
     saveDraftAllowed: false,
     publishAllowed: false,
   };
@@ -70,7 +72,7 @@ function readyPreview(platforms = ["xiaohongshu", "douyin"]) {
     blockers: [],
     ...fingerprintPayload,
     formFillAuthorizationPreviewFingerprint,
-    requiredConfirmation: `PREFILL REVIEWED CREATOR FORMS ${formFillAuthorizationPreviewFingerprint}`,
+    requiredConfirmation: `REPLACE WITH REVIEWED CREATOR VERSION ${formFillAuthorizationPreviewFingerprint}`,
     targetCount: fillTargets.length,
     reviewedAssetCount: fillTargets.length,
     eligibleForExplicitFormFillAuthorization: true,
@@ -167,6 +169,7 @@ test("contract forbids login, draft save and publication and performs no externa
     loginAllowed: false,
     reviewedAssetUploadAllowed: true,
     reviewedFieldFillAllowed: true,
+    existingDraftContentsClearAllowed: true,
     draftSaveAllowed: false,
     publishAllowed: false,
   });
@@ -177,6 +180,7 @@ test("contract forbids login, draft save and publication and performs no externa
   assert.equal(result.loginTriggered, false);
   assert.equal(result.uploadTriggered, false);
   assert.equal(result.formFieldsFilled, false);
+  assert.equal(result.existingDraftContentsClearAllowedByContract, true);
   assert.equal(result.draftSaveAllowedByContract, false);
   assert.equal(result.draftSaved, false);
   assert.equal(result.publishAllowedByContract, false);

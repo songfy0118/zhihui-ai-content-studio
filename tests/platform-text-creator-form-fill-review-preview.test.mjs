@@ -24,7 +24,8 @@ function contractTarget(platform) {
       accountHandle: null,
       identityConfirmationFingerprint: "c".repeat(64),
     },
-    operation: "prefill_visible_creator_form_and_upload_reviewed_assets_only",
+    operation: "replace_visible_creator_form_contents_and_upload_reviewed_assets_only",
+    replacementMode: "clear_existing_fields_and_media_before_fill",
     exactReviewedFields: {
       contentMode: platform === "xiaohongshu" ? "text_image_carousel_structure" : "text_image_post_structure",
       title: platform === "xiaohongshu" ? "为什么要核对两个来源？" : "一条消息为什么需要两个来源？",
@@ -66,6 +67,7 @@ function readyInputs(platforms = ["xiaohongshu", "douyin"]) {
       loginAllowed: false,
       reviewedAssetUploadAllowed: true,
       reviewedFieldFillAllowed: true,
+      existingDraftContentsClearAllowed: true,
       draftSaveAllowed: false,
       publishAllowed: false,
     },
@@ -79,6 +81,7 @@ function readyInputs(platforms = ["xiaohongshu", "douyin"]) {
     browserInteractionAllowedByContract: true,
     reviewedAssetUploadAllowedByContract: true,
     reviewedFieldFillAllowedByContract: true,
+    existingDraftContentsClearAllowedByContract: true,
     draftSaveAllowedByContract: false,
     publishAllowedByContract: false,
     browserInteractionPerformed: false,
@@ -101,14 +104,14 @@ function readyInputs(platforms = ["xiaohongshu", "douyin"]) {
   const prefilledTargets = contractTargets.map((target) => ({
     platform: target.platform,
     finalUrl: target.visiblePageUrl,
-    status: "prefilled_visible_review_pending_not_saved",
+    status: "replaced_visible_review_pending_not_saved",
     filledFieldFingerprint: hash(target.exactReviewedFields),
     uploadedAssetFingerprints: target.reviewedAssets.map((asset) => asset.svgFingerprint),
     reviewedAssetCount: target.reviewedAssetCount,
     saveDraftRequiredSeparateAuthorization: true,
   }));
   const execution = {
-    status: "platform_text_creator_forms_prefilled_review_pending_not_saved",
+    status: "platform_text_creator_forms_replaced_review_pending_not_saved",
     blockers: [],
     contractFingerprint,
     prefillAttempts: prefilledTargets.length,
@@ -122,6 +125,7 @@ function readyInputs(platforms = ["xiaohongshu", "douyin"]) {
     loginTriggered: false,
     uploadTriggered: true,
     formFieldsFilled: true,
+    existingDraftContentsCleared: true,
     draftSaved: false,
     publishTriggered: false,
     databaseWrites: false,
@@ -160,6 +164,7 @@ test("preserves exact account, field and asset expectations in the checklist", (
     assert.equal(target.expectedFieldFingerprint, hash(contract.exactReviewedFields));
     assert.deepEqual(target.expectedAssetFingerprints, contract.reviewedAssets.map((asset) => asset.svgFingerprint));
     assert.ok(target.requiredChecks.includes("draft_remains_unsaved"));
+    assert.ok(target.requiredChecks.includes("previous_fields_and_media_were_cleared_before_replacement"));
   }
 });
 

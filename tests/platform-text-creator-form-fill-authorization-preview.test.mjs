@@ -166,8 +166,9 @@ test("builds a deterministic form-fill authorization preview bound to copy, asse
   assert.equal(first.reviewedAssetCount, 2);
   assert.deepEqual(first.fillTargets.map(({ platform }) => platform), ["xiaohongshu", "douyin"]);
   assert.ok(first.fillTargets.every((target) => target.targetStatus === "preview_only_not_authorized"));
-  assert.equal(first.requiredConfirmation, `PREFILL REVIEWED CREATOR FORMS ${first.formFillAuthorizationPreviewFingerprint}`);
+  assert.equal(first.requiredConfirmation, `REPLACE WITH REVIEWED CREATOR VERSION ${first.formFillAuthorizationPreviewFingerprint}`);
   assert.equal(first.eligibleForExplicitFormFillAuthorization, true);
+  assert.ok(first.fillTargets.every((target) => target.replacementMode === "clear_existing_fields_and_media_before_fill"));
 });
 
 test("preserves exact reviewed fields and asset references", () => {
@@ -232,5 +233,9 @@ test("does not interact with the browser, fill forms, save drafts, publish or co
   assert.equal(result.filesystemMutations, false);
   assert.equal(result.externalCalls, false);
   assert.equal(result.businessResult, false);
-  assert.ok(result.fillTargets.every((target) => target.saveDraftAllowed === false && target.publishAllowed === false));
+  assert.ok(result.fillTargets.every((target) => (
+    target.existingDraftContentsClearAllowed === false
+    && target.saveDraftAllowed === false
+    && target.publishAllowed === false
+  )));
 });

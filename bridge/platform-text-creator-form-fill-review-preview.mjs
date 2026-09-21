@@ -12,6 +12,7 @@ const CONTRACT_CONSTRAINTS = Object.freeze({
   loginAllowed: false,
   reviewedAssetUploadAllowed: true,
   reviewedFieldFillAllowed: true,
+  existingDraftContentsClearAllowed: true,
   draftSaveAllowed: false,
   publishAllowed: false,
 });
@@ -46,6 +47,7 @@ function safeInputs(authorization, execution) {
     || authorization?.browserInteractionAllowedByContract !== true
     || authorization?.reviewedAssetUploadAllowedByContract !== true
     || authorization?.reviewedFieldFillAllowedByContract !== true
+    || authorization?.existingDraftContentsClearAllowedByContract !== true
     || authorization?.draftSaveAllowedByContract !== false
     || authorization?.publishAllowedByContract !== false
     || authorization?.browserInteractionPerformed !== false
@@ -71,7 +73,7 @@ function safeInputs(authorization, execution) {
     || !Array.isArray(contract?.contractTargets)
     || contract.contractTargets.length < 1
     || contract.contractTargets.length > 2
-    || execution?.status !== "platform_text_creator_forms_prefilled_review_pending_not_saved"
+    || execution?.status !== "platform_text_creator_forms_replaced_review_pending_not_saved"
     || !Array.isArray(execution?.blockers)
     || execution.blockers.length !== 0
     || execution?.contractFingerprint !== contract.contractFingerprint
@@ -87,6 +89,7 @@ function safeInputs(authorization, execution) {
     || execution?.loginTriggered !== false
     || execution?.uploadTriggered !== true
     || execution?.formFieldsFilled !== true
+    || execution?.existingDraftContentsCleared !== true
     || execution?.draftSaved !== false
     || execution?.publishTriggered !== false
     || execution?.databaseWrites !== false
@@ -106,7 +109,8 @@ function safeInputs(authorization, execution) {
       || platformRank <= previousPlatformRank
       || !sameOrigin(contractTarget?.creatorEntryUrl, CREATOR_ORIGINS[contractTarget.platform])
       || !sameOrigin(contractTarget?.visiblePageUrl, CREATOR_ORIGINS[contractTarget.platform])
-      || contractTarget?.operation !== "prefill_visible_creator_form_and_upload_reviewed_assets_only"
+      || contractTarget?.operation !== "replace_visible_creator_form_contents_and_upload_reviewed_assets_only"
+      || contractTarget?.replacementMode !== "clear_existing_fields_and_media_before_fill"
       || !contractTarget?.confirmedAccount?.identityLabel
       || contractTarget?.confirmedAccount?.identityConfirmationFingerprint !== contract.sourceAccountConfirmationFingerprint
       || !contractTarget?.exactReviewedFields
@@ -121,7 +125,7 @@ function safeInputs(authorization, execution) {
       || !HASH.test(contractTarget?.draftReviewFingerprint ?? "")
       || !HASH.test(contractTarget?.visualReviewFingerprint ?? "")
       || resultTarget?.platform !== contractTarget.platform
-      || resultTarget?.status !== "prefilled_visible_review_pending_not_saved"
+      || resultTarget?.status !== "replaced_visible_review_pending_not_saved"
       || !sameOrigin(resultTarget?.finalUrl, CREATOR_ORIGINS[contractTarget.platform])
       || resultTarget?.filledFieldFingerprint !== hash(contractTarget.exactReviewedFields)
       || JSON.stringify(resultTarget?.uploadedAssetFingerprints) !== JSON.stringify(assetFingerprints)
@@ -185,6 +189,7 @@ export function buildPlatformTextCreatorFormFillReviewPreview({ authorization, e
       "visible_account_matches_confirmed_account",
       "visible_title_body_cover_and_hashtags_match_reviewed_fields",
       "visible_assets_match_reviewed_asset_fingerprints",
+      "previous_fields_and_media_were_cleared_before_replacement",
       "draft_remains_unsaved",
       "publication_remains_untriggered",
     ],
