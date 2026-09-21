@@ -59,6 +59,8 @@
     "news:platform-text-handoff:plan": "node --test tests/platform-text-draft-handoff-plan.test.mjs",
     "news:platform-text-assets:plan": "node --test tests/platform-text-visual-asset-plan.test.mjs",
     "news:platform-text-assets:render": "node --test tests/platform-text-visual-svg-renderer.test.mjs",
+    "news:infographic-storyboard:check": "node --test tests/platform-infographic-storyboard.test.mjs",
+    "news:jev-infographic:preview": "node scripts/preview-jev-infographic-storyboard.mjs",
     "news:platform-text-assets:export:isolated": "node --test tests/platform-text-svg-bundle-exporter.test.mjs",
     "news:platform-text-assets:inspect:isolated": "node --test tests/platform-text-svg-bundle-inspector.test.mjs",
     "news:platform-text-assets:review:check": "node --test tests/platform-text-visual-review-preview.test.mjs",
