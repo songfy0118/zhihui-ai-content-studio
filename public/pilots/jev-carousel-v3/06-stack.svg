@@ -1,0 +1,76 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
+  <title>GitHub 上，大家怎么复现 JEV？</title>
+  <defs>
+    <pattern id="paper-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#1f2937" stroke-opacity=".025"/>
+    </pattern>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#111827" flood-opacity=".08"/>
+    </filter>
+    <style>
+      .sans{font-family:"Microsoft YaHei","Noto Sans SC",Arial,sans-serif;fill:#161b22}
+      .serif{font-family:"SimSun","Noto Serif SC",serif;fill:#161b22}
+      .mono{font-family:Consolas,"SFMono-Regular",monospace}
+      .section{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:21px;font-weight:800;letter-spacing:1.2px;fill:#2457c5}
+      .headline{font-family:"SimSun","Noto Serif SC",serif;font-size:57px;font-weight:900;fill:#161b22}
+      .deck{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:25px;font-weight:600;fill:#53606c}
+      .h2{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:29px;font-weight:900;fill:#161b22}
+      .h3{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:23px;font-weight:800;fill:#161b22}
+      .body{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:22px;fill:#161b22}
+      .small{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:18px;fill:#53606c}
+      .tiny{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:15px;fill:#53606c}
+      .source{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:14px;fill:#707983}
+      .pill{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:17px;font-weight:800}
+      .note{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:18px;font-weight:700}
+    </style>
+  </defs>
+  <rect width="1080" height="1440" fill="#f7f5ef"/>
+  <rect width="1080" height="1440" fill="url(#paper-grid)"/>
+  <rect x="0" y="0" width="18" height="1440" fill="#2457c5"/>
+  <text x="72" y="72" class="section" >05 · OPEN-SOURCE STACK</text>
+  <text x="1008" y="72" class="tiny" text-anchor="end">FIELD NOTE  ·  06/07</text>
+  <path d="M72 96H1008" stroke="#2457c5" stroke-width="3" />
+  <text x="72" y="165" class="headline" >GitHub 上，大家怎么复现 JEV？</text>
+  <text x="72" y="217" class="deck" >接入层、决策网关、开放复现和评测框架，要分清“官方模型”与“社区工程”</text>
+  <path d="M72 1278H1008" stroke="#b7bcc2" stroke-width="1" />
+  <text x="1008" y="1325" class="source" text-anchor="end">JEV / SYSTEM ONE · RESEARCH EXPLAINER</text>
+  
+        <g transform="translate(72 286)">
+          <text x="0" y="30" class="h2" style="fill:#2457c5">官方 · 先看真实接口</text>
+          <rect y="54" width="936" height="214" rx="14" fill="#e9effc" stroke="#2457c5" filter="url(#soft-shadow)"/>
+          <text x="24" y="96" class="h3" >TypeSafe OpenAPI</text>
+          <text x="24" y="132" class="mono" font-size="18" style="fill:#2457c5">api.typesafe.ai/docs</text>
+          <text x="24" y="164" class="small" >Choice / Score / Noul 的请求与返回结构</text>
+          <path d="M24 184H912" stroke="#b7bcc2" stroke-width="1" />
+          <text x="24" y="218" class="h3" >Jev API 示例</text>
+          <text x="264" y="218" class="mono" font-size="18" style="fill:#2457c5">github.com/jev-ai/jev-api</text>
+          <text x="264" y="248" class="small" >公开示例仓库；底层模型产品仍以官方文档为准</text>
+
+          <text x="0" y="322" class="h2" style="fill:#d4552d">社区 · 看怎么接、怎么测</text>
+          <rect y="346" width="936" height="276" rx="14" fill="#faeae3" stroke="#d4552d" filter="url(#soft-shadow)"/>
+          <text x="24" y="390" class="h3" >决策网关</text><text x="194" y="390" class="mono" font-size="18" style="fill:#d4552d">github.com/kuldeepsinh19/jev-decision-gateway</text>
+          <text x="194" y="421" class="small" >Jev 做窄判断；代码负责阈值、fallback 和授权。</text>
+          <path d="M24 446H912" stroke="#b7bcc2" stroke-width="1" />
+          <text x="24" y="488" class="h3" >统一接入层</text><text x="194" y="488" class="mono" font-size="18" style="fill:#d4552d">github.com/lukeramsden/system-one</text>
+          <text x="194" y="519" class="small" >把 Jev、Cloudflare 与 Laya 暴露成同一套类型化接口。</text>
+          <path d="M24 544H912" stroke="#b7bcc2" stroke-width="1" />
+          <text x="24" y="586" class="h3" >开放复现</text><text x="194" y="586" class="mono" font-size="18" style="fill:#d4552d">github.com/mithalouni/system-one-open</text>
+          <text x="194" y="613" class="small" >基于 Gemma 的 Jev 风格复现；不是 TypeSafe 官方模型。</text>
+
+          <text x="0" y="680" class="h2" >工作流底座 · 不是 Jev 项目</text>
+          <rect y="704" width="936" height="174" rx="14" fill="#ffffff" stroke="#161b22" filter="url(#soft-shadow)"/>
+          <text x="24" y="746" class="h3" >LangGraph</text><text x="194" y="746" class="mono" font-size="18" style="fill:#2457c5">github.com/langchain-ai/langgraph</text>
+          <text x="194" y="776" class="small" >用条件边和人工中断承接判断结果。</text>
+          <path d="M24 800H912" stroke="#b7bcc2" stroke-width="1" />
+          <text x="24" y="842" class="h3" >LiteLLM</text><text x="194" y="842" class="mono" font-size="18" style="fill:#2457c5">github.com/BerriAI/litellm</text>
+          <text x="194" y="870" class="small" >统一模型接入、重试、限流和可观测性。</text>
+        </g>
+        
+  <rect x="72" y="1190" width="936" height="54" rx="8" fill="#e9effc"/>
+  <rect x="72" y="1190" width="6" height="54" rx="3" fill="#2457c5"/>
+  <text x="94" y="1225" class="note" style="fill:#2457c5">重要：开源接入层 ≠ 开源模型。调用真实 Jev 时，API Key 必须只放服务器端。</text>
+
+        <text x="72" y="1325" class="source" >链接按官方接口、社区工程、开放复现、工作流底座分类，避免把社区项目当官方。</text>
+      
+</svg>

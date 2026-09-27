@@ -1,0 +1,75 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
+  <title>下一代 AI，不一定是一个更大的模型</title>
+  <defs>
+    <pattern id="paper-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#1f2937" stroke-opacity=".025"/>
+    </pattern>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#111827" flood-opacity=".08"/>
+    </filter>
+    <style>
+      .sans{font-family:"Microsoft YaHei","Noto Sans SC",Arial,sans-serif;fill:#161b22}
+      .serif{font-family:"SimSun","Noto Serif SC",serif;fill:#161b22}
+      .mono{font-family:Consolas,"SFMono-Regular",monospace}
+      .section{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:21px;font-weight:800;letter-spacing:1.2px;fill:#d4552d}
+      .headline{font-family:"SimSun","Noto Serif SC",serif;font-size:57px;font-weight:900;fill:#161b22}
+      .deck{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:25px;font-weight:600;fill:#53606c}
+      .h2{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:29px;font-weight:900;fill:#161b22}
+      .h3{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:23px;font-weight:800;fill:#161b22}
+      .body{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:22px;fill:#161b22}
+      .small{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:18px;fill:#53606c}
+      .tiny{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:15px;fill:#53606c}
+      .source{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:14px;fill:#707983}
+      .pill{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:17px;font-weight:800}
+      .note{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:18px;font-weight:700}
+    </style>
+  </defs>
+  <rect width="1080" height="1440" fill="#f7f5ef"/>
+  <rect width="1080" height="1440" fill="url(#paper-grid)"/>
+  <rect x="0" y="0" width="18" height="1440" fill="#d4552d"/>
+  <text x="72" y="72" class="section" >CONCLUSION · 先验证，再自动化</text>
+  <text x="1008" y="72" class="tiny" text-anchor="end">FIELD NOTE  ·  07/07</text>
+  <path d="M72 96H1008" stroke="#d4552d" stroke-width="3" />
+  <text x="72" y="165" class="headline" >下一代 AI，不一定是一个更大的模型</text>
+  <text x="72" y="217" class="deck" >更可能是一支分工明确、彼此校验、随时能让人接管的模型团队</text>
+  <path d="M72 1278H1008" stroke="#b7bcc2" stroke-width="1" />
+  <text x="1008" y="1325" class="source" text-anchor="end">JEV / SYSTEM ONE · RESEARCH EXPLAINER</text>
+  
+        <g transform="translate(72 286)">
+          <rect width="936" height="164" rx="16" fill="#161b22"/>
+          <text x="30" y="50" class="serif" font-size="44" font-weight="900" style="fill:#d4552d">01</text>
+          <text x="112" y="48" class="h2" style="fill:#ffffff">大模型负责开放式理解与表达</text>
+          <text x="112" y="92" class="body" style="fill:#d1d5db">规划、写作、解释、处理未知问题</text>
+          <text x="112" y="130" class="small" style="fill:#9ca3af">它擅长“把问题想清楚”。</text>
+        </g>
+        <g transform="translate(72 474)">
+          <rect width="936" height="164" rx="16" fill="#faeae3" stroke="#d4552d" stroke-width="2"/>
+          <text x="30" y="50" class="serif" font-size="44" font-weight="900" style="fill:#d4552d">02</text>
+          <text x="112" y="48" class="h2" style="fill:#d4552d">决策模型负责高频、窄范围判断</text>
+          <text x="112" y="92" class="body" >路由、打分、门控、是否升级</text>
+          <text x="112" y="130" class="small" >它擅长“把下一步选出来”。</text>
+        </g>
+        <g transform="translate(72 662)">
+          <rect width="936" height="164" rx="16" fill="#e9effc" stroke="#2457c5" stroke-width="2"/>
+          <text x="30" y="50" class="serif" font-size="44" font-weight="900" style="fill:#2457c5">03</text>
+          <text x="112" y="48" class="h2" style="fill:#2457c5">工作流与人类负责权限和后果</text>
+          <text x="112" y="92" class="body" >阈值、确认、回滚、复盘、责任边界</text>
+          <text x="112" y="130" class="small" >它们决定“这一步到底能不能做”。</text>
+        </g>
+        <g transform="translate(72 874)">
+          <text x="0" y="34" class="h2" >真正值得追踪的三个问题</text>
+          <text x="0" y="82" class="body" >□  是否出现跨任务、可复现的独立评测？</text>
+          <text x="0" y="126" class="body" >□  在你的数据上，哪类决定稳定，哪类必须转人工？</text>
+          <text x="0" y="170" class="body" >□  它节省的成本，能否覆盖误判和工程复杂度？</text>
+          
+  <rect x="0" y="214" width="936" height="54" rx="8" fill="#faeae3"/>
+  <rect x="0" y="214" width="6" height="54" rx="3" fill="#d4552d"/>
+  <text x="22" y="249" class="note" style="fill:#d4552d">别问“Jev 会不会取代 OpenAI”；问“哪一步不必再动用最贵的大模型”。</text>
+
+        </g>
+        <text x="72" y="1185" class="h2" >你会先把哪一种“小决定”交给专门模型？</text>
+        <text x="72" y="1225" class="small" >评论区留下场景：路由 / 风控 / 质量评分 / 人工升级</text>
+        <text x="72" y="1325" class="source" >本文为公开资料解读，不构成性能承诺；所有自动化决策都应按风险设计人工兜底。</text>
+      
+</svg>

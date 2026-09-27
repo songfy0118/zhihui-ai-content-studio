@@ -1,0 +1,101 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
+  <title>硅谷热议 JEV：AI 不聊天，只拍板</title>
+  <defs>
+    <pattern id="paper-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#1f2937" stroke-opacity=".025"/>
+    </pattern>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#111827" flood-opacity=".08"/>
+    </filter>
+    <style>
+      .sans{font-family:"Microsoft YaHei","Noto Sans SC",Arial,sans-serif;fill:#161b22}
+      .serif{font-family:"SimSun","Noto Serif SC",serif;fill:#161b22}
+      .mono{font-family:Consolas,"SFMono-Regular",monospace}
+      .section{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:21px;font-weight:800;letter-spacing:1.2px;fill:#d4552d}
+      .headline{font-family:"SimSun","Noto Serif SC",serif;font-size:57px;font-weight:900;fill:#161b22}
+      .deck{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:25px;font-weight:600;fill:#53606c}
+      .h2{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:29px;font-weight:900;fill:#161b22}
+      .h3{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:23px;font-weight:800;fill:#161b22}
+      .body{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:22px;fill:#161b22}
+      .small{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:18px;fill:#53606c}
+      .tiny{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:15px;fill:#53606c}
+      .source{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:14px;fill:#707983}
+      .pill{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:17px;font-weight:800}
+      .note{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:18px;font-weight:700}
+    </style>
+  </defs>
+  <rect width="1080" height="1440" fill="#f7f5ef"/>
+  <rect width="1080" height="1440" fill="url(#paper-grid)"/>
+  <rect x="0" y="0" width="18" height="1440" fill="#d4552d"/>
+  <text x="72" y="72" class="section" >硅谷热议 · JEV 决策模型</text>
+  <text x="1008" y="72" class="tiny" text-anchor="end">FIELD NOTE  ·  01/07</text>
+  <path d="M72 96H1008" stroke="#d4552d" stroke-width="3" />
+  <text x="72" y="165" class="headline" >硅谷热议 JEV：AI 不聊天，只拍板</text>
+  <text x="72" y="217" class="deck" >它不写答案，只把客服、风控和 Agent 的下一步变成可计算的决定</text>
+  <path d="M72 1278H1008" stroke="#b7bcc2" stroke-width="1" />
+  <text x="1008" y="1325" class="source" text-anchor="end">JEV / SYSTEM ONE · RESEARCH EXPLAINER</text>
+  
+        
+  <rect x="72" y="270" width="188" height="42" rx="21" fill="#d4552d"/>
+  <text x="166" y="299" class="pill" style="fill:#ffffff" text-anchor="middle">API-ONLY MODEL</text>
+
+        
+  <rect x="274" y="270" width="250" height="42" rx="21" fill="#161b22"/>
+  <text x="399" y="299" class="pill" style="fill:#ffffff" text-anchor="middle">CHOICE · SCORE · NOUL</text>
+
+        
+  <rect x="538" y="270" width="286" height="42" rx="21" fill="#2457c5"/>
+  <text x="681" y="299" class="pill" style="fill:#ffffff" text-anchor="middle">GitHub 已有开源接入层</text>
+
+        <g transform="translate(72 336)" filter="url(#soft-shadow)">
+          <rect width="936" height="224" rx="16" fill="#ffffff" stroke="#161b22" stroke-width="2"/>
+          <text x="28" y="45" class="h2" >它具体干嘛？</text>
+          <text x="28" y="84" class="body" >把一段业务状态，变成代码能直接读取的结构化判断。</text>
+          <g transform="translate(28 116)">
+            <rect width="190" height="68" rx="10" fill="#e8ebee"/><text x="95" y="42" class="small" text-anchor="middle">聊天 / 表单 / 记录</text>
+            <path d="M204 34h46" stroke="#161b22" stroke-width="3"/><path d="M237 23l15 11-15 11" fill="none" stroke="#161b22" stroke-width="3"/>
+            <rect x="264" width="118" height="68" rx="10" fill="#faeae3" stroke="#d4552d" stroke-width="2"/><text x="323" y="43" class="h3" style="fill:#d4552d" text-anchor="middle">JEV</text>
+            <path d="M396 34h46" stroke="#161b22" stroke-width="3"/><path d="M429 23l15 11-15 11" fill="none" stroke="#161b22" stroke-width="3"/>
+            <rect x="456" width="218" height="68" rx="10" fill="#e9effc" stroke="#2457c5"/><text x="565" y="28" class="small" style="fill:#2457c5" text-anchor="middle">选项 / 分数 / 概率</text><text x="565" y="53" class="tiny" text-anchor="middle">+ confidence</text>
+            <path d="M688 34h46" stroke="#161b22" stroke-width="3"/><path d="M721 23l15 11-15 11" fill="none" stroke="#161b22" stroke-width="3"/>
+            <rect x="748" width="132" height="68" rx="10" fill="#161b22"/><text x="814" y="28" class="small" style="fill:#ffffff" text-anchor="middle">你的代码</text><text x="814" y="53" class="tiny" style="fill:#d1d5db" text-anchor="middle">决定下一步</text>
+          </g>
+        </g>
+        <text x="72" y="612" class="h2" >四类可落地场景</text>
+        <g transform="translate(72 640)">
+          <rect width="454" height="174" rx="14" fill="#e9effc" stroke="#2457c5"/>
+          <text x="22" y="38" class="h3" style="fill:#2457c5">微信私域 / 社群</text>
+          <text x="22" y="78" class="body" >识别咨询意图 · 用户分层</text>
+          <text x="22" y="116" class="body" >线索评分 · 低信心转人工</text>
+          <text x="22" y="151" class="small" >不能自动加好友或群发</text>
+          <rect x="482" width="454" height="174" rx="14" fill="#faeae3" stroke="#d4552d"/>
+          <text x="504" y="38" class="h3" style="fill:#d4552d">客服 / CRM</text>
+          <text x="504" y="78" class="body" >工单路由 · 紧急度评分</text>
+          <text x="504" y="116" class="body" >退款诉求识别 · 异常升级</text>
+          <text x="504" y="151" class="small" >最终回复仍由人或大模型生成</text>
+          <rect y="194" width="454" height="174" rx="14" fill="#ffffff" stroke="#161b22"/>
+          <text x="22" y="232" class="h3" >企业管理</text>
+          <text x="22" y="272" class="body" >审批优先级 · 资料完整性</text>
+          <text x="22" y="310" class="body" >任务分派 · 异常转负责人</text>
+          <text x="22" y="345" class="small" >模型不拥有审批权限</text>
+          <rect x="482" y="194" width="454" height="174" rx="14" fill="#ffffff" stroke="#161b22"/>
+          <text x="504" y="232" class="h3" >金融辅助</text>
+          <text x="504" y="272" class="body" >材料分类 · 风险信号评分</text>
+          <text x="504" y="310" class="body" >交易复核排序 · 人工升级</text>
+          <text x="504" y="345" class="small" >不直接批准贷款或交易</text>
+        </g>
+        
+  <rect x="72" y="1044" width="936" height="54" rx="8" fill="#faeae3"/>
+  <rect x="72" y="1044" width="6" height="54" rx="3" fill="#d4552d"/>
+  <text x="94" y="1079" class="note" style="fill:#d4552d">边界：Jev 只返回判断信号；微信操作、审批、转账、发布仍由受控系统和人执行。</text>
+
+        <g transform="translate(72 1120)">
+          <text x="0" y="26" class="h3" >官方入口</text>
+          <text x="0" y="58" class="mono" font-size="17" style="fill:#2457c5">api.typesafe.ai/docs</text>
+          <text x="240" y="58" class="mono" font-size="17" style="fill:#2457c5">github.com/lukeramsden/system-one</text>
+          <text x="240" y="88" class="mono" font-size="17" style="fill:#2457c5">github.com/kuldeepsinh19/jev-decision-gateway</text>
+        </g>
+        <text x="72" y="1325" class="source" >说明：GitHub 项目为社区接入与复现；Jev 本体是托管模型，不等于开源权重。</text>
+      
+</svg>

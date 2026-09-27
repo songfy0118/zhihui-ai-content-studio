@@ -1,0 +1,136 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
+  <title>Choice、Score、Noul 到底返回什么？</title>
+  <defs>
+    <pattern id="paper-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#1f2937" stroke-opacity=".025"/>
+    </pattern>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#111827" flood-opacity=".08"/>
+    </filter>
+    <style>
+      .sans{font-family:"Microsoft YaHei","Noto Sans SC",Arial,sans-serif;fill:#161b22}
+      .serif{font-family:"SimSun","Noto Serif SC",serif;fill:#161b22}
+      .mono{font-family:Consolas,"SFMono-Regular",monospace}
+      .section{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:21px;font-weight:800;letter-spacing:1.2px;fill:#d4552d}
+      .headline{font-family:"SimSun","Noto Serif SC",serif;font-size:57px;font-weight:900;fill:#161b22}
+      .deck{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:25px;font-weight:600;fill:#53606c}
+      .h2{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:29px;font-weight:900;fill:#161b22}
+      .h3{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:23px;font-weight:800;fill:#161b22}
+      .body{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:22px;fill:#161b22}
+      .small{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:18px;fill:#53606c}
+      .tiny{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:15px;fill:#53606c}
+      .source{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:14px;fill:#707983}
+      .pill{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:17px;font-weight:800}
+      .note{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:18px;font-weight:700}
+    </style>
+  </defs>
+  <rect width="1080" height="1440" fill="#f7f5ef"/>
+  <rect width="1080" height="1440" fill="url(#paper-grid)"/>
+  <rect x="0" y="0" width="18" height="1440" fill="#d4552d"/>
+  <text x="72" y="72" class="section" >02 · THREE PRIMITIVES</text>
+  <text x="1008" y="72" class="tiny" text-anchor="end">FIELD NOTE  ·  03/07</text>
+  <path d="M72 96H1008" stroke="#d4552d" stroke-width="3" />
+  <text x="72" y="165" class="headline" >Choice、Score、Noul 到底返回什么？</text>
+  <text x="72" y="217" class="deck" >同一份 state 可以并行回答多个问题；真正落地靠的是字段与阈值</text>
+  <path d="M72 1278H1008" stroke="#b7bcc2" stroke-width="1" />
+  <text x="1008" y="1325" class="source" text-anchor="end">JEV / SYSTEM ONE · RESEARCH EXPLAINER</text>
+  
+        <g transform="translate(72 278)">
+          <g filter="url(#soft-shadow)">
+            <rect width="296" height="750" rx="14" fill="#ffffff" stroke="#2457c5" stroke-width="2"/>
+            <rect width="296" height="62" rx="14" fill="#2457c5"/>
+            <text x="20" y="40" class="h3" style="fill:#ffffff">CHOICE · 选一个</text>
+            <text x="20" y="105" class="small" >问题</text><text x="20" y="139" class="body" >该工单交给谁？</text>
+            <path d="M20 165H276" stroke="#b7bcc2" stroke-width="2" />
+            <text x="20" y="205" class="small" >候选集合</text>
+            
+  <rect x="20" y="225" width="92" height="42" rx="21" fill="#e9effc"/>
+  <text x="66" y="254" class="pill" style="fill:#2457c5" text-anchor="middle">billing</text>
+
+            
+  <rect x="118" y="225" width="100" height="42" rx="21" fill="#e8ebee"/>
+  <text x="168" y="254" class="pill" style="fill:#161b22" text-anchor="middle">technical</text>
+
+            
+  <rect x="20" y="277" width="86" height="42" rx="21" fill="#e8ebee"/>
+  <text x="63" y="306" class="pill" style="fill:#161b22" text-anchor="middle">account</text>
+
+            
+  <rect x="112" y="277" width="70" height="42" rx="21" fill="#e8ebee"/>
+  <text x="147" y="306" class="pill" style="fill:#161b22" text-anchor="middle">other</text>
+
+            <text x="20" y="355" class="small" >返回</text>
+            <rect x="20" y="374" width="256" height="155" rx="8" fill="#111827"/>
+            <text x="34" y="410" class="mono" font-size="17" style="fill:#dbeafe">choice: &quot;billing&quot;</text>
+            <text x="34" y="442" class="mono" font-size="17" style="fill:#dbeafe">p: {billing: .87,</text>
+            <text x="34" y="474" class="mono" font-size="17" style="fill:#dbeafe"> technical: .13}</text>
+            <text x="34" y="506" class="mono" font-size="17" style="fill:#fdba74">confidence: .80</text>
+            <text x="20" y="576" class="small" >适合</text><text x="20" y="610" class="body" >工具路由 / 意图分类</text>
+            <text x="20" y="646" class="body" >有限集合中的唯一选择</text>
+            
+  <rect x="20" y="680" width="256" height="54" rx="8" fill="#e9effc"/>
+  <rect x="20" y="680" width="6" height="54" rx="3" fill="#2457c5"/>
+  <text x="42" y="715" class="note" style="fill:#2457c5">必须保留 other / none</text>
+
+          </g>
+          <g transform="translate(320)" filter="url(#soft-shadow)">
+            <rect width="296" height="750" rx="14" fill="#ffffff" stroke="#d4552d" stroke-width="2"/>
+            <rect width="296" height="62" rx="14" fill="#d4552d"/>
+            <text x="20" y="40" class="h3" style="fill:#ffffff">SCORE · 排位置</text>
+            <text x="20" y="105" class="small" >问题</text><text x="20" y="139" class="body" >风险程度有多高？</text>
+            <path d="M20 165H276" stroke="#b7bcc2" stroke-width="2" />
+            <text x="20" y="205" class="small" >有序量表</text>
+            <text x="20" y="246" class="body" >1 低</text><text x="110" y="246" class="body" >2 中</text><text x="202" y="246" class="body" >3 高</text>
+            <path d="M32 292H264" stroke="#b7bcc2" stroke-width="12" stroke-linecap="round"/>
+            <path d="M32 292H191" stroke="#d4552d" stroke-width="12" stroke-linecap="round"/>
+            <circle cx="191" cy="292" r="16" fill="#ffffff" stroke="#d4552d" stroke-width="5"/>
+            <text x="20" y="355" class="small" >返回</text>
+            <rect x="20" y="374" width="256" height="155" rx="8" fill="#111827"/>
+            <text x="34" y="410" class="mono" font-size="17" style="fill:#ffedd5">score: 2.36</text>
+            <text x="34" y="442" class="mono" font-size="17" style="fill:#ffedd5">levels: [1,2,3]</text>
+            <text x="34" y="474" class="mono" font-size="17" style="fill:#ffedd5">distribution: [...]</text>
+            <text x="34" y="506" class="mono" font-size="17" style="fill:#fdba74">confidence: .74</text>
+            <text x="20" y="576" class="small" >适合</text><text x="20" y="610" class="body" >风险 / 质量 / 紧迫度</text>
+            <text x="20" y="646" class="body" >在有序区间里定位</text>
+            
+  <rect x="20" y="680" width="256" height="54" rx="8" fill="#faeae3"/>
+  <rect x="20" y="680" width="6" height="54" rx="3" fill="#d4552d"/>
+  <text x="42" y="715" class="note" style="fill:#d4552d">等级必须写清边界</text>
+
+          </g>
+          <g transform="translate(640)" filter="url(#soft-shadow)">
+            <rect width="296" height="750" rx="14" fill="#ffffff" stroke="#161b22" stroke-width="2"/>
+            <rect width="296" height="62" rx="14" fill="#161b22"/>
+            <text x="20" y="40" class="h3" style="fill:#ffffff">NOUL · 是 / 否概率</text>
+            <text x="20" y="105" class="small" >命题</text><text x="20" y="139" class="body" >是否需要转人工？</text>
+            <path d="M20 165H276" stroke="#b7bcc2" stroke-width="2" />
+            <text x="20" y="205" class="small" >概率刻度</text>
+            <path d="M40 305A108 108 0 01256 305" fill="none" stroke="#e8ebee" stroke-width="22" stroke-linecap="round"/>
+            <path d="M148 305l72-74" stroke="#d4552d" stroke-width="6"/>
+            <circle cx="148" cy="305" r="13" fill="#ffffff" stroke="#d4552d" stroke-width="4"/>
+            <text x="40" y="333" class="small" >0</text><text x="246" y="333" class="small" >1</text>
+            <text x="20" y="355" class="small" >返回</text>
+            <rect x="20" y="374" width="256" height="155" rx="8" fill="#111827"/>
+            <text x="34" y="416" class="mono" font-size="17" style="fill:#f3f4f6">type: &quot;noul&quot;</text>
+            <text x="34" y="458" class="mono" font-size="17" style="fill:#fdba74">noul: 0.83</text>
+            <text x="34" y="500" class="mono" font-size="17" style="fill:#9ca3af">// P(answer=yes)</text>
+            <text x="20" y="576" class="small" >适合</text><text x="20" y="610" class="body" >拦截 / 升级 / 是否执行</text>
+            <text x="20" y="646" class="body" >二元命题的概率判断</text>
+            
+  <rect x="20" y="680" width="256" height="54" rx="8" fill="#e8ebee"/>
+  <rect x="20" y="680" width="6" height="54" rx="3" fill="#161b22"/>
+  <text x="42" y="715" class="note" style="fill:#161b22">0.5 = 无法判断</text>
+
+          </g>
+        </g>
+        
+  <rect x="72" y="1065" width="936" height="54" rx="8" fill="#e9effc"/>
+  <rect x="72" y="1065" width="6" height="54" rx="3" fill="#2457c5"/>
+  <text x="94" y="1100" class="note" style="fill:#2457c5">注意：Choice/Score 的 confidence 是分布集中度，不是“答对概率”。</text>
+
+        <text x="72" y="1148" class="h2" >工程原则</text>
+        <text x="72" y="1190" class="body" >模型只返回判断；是否自动执行、要求确认还是转人工，必须由你的代码决定。</text>
+        <text x="72" y="1325" class="source" >资料：[1] TypeSafe AI Architecture；[3] souvikr/jev-test README。示例数值仅为结构演示。</text>
+      
+</svg>
