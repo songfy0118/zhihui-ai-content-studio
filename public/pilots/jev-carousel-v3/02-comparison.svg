@@ -1,6 +1,6 @@
 
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
-  <title>聊天模型 vs 决策模型</title>
+  <title>大模型负责想，JEV 只负责选</title>
   <defs>
     <pattern id="paper-grid" width="24" height="24" patternUnits="userSpaceOnUse">
       <path d="M24 0H0V24" fill="none" stroke="#1f2937" stroke-opacity=".025"/>
@@ -14,6 +14,7 @@
       .mono{font-family:Consolas,"SFMono-Regular",monospace}
       .section{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:21px;font-weight:800;letter-spacing:1.2px;fill:#2457c5}
       .headline{font-family:"SimSun","Noto Serif SC",serif;font-size:57px;font-weight:900;fill:#161b22}
+      .headlineSplit{font-family:"SimSun","Noto Serif SC",serif;font-size:44px;font-weight:900;fill:#161b22}
       .deck{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:25px;font-weight:600;fill:#53606c}
       .h2{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:29px;font-weight:900;fill:#161b22}
       .h3{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:23px;font-weight:800;fill:#161b22}
@@ -31,8 +32,8 @@
   <text x="72" y="72" class="section" >01 · MODEL DIVISION</text>
   <text x="1008" y="72" class="tiny" text-anchor="end">FIELD NOTE  ·  02/07</text>
   <path d="M72 96H1008" stroke="#2457c5" stroke-width="3" />
-  <text x="72" y="165" class="headline" >聊天模型 vs 决策模型</text>
-  <text x="72" y="217" class="deck" >差别不是“谁更聪明”，而是输出空间、失败方式和使用位置完全不同</text>
+  <text x="72" y="165" class="headline" >大模型负责想，JEV 只负责选</text>
+  <text x="72" y="217" class="deck" >它不是更聪明，而是把答案限制成代码能检查的选择题</text>
   <path d="M72 1278H1008" stroke="#b7bcc2" stroke-width="1" />
   <text x="1008" y="1325" class="source" text-anchor="end">JEV / SYSTEM ONE · RESEARCH EXPLAINER</text>
   

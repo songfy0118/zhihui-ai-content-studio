@@ -1,6 +1,6 @@
 
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
-  <title>194× 更快？先看数字是谁测的</title>
+  <title>官方说快 194 倍， 这个数字先别急着信</title>
   <defs>
     <pattern id="paper-grid" width="24" height="24" patternUnits="userSpaceOnUse">
       <path d="M24 0H0V24" fill="none" stroke="#1f2937" stroke-opacity=".025"/>
@@ -14,6 +14,7 @@
       .mono{font-family:Consolas,"SFMono-Regular",monospace}
       .section{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:21px;font-weight:800;letter-spacing:1.2px;fill:#d4552d}
       .headline{font-family:"SimSun","Noto Serif SC",serif;font-size:57px;font-weight:900;fill:#161b22}
+      .headlineSplit{font-family:"SimSun","Noto Serif SC",serif;font-size:44px;font-weight:900;fill:#161b22}
       .deck{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:25px;font-weight:600;fill:#53606c}
       .h2{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:29px;font-weight:900;fill:#161b22}
       .h3{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:23px;font-weight:800;fill:#161b22}
@@ -31,8 +32,8 @@
   <text x="72" y="72" class="section" >04 · EVIDENCE LADDER</text>
   <text x="1008" y="72" class="tiny" text-anchor="end">FIELD NOTE  ·  05/07</text>
   <path d="M72 96H1008" stroke="#d4552d" stroke-width="3" />
-  <text x="72" y="165" class="headline" >194× 更快？先看数字是谁测的</text>
-  <text x="72" y="217" class="deck" >科技新闻最容易把“官方基准”写成“已被证明”；正确读法是分层看证据</text>
+  <text x="72" y="151" class="headlineSplit" >官方说快 194 倍，</text><text x="72" y="203" class="headlineSplit" >这个数字先别急着信</text>
+  <text x="72" y="248" class="deck" >厂商基准、第三方小样本和生产数据，证明的是三件不同的事</text>
   <path d="M72 1278H1008" stroke="#b7bcc2" stroke-width="1" />
   <text x="1008" y="1325" class="source" text-anchor="end">JEV / SYSTEM ONE · RESEARCH EXPLAINER</text>
   

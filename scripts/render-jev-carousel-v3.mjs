@@ -46,9 +46,15 @@ const note = (x, y, width, label, fill = C.bluePale, color = C.blue) => `
 
 const source = (label) => text(72, 1325, label, "source");
 
+const heading = (value) => {
+  const lines = Array.isArray(value) ? value : [value];
+  if (lines.length === 1) return text(72, 165, lines[0], "headline");
+  return lines.map((line, index) => text(72, 151 + index * 52, line, "headlineSplit")).join("");
+};
+
 const frame = ({ index, section, headline, deck, body, accent = C.blue }) => `
 <svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}">
-  <title>${esc(headline)}</title>
+  <title>${esc(Array.isArray(headline) ? headline.join(" ") : headline)}</title>
   <defs>
     <pattern id="paper-grid" width="24" height="24" patternUnits="userSpaceOnUse">
       <path d="M24 0H0V24" fill="none" stroke="#1f2937" stroke-opacity=".025"/>
@@ -62,6 +68,7 @@ const frame = ({ index, section, headline, deck, body, accent = C.blue }) => `
       .mono{font-family:Consolas,"SFMono-Regular",monospace}
       .section{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:21px;font-weight:800;letter-spacing:1.2px;fill:${accent}}
       .headline{font-family:"SimSun","Noto Serif SC",serif;font-size:57px;font-weight:900;fill:${C.ink}}
+      .headlineSplit{font-family:"SimSun","Noto Serif SC",serif;font-size:44px;font-weight:900;fill:${C.ink}}
       .deck{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:25px;font-weight:600;fill:${C.muted}}
       .h2{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:29px;font-weight:900;fill:${C.ink}}
       .h3{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:23px;font-weight:800;fill:${C.ink}}
@@ -79,8 +86,8 @@ const frame = ({ index, section, headline, deck, body, accent = C.blue }) => `
   ${text(72, 72, section, "section")}
   ${text(1008, 72, `FIELD NOTE  ·  ${String(index).padStart(2, "0")}/07`, "tiny", 'text-anchor="end"')}
   ${rule(72, 96, 1008, 96, accent, 3)}
-  ${text(72, 165, headline, "headline")}
-  ${text(72, 217, deck, "deck")}
+  ${heading(headline)}
+  ${text(72, Array.isArray(headline) ? 248 : 217, deck, "deck")}
   ${rule(72, 1278, 1008, 1278, C.rule, 1)}
   ${text(1008, 1325, "JEV / SYSTEM ONE · RESEARCH EXPLAINER", "source", 'text-anchor="end"')}
   ${body}
@@ -91,9 +98,9 @@ const cards = [
     slug: "01-cover",
     svg: frame({
       index: 1,
-      section: "硅谷热议 · JEV 决策模型",
-      headline: "硅谷热议 JEV：AI 不聊天，只拍板",
-      deck: "它不写答案，只把客服、风控和 Agent 的下一步变成可计算的决定",
+      section: "大模型之后 · JEV 决策模型",
+      headline: ["大模型越聪明，为什么还需要", "一个“只会拍板”的 AI？"],
+      deck: "JEV 把 Agent 最危险的一步拆出来：只判断，不执行",
       accent: C.orange,
       body: `
         ${pill(72, 270, 188, "API-ONLY MODEL", C.orange)}
@@ -152,8 +159,8 @@ const cards = [
     svg: frame({
       index: 2,
       section: "01 · MODEL DIVISION",
-      headline: "聊天模型 vs 决策模型",
-      deck: "差别不是“谁更聪明”，而是输出空间、失败方式和使用位置完全不同",
+      headline: "大模型负责想，JEV 只负责选",
+      deck: "它不是更聪明，而是把答案限制成代码能检查的选择题",
       body: `
         <g transform="translate(72 286)" filter="url(#soft-shadow)">
           <rect width="936" height="690" rx="16" fill="${C.white}" stroke="${C.ink}" stroke-width="2"/>
@@ -196,8 +203,8 @@ const cards = [
     svg: frame({
       index: 3,
       section: "02 · THREE PRIMITIVES",
-      headline: "Choice、Score、Noul 到底返回什么？",
-      deck: "同一份 state 可以并行回答多个问题；真正落地靠的是字段与阈值",
+      headline: "它只会三件事，代码反而更敢接",
+      deck: "Choice、Score、Noul：选一个、排位置、判断成立概率",
       accent: C.orange,
       body: `
         <g transform="translate(72 278)">
@@ -276,8 +283,8 @@ const cards = [
     svg: frame({
       index: 4,
       section: "03 · CONTROL LOOP",
-      headline: "真正的产品，是可回滚的决策链",
-      deck: "输入、判断、阈值、执行、反馈缺一不可；模型只是其中一个盒子",
+      headline: ["最危险的不是判断错，", "是错了还自动执行"],
+      deck: "真正的产品必须把判断、权限、确认、回滚和结果反馈串起来",
       body: `
         <g transform="translate(72 292)" filter="url(#soft-shadow)">
           <rect width="936" height="500" rx="16" fill="${C.white}" stroke="${C.ink}" stroke-width="2"/>
@@ -318,8 +325,8 @@ const cards = [
     svg: frame({
       index: 5,
       section: "04 · EVIDENCE LADDER",
-      headline: "194× 更快？先看数字是谁测的",
-      deck: "科技新闻最容易把“官方基准”写成“已被证明”；正确读法是分层看证据",
+      headline: ["官方说快 194 倍，", "这个数字先别急着信"],
+      deck: "厂商基准、第三方小样本和生产数据，证明的是三件不同的事",
       accent: C.orange,
       body: `
         <g transform="translate(72 286)">
@@ -362,8 +369,8 @@ const cards = [
     svg: frame({
       index: 6,
       section: "05 · OPEN-SOURCE STACK",
-      headline: "GitHub 上，大家怎么复现 JEV？",
-      deck: "接入层、决策网关、开放复现和评测框架，要分清“官方模型”与“社区工程”",
+      headline: "GitHub 已经有人把接入层搭好了",
+      deck: "但接入层、开放复现和官方模型不是同一回事",
       body: `
         <g transform="translate(72 286)">
           ${text(0, 30, "官方 · 先看真实接口", "h2", `fill="${C.blue}"`)}
@@ -405,8 +412,8 @@ const cards = [
     svg: frame({
       index: 7,
       section: "CONCLUSION · 先验证，再自动化",
-      headline: "下一代 AI，不一定是一个更大的模型",
-      deck: "更可能是一支分工明确、彼此校验、随时能让人接管的模型团队",
+      headline: "未来的 AI，不会只有一个“大脑”",
+      deck: "更像一支会分工、会校验，也能随时把决定交还给人的团队",
       accent: C.orange,
       body: `
         <g transform="translate(72 286)">

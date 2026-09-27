@@ -1,6 +1,6 @@
 
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
-  <title>下一代 AI，不一定是一个更大的模型</title>
+  <title>未来的 AI，不会只有一个“大脑”</title>
   <defs>
     <pattern id="paper-grid" width="24" height="24" patternUnits="userSpaceOnUse">
       <path d="M24 0H0V24" fill="none" stroke="#1f2937" stroke-opacity=".025"/>
@@ -14,6 +14,7 @@
       .mono{font-family:Consolas,"SFMono-Regular",monospace}
       .section{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:21px;font-weight:800;letter-spacing:1.2px;fill:#d4552d}
       .headline{font-family:"SimSun","Noto Serif SC",serif;font-size:57px;font-weight:900;fill:#161b22}
+      .headlineSplit{font-family:"SimSun","Noto Serif SC",serif;font-size:44px;font-weight:900;fill:#161b22}
       .deck{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:25px;font-weight:600;fill:#53606c}
       .h2{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:29px;font-weight:900;fill:#161b22}
       .h3{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:23px;font-weight:800;fill:#161b22}
@@ -31,8 +32,8 @@
   <text x="72" y="72" class="section" >CONCLUSION · 先验证，再自动化</text>
   <text x="1008" y="72" class="tiny" text-anchor="end">FIELD NOTE  ·  07/07</text>
   <path d="M72 96H1008" stroke="#d4552d" stroke-width="3" />
-  <text x="72" y="165" class="headline" >下一代 AI，不一定是一个更大的模型</text>
-  <text x="72" y="217" class="deck" >更可能是一支分工明确、彼此校验、随时能让人接管的模型团队</text>
+  <text x="72" y="165" class="headline" >未来的 AI，不会只有一个“大脑”</text>
+  <text x="72" y="217" class="deck" >更像一支会分工、会校验，也能随时把决定交还给人的团队</text>
   <path d="M72 1278H1008" stroke="#b7bcc2" stroke-width="1" />
   <text x="1008" y="1325" class="source" text-anchor="end">JEV / SYSTEM ONE · RESEARCH EXPLAINER</text>
   

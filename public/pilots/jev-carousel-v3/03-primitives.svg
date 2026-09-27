@@ -1,6 +1,6 @@
 
 <svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
-  <title>Choice、Score、Noul 到底返回什么？</title>
+  <title>它只会三件事，代码反而更敢接</title>
   <defs>
     <pattern id="paper-grid" width="24" height="24" patternUnits="userSpaceOnUse">
       <path d="M24 0H0V24" fill="none" stroke="#1f2937" stroke-opacity=".025"/>
@@ -14,6 +14,7 @@
       .mono{font-family:Consolas,"SFMono-Regular",monospace}
       .section{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:21px;font-weight:800;letter-spacing:1.2px;fill:#d4552d}
       .headline{font-family:"SimSun","Noto Serif SC",serif;font-size:57px;font-weight:900;fill:#161b22}
+      .headlineSplit{font-family:"SimSun","Noto Serif SC",serif;font-size:44px;font-weight:900;fill:#161b22}
       .deck{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:25px;font-weight:600;fill:#53606c}
       .h2{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:29px;font-weight:900;fill:#161b22}
       .h3{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:23px;font-weight:800;fill:#161b22}
@@ -31,8 +32,8 @@
   <text x="72" y="72" class="section" >02 · THREE PRIMITIVES</text>
   <text x="1008" y="72" class="tiny" text-anchor="end">FIELD NOTE  ·  03/07</text>
   <path d="M72 96H1008" stroke="#d4552d" stroke-width="3" />
-  <text x="72" y="165" class="headline" >Choice、Score、Noul 到底返回什么？</text>
-  <text x="72" y="217" class="deck" >同一份 state 可以并行回答多个问题；真正落地靠的是字段与阈值</text>
+  <text x="72" y="165" class="headline" >它只会三件事，代码反而更敢接</text>
+  <text x="72" y="217" class="deck" >Choice、Score、Noul：选一个、排位置、判断成立概率</text>
   <path d="M72 1278H1008" stroke="#b7bcc2" stroke-width="1" />
   <text x="1008" y="1325" class="source" text-anchor="end">JEV / SYSTEM ONE · RESEARCH EXPLAINER</text>
   

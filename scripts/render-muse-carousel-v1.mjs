@@ -47,6 +47,12 @@ const card = (x, y, width, height, fill = C.white, stroke = C.ink) =>
 const wrap = (x, y, lines, cls = "body", gap = 38, extra = "") =>
   lines.map((value, index) => t(x, y + index * gap, value, cls, extra)).join("");
 
+const heading = (value) => {
+  const lines = Array.isArray(value) ? value : [value];
+  if (lines.length === 1) return t(72, 165, lines[0], "title");
+  return lines.map((line, index) => t(72, 151 + index * 52, line, "titleSplit")).join("");
+};
+
 const frame = ({ index, section, title, deck, accent = C.blue, body, source }) => `
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
@@ -59,6 +65,7 @@ const frame = ({ index, section, title, deck, accent = C.blue, body, source }) =
     <style>
       .section{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:21px;font-weight:800;letter-spacing:1.1px;fill:${accent}}
       .title{font-family:"SimSun","Noto Serif SC",serif;font-size:57px;font-weight:900;fill:${C.ink}}
+      .titleSplit{font-family:"SimSun","Noto Serif SC",serif;font-size:44px;font-weight:900;fill:${C.ink}}
       .deck{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:25px;font-weight:650;fill:${C.muted}}
       .h2{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:31px;font-weight:900;fill:${C.ink}}
       .h3{font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;font-size:23px;font-weight:850;fill:${C.ink}}
@@ -76,8 +83,8 @@ const frame = ({ index, section, title, deck, accent = C.blue, body, source }) =
   ${t(72, 72, section, "section")}
   ${t(1008, 72, `MUSE BRIEF · ${String(index).padStart(2, "0")}/07`, "tiny", 'text-anchor="end"')}
   ${line(72, 96, 1008, 96, accent, 3)}
-  ${t(72, 165, title, "title")}
-  ${t(72, 217, deck, "deck")}
+  ${heading(title)}
+  ${t(72, Array.isArray(title) ? 248 : 217, deck, "deck")}
   ${line(72, 1278, 1008, 1278, C.line, 1)}
   ${t(72, 1325, source, "tiny")}
   ${t(1008, 1325, "META MUSE · PUBLIC SOURCE EXPLAINER", "tiny", 'text-anchor="end"')}
@@ -89,9 +96,9 @@ const pages = [
     slug: "01-cover",
     svg: frame({
       index: 1,
-      section: "META 发布 MUSE · PERSONAL AGENT",
-      title: "Meta 把 AI 从聊天框里放出来了",
-      deck: "Muse 开始替你浏览、填表、发邮件和推进购物",
+      section: "META MUSE · PERSONAL AGENT",
+      title: ["Meta 的新 AI 不陪聊，", "它开始替你下单"],
+      deck: "Muse 会浏览、填表、发邮件；Amazon 随即把它拦在门外",
       accent: C.orange,
       source: "来源：Meta Newsroom（2026-09-08）；Axios（2026-09-21）",
       body: `
@@ -133,8 +140,8 @@ const pages = [
     svg: frame({
       index: 2,
       section: "01 · 30 秒看懂冲突",
-      title: "Muse 能做什么？Amazon 怕什么？",
-      deck: "第二张直接给结论：AI 代理争的不是功能，而是入口",
+      title: ["Meta 刚把 AI 放出来，", "Amazon 就把门关了"],
+      deck: "争的不是一个购物功能，而是谁控制下一代互联网入口",
       source: "来源：Meta Newsroom；Axios（2026-09-21）",
       body: `
         ${card(72, 282, 454, 430, C.paleBlue, C.blue)}
@@ -165,8 +172,8 @@ const pages = [
     svg: frame({
       index: 3,
       section: "02 · ARCHITECTURE",
-      title: "它凭什么敢拿到你的权限？",
-      deck: "Meta 的答案：独立虚拟电脑 + 隔离监督智能体 + 可撤销授权",
+      title: ["敢让 AI 碰邮箱和支付，", "Meta 靠什么？"],
+      deck: "独立虚拟电脑、隔离监督智能体，以及可撤销的最小权限",
       accent: C.cyan,
       source: "来源：Meta Newsroom；security.muse.ai（官方安全说明）",
       body: `
@@ -187,8 +194,8 @@ const pages = [
           <rect x="548" y="224" width="216" height="68" rx="10" fill="${C.ink}"/>
           ${t(656, 266, "Credential Store", "h3", `fill="${C.white}" text-anchor="middle"`)}
           ${line(410, 200, 410, 224, C.ink, 3)}${line(656, 200, 656, 224, C.red, 3)}
-          <path d="M808 205H858" stroke="${C.red}" stroke-width="4"/><path d="M845 192l16 13-16 13" fill="none" stroke="${C.red}" stroke-width="4"/>
-          ${t(862, 192, "互联网", "h3", `fill="${C.red}" text-anchor="middle"`)}${t(862, 226, "只有监督层", "small", 'text-anchor="middle"')}${t(862, 254, "允许才访问", "small", 'text-anchor="middle"')}
+          <path d="M792 205H822" stroke="${C.red}" stroke-width="4"/><path d="M809 192l16 13-16 13" fill="none" stroke="${C.red}" stroke-width="4"/>
+          ${t(836, 192, "互联网", "h3", `fill="${C.red}" text-anchor="middle"`)}${t(836, 226, "监督层放行", "small", 'text-anchor="middle"')}${t(836, 254, "才允许访问", "small", 'text-anchor="middle"')}
         </g>
         ${t(72, 856, "官方承诺的四道边界", "h2")}
         ${card(72, 894, 454, 132, C.paleBlue, C.blue)}
@@ -207,8 +214,8 @@ const pages = [
     svg: frame({
       index: 4,
       section: "03 · PERMISSION LADDER",
-      title: "真正的风险，不是它会不会回答错",
-      deck: "而是一个错误判断，能不能继续变成邮件、订单或账户操作",
+      title: ["AI 犯错不可怕，", "可怕的是它替你点了确认"],
+      deck: "一个错误判断，可能继续变成邮件、订单或账户操作",
       accent: C.red,
       source: "分析：基于 Meta 官方权限设计与第三方体验报道",
       body: `
@@ -235,8 +242,8 @@ const pages = [
     svg: frame({
       index: 5,
       section: "04 · PLATFORM WAR",
-      title: "Amazon 为什么要拦住 Muse？",
-      deck: "因为 AI 代购争夺的，不只是一笔订单，而是谁控制用户入口",
+      title: ["Amazon 拦的不是 AI，", "是下一个购物入口"],
+      deck: "如果用户先把需求交给 Agent，平台还剩下多少控制权？",
       accent: C.orange,
       source: "来源：Axios，2026-09-21（Amazon 拦截 Muse 访问与代购）",
       body: `
@@ -263,8 +270,8 @@ const pages = [
     svg: frame({
       index: 6,
       section: "05 · COMPETITION",
-      title: "OpenAI、Google、Meta 在争什么？",
-      deck: "不是谁最会聊天，而是谁能成为你默认授权的个人执行入口",
+      title: ["OpenAI、Google、Meta，", "开始抢同一把钥匙"],
+      deck: "谁能成为你默认授权的个人 Agent，谁就握住下一代入口",
       source: "分析：结合 Meta 官方发布、Axios 与 TechCrunch 公开报道",
       body: `
         ${card(72, 286, 936, 650, C.white, C.ink)}
@@ -289,8 +296,8 @@ const pages = [
     svg: frame({
       index: 7,
       section: "06 · TAKEAWAY",
-      title: "Muse 不是终点，它是入口换代的信号",
-      deck: "未来一年，判断一个 Agent 是否靠谱，先看这五件事",
+      title: ["以后选 AI，先问它", "能不能被你叫停"],
+      deck: "会行动只是开始；权限、记录、撤销和人工接管才决定能不能用",
       accent: C.cyan,
       source: "结论：基于公开资料的趋势判断，不代表产品性能独立验证",
       body: `
