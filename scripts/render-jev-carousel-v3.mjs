@@ -98,9 +98,9 @@ const cards = [
     slug: "01-cover",
     svg: frame({
       index: 1,
-      section: "大模型之后 · JEV 决策模型",
-      headline: ["大模型越聪明，为什么还需要", "一个“只会拍板”的 AI？"],
-      deck: "JEV 把 Agent 最危险的一步拆出来：只判断，不执行",
+      section: "前 OPENAI 研究员 · JEV 决策模型",
+      headline: ["前 OpenAI 研究员反着做 AI：", "不写长文，只替软件拍板"],
+      deck: "Jev 把 Agent 最危险的“小决定”，拆成了一种新模型",
       accent: C.orange,
       body: `
         ${pill(72, 270, 188, "API-ONLY MODEL", C.orange)}

@@ -97,8 +97,8 @@ const pages = [
     svg: frame({
       index: 1,
       section: "META MUSE · PERSONAL AGENT",
-      title: ["Meta 的新 AI 不陪聊，", "它开始替你下单"],
-      deck: "Muse 会浏览、填表、发邮件；Amazon 随即把它拦在门外",
+      title: ["Meta 把 AI 放出聊天框，", "Amazon 为什么先关门？"],
+      deck: "Muse 开始替人办事，第一场 Agent 入口战争已经发生",
       accent: C.orange,
       source: "来源：Meta Newsroom（2026-09-08）；Axios（2026-09-21）",
       body: `
