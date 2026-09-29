@@ -97,8 +97,8 @@ const pages = [
     svg: frame({
       index: 1,
       section: "META MUSE · PERSONAL AGENT",
-      title: ["Meta 把 AI 放出聊天框，", "Amazon 为什么先关门？"],
-      deck: "Muse 开始替人办事，第一场 Agent 入口战争已经发生",
+      title: ["谁控制 AI 代理，", "谁控制下一代互联网入口"],
+      deck: "Meta 与 Amazon 的第一场 Agent 入口战争",
       accent: C.orange,
       source: "来源：Meta Newsroom（2026-09-08）；Axios（2026-09-21）",
       body: `
@@ -131,7 +131,7 @@ const pages = [
         ${wrap(724, 824, ["Amazon 已阻止 Muse", "访问和代购：谁拥有", "用户关系，谁就有入口。"], "body", 42)}
         ${card(72, 1050, 936, 150, C.ink, C.ink)}
         ${t(108, 1100, "真正的争夺", "small", `fill="#cbd5e1"`)}
-        ${t(108, 1152, "谁控制你的 AI 代理，谁就控制下一代互联网入口。", "h2", `fill="${C.white}"`)}
+        ${t(108, 1152, "谁控制 AI 代理，谁控制下一代互联网入口。", "h2", `fill="${C.white}"`)}
       `,
     }),
   },
